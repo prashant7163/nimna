@@ -5,17 +5,17 @@ Single source of truth for loop status. Statuses: pending / in-progress / blocke
 ---
 
 ## Task 1 — Brand Foundation & Logo
-**Status:** blocked-on-user (Checkpoint A1 — brand direction selection; presented 2026-07-03)
+**Status:** in-progress (A1 resolved: Direction C "The Line"; executing 1.2–1.4 → 2.1)
 
 Spec sections: design prompt §1 (Brand Foundation), §2 (Logo & App Icon).
 Taste Checkpoint A — two pauses: A1 brand direction (after 1.1), A2 logo concept (after 2.1).
 
 Deliverables:
 - [x] 1.1 Three brand-direction concepts + recommendation → `/designs/brand/brand-directions.md` (2026-07-03)
-- [ ] **CHECKPOINT A1** — user selects direction ← WAITING
-- [ ] 1.2 Color system, dark + light, WCAG AA verified → `/designs/brand/color-system.md`
-- [ ] 1.3 Typography system (Flutter/Google Fonts-compatible) → `/designs/brand/typography.md`
-- [ ] 1.4 Voice & microcopy guide (10 real strings) → `/designs/brand/voice-and-microcopy.md`
+- [x] **CHECKPOINT A1** — Direction C "The Line" selected (2026-07-03)
+- [x] 1.2 Color system, dark + light, WCAG AA verified (33/33 pass) → `/designs/brand/color-system.md` (2026-07-03)
+- [x] 1.3 Typography system (Schibsted Grotesk + Spline Sans Mono) → `/designs/brand/typography.md` (2026-07-03)
+- [x] 1.4 Voice & microcopy guide (10 strings + honesty checklist) → `/designs/brand/voice-and-microcopy.md` (2026-07-03)
 - [ ] 2.1 Three logo concepts as SVG (wordmark + symbol) → `/designs/brand/logo/concepts/`
 - [ ] **CHECKPOINT A2** — user selects logo concept
 - [ ] 2.2 Refined final logo: clear-space, min sizes, mono/inverse, lockups → `/designs/brand/logo/final/`
