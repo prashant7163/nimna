@@ -22,3 +22,10 @@
 - A2: USER selected Concept 1 "Two Ends". 2.2: nine final SVGs (lockup/wordmark/symbol × dark/light/mono) + usage.md in designs/brand/logo/final/. 2.3: iOS 1024 master + Android adaptive bg/fg/monochrome layers + app-icon.md in designs/brand/app-icon/; 48px legibility render-verified.
 - Full brand foundation now in designs/brand/ (directions, color, type, voice, logo, icons), all READMEs current.
 - Next: Task 2 (design system → wireframes F1–F9 → 12 hi-fi screens → handoff). Front-loading user questions (wipe style, paywall presentation, lock-screen posture) before starting.
+
+## 2026-07-03 — TASK 2 COMPLETE
+- USER front-loads: hold-to-wipe, full-screen paywall, zero-leak lock. System: foundations + components + 22 icons + tokens.json (designs/system/). Screens: 12 dark + 4 light hi-fi HTML at 390×844, token-exact, Chrome-render-verified (designs/screens/). Handoff: flutter-notes, asset checklist, brand cheat sheet (designs/handoff/). Wireframes (subagent, reviewed): 46 annotated frames F1–F9, all six mandated edge cases (designs/wireframes/).
+- Mid-task USER decisions: safety-phrase has no skip; free slot = ever-initiated (wipe doesn't reset).
+- PROTOCOL FLAGS (from wireframe review, for spec v0.2): (1) joiner-side "expired vs never-existed" code states are indistinguishable to a stateless relay — a distinct expired UI needs a QR-carried expiry hint or stays folded into the wrong-code error, as wireframed; (2) after a lapsed knock from a cold open, the app cannot attribute the knocker (content-free push) — named strings only apply to knocks seen while connected, as wireframed.
+- Open items: paywall price (USER), FLAG_SECURE (build phase).
+- Next: Task 3 website — Checkpoint B (outline + hero/relay concepts).

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F6 · Receiving a knock</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html">f2</a>
+    <a href="f3-join-channel.html">f3</a>
+    <a href="f4-channel-list.html">f4</a>
+    <a href="f5-chat-session.html">f5</a>
+    <a href="f6-receiving-knock.html" class="here">f6</a>
+    <a href="f7-channel-settings.html">f7</a>
+    <a href="f8-app-settings.html">f8</a>
+    <a href="f9-paywall.html">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F6 — Receiving a knock (in-app · via content-free push · knock screen)</h1>
+  <p>A knock lives 60 seconds at the relay (spec §3.2). The push, where enabled, says “New activity” and nothing else — it cannot say more, because nothing more exists server-side. Edge frame (dashed): knock already lapsed when the app opens.</p>
+</div>
+
+<main class="strip">
+
+  <!-- F6.1 -->
+  <section class="cell">
+    <div class="frame-tag">F6.1 · In-app knock banner</div>
+    <div class="frame">
+      <div class="banner">
+        <span><b>Marlowe</b> is knocking.</span>
+        <div class="mini" style="width:48px"></div>
+        <div class="btn-row">
+          <div class="btn primary small">Pick up</div>
+          <div class="btn ghost small">Ignore</div>
+        </div>
+      </div>
+      <p class="meta">[slides from top; mini-line breathes while the knock lives — annotated, not animated; banner auto-dismisses at 60 s leaving no trace]</p>
+      <div style="height:8px"></div>
+      <div class="dimmed">
+        <div class="listhead">
+          <span class="wordmark">nimna</span>
+          <span class="plus">+</span>
+        </div>
+        <div style="height:8px"></div>
+        <div class="chanrow">
+          <span class="txt"><span class="lbl">Marlowe</span><span class="cap" style="display:block">Knocking…</span></span>
+          <span class="mini"></span>
+        </div>
+        <div class="chanrow">
+          <span class="txt"><span class="lbl">Attic</span><span class="cap" style="display:block">Quiet</span></span>
+          <span class="mini dotted"></span>
+        </div>
+      </div>
+      <div class="grow"></div>
+      <p class="meta">[whatever screen is behind stays put — the banner floats over list, chat, or settings alike]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Answerable from anywhere in the app, without yanking the user out of what they were doing. Label + “is knocking.” + two verbs — no preview, because no content exists until the line is bridged.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Peer knocks while this app is open and connected (relay forwards the knock — spec §3.2.2, peer-online branch).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Pick up → ACCEPT sent → F5.4 live session for that channel. Ignore → banner leaves; nothing is recorded, the peer only ever observes silence.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Banner untouched for 60 s → dismisses itself; no “missed knock” list exists anywhere (that would be stored state). Two channels knock at once → banners queue one at a time, oldest first (product decision, noted in README).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F6.2 -->
+  <section class="cell">
+    <div class="frame-tag">F6.2 · Content-free push (lock screen)</div>
+    <div class="frame" style="background:#EFEFEF">
+      <div style="height:64px"></div>
+      <p class="lock-time">21:07</p>
+      <p class="lock-date">Thursday 3 July</p>
+      <div style="height:40px"></div>
+      <div class="push-card">
+        <span class="appicon">n</span>
+        <span><b>nimna</b><br><span class="cap">New activity</span></span>
+      </div>
+      <p class="meta">[the entire notification. No channel, no name, no message, no count — none of that exists at the relay to be sent (spec §3.2.2). Push is per-channel opt-in, DEFAULT OFF (F7.1)]</p>
+      <div class="grow"></div>
+      <p class="meta center">[OS lock screen mock — not a nimna surface]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Show exactly how little a nimna push says, on the surface where other apps leak the most. “New activity” is the complete message — a contentless nudge.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Peer knocked while this phone's app was disconnected AND this channel had opted into notifications (spec §3.2.2 peer-offline branch). Default-off means most users never see this frame.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Tap → app opens → app-lock gate first if set (F4.2) → F6.3 if the knock still lives, F6.4 if it lapsed. Ignore → nothing anywhere changes.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Multiple knocks / channels → still just one “New activity”; pushes never enumerate. Push arrives long after the knock died (OS delay) → F6.4's honest handling. Push token is the one piece of state that may persist server-side; the spec keeps push optional to protect the zero-persistence claim — mirrored in F7.1's caption.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F6.3 -->
+  <section class="cell">
+    <div class="frame-tag">F6.3 · Knock screen (app opens to a live knock)</div>
+    <div class="frame">
+      <div style="height:120px"></div>
+      <p class="h-lg center">Marlowe</p>
+      <div style="height:24px"></div>
+      <div class="line"></div>
+      <p class="line-lbl center">is knocking… 0:31</p>
+      <p class="meta center">[full-width line, breathing — annotated, not animated; countdown shows the knock's remaining life]</p>
+      <div class="grow"></div>
+      <div class="btn primary">Pick up</div>
+      <div style="height:8px"></div>
+      <div class="btn ghost">Ignore</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>A full-screen “incoming call” for the case where the app opens INTO a waiting knock — nothing to catch up on, just answer or don't. Never any message content: none exists anywhere until bridged.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>App opened (from the push, or by habit) while a live knock is registered for one of this phone's channels; shown after the app-lock gate (F4.2) if lock is on.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Pick up → F5.4 live session. Ignore → F4.1 channel list; the knock dies its natural death at the relay, unrecorded.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Knock expires while this screen is up (user stared past 0:00) → screen swaps in place to F6.4's copy. Attribution note: the label is known here because the knock is live on the connection — contrast with F6.4.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F6.4 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F6.4 · EDGE — knock already lapsed</div>
+    <div class="frame">
+      <div style="height:120px"></div>
+      <p class="h-lg center">Marlowe</p>
+      <div style="height:24px"></div>
+      <div class="line dotted"></div>
+      <p class="line-lbl center">They knocked a moment ago. It's lapsed — knock back?</p>
+      <div class="grow"></div>
+      <div class="btn primary">Knock back</div>
+      <div style="height:8px"></div>
+      <div class="btn ghost">Not now</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Arriving seconds too late shouldn't feel like failure. One line of fact, one warm suggestion — knocking back just swaps the roles.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>A knock was seen (banner or knock screen) but expired before the user acted — e.g. phone picked up at 0:02, unlocked at −0:05.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Knock back → F5.2 (your own knock on that channel, fresh 60 s). Not now → F4.1.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Honesty note:</b> the named variant shown here requires the app to have SEEN the knock while it lived. From a cold open after expiry, the relay (stateless) has nothing to report and the push named no channel — so no screen appears at all, honestly: the app cannot know who knocked. This asymmetry is annotated in the README, not papered over. Knock back to a peer who already left → F5.2 runs its minute and lapses to F5.7; no loop.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

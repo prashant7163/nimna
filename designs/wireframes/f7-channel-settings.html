@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F7 · Channel settings</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html">f2</a>
+    <a href="f3-join-channel.html">f3</a>
+    <a href="f4-channel-list.html">f4</a>
+    <a href="f5-chat-session.html">f5</a>
+    <a href="f6-receiving-knock.html">f6</a>
+    <a href="f7-channel-settings.html" class="here">f7</a>
+    <a href="f8-app-settings.html">f8</a>
+    <a href="f9-paywall.html">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F7 — Channel settings (label · notifications · receipts · per-channel wipe)</h1>
+  <p>Everything here is per-channel and stored only on this phone (spec §6). Notifications are the one opt-IN — default off, and the caption says exactly what a push contains. Wipe is hold-to-wipe, 1.5 s, release cancels (USER decision).</p>
+</div>
+
+<main class="strip">
+
+  <!-- F7.1 -->
+  <section class="cell">
+    <div class="frame-tag">F7.1 · Settings list</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
+      <p class="cap">Line settings — this phone only</p>
+      <div style="height:8px"></div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Label</span>
+        <span class="cap" style="display:block">Marlowe · lives only on this phone</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Notify me when they knock</span>
+        <span class="cap" style="display:block">A contentless nudge: “New activity”. Nothing else leaves your phones.</span></span>
+        <span class="toggle"></span>
+      </div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Read receipts</span>
+        <span class="cap" style="display:block">They'll see “Seen” under messages you've read. This line only.</span></span>
+        <span class="toggle"></span>
+      </div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Typing indicator</span>
+        <span class="cap" style="display:block">They'll see when you're writing. This line only.</span></span>
+        <span class="toggle"></span>
+      </div>
+      <div style="height:24px"></div>
+      <div class="setrow danger" style="border-bottom:none">
+        <span class="txt"><span class="lbl">Wipe this line</span>
+        <span class="cap" style="display:block">Keys and messages — this line, this phone.</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="grow"></div>
+      <p class="meta">[all three toggles default OFF; receipts/typing ride as encrypted CONTROL frames, indistinguishable from messages to the relay — spec §5]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Four quiet facts and one exit. Every caption answers the privacy question in place, so no setting needs a help page. Notifications caption is the required string, verbatim.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>From F5 chat header (tap the label) or long-press row → Settings on F4.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Label → F4.3-style inline edit. Toggles apply instantly, locally. Wipe this line → F7.2 sheet. ‹ → back to chat.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Enabling notifications registers a push token — the one piece of server-adjacent state the spec permits, named honestly in the caption (spec §3.2.2). Receipts/typing are honored by the peer's app, not enforced — same honor-system logic as disappearing messages.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F7.2 -->
+  <section class="cell">
+    <div class="frame-tag">F7.2 · Wipe this line — sheet</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
+        <p class="cap">Line settings — this phone only</p>
+        <div class="setrow"><span class="txt"><span class="lbl">Label</span></span><span class="chev">›</span></div>
+        <div class="setrow"><span class="txt"><span class="lbl">Notify me when they knock</span></span><span class="toggle"></span></div>
+      </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <p class="h" style="font-size:17px">Wipe this line?</p>
+        <p class="bodytext">Keys and messages for this line are destroyed on this phone. Nothing can bring them back.</p>
+        <p class="cap">Their phone keeps its side unless they wipe too.</p>
+        <div class="hold">
+          <span>Hold to wipe</span>
+          <span class="track"></span>
+        </div>
+        <p class="cap center">Hold for 1.5 seconds. Let go to keep everything.</p>
+        <div class="btn ghost">Keep</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Fast but unmistakable: the hold IS the confirmation — no second dialog. Copy is one breath per sentence, and the honest cross-device note (“their phone keeps its side”) prevents a false belief the UI could never correct later.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Wipe this line from F7.1.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Hold completes (1.5 s) → channel keys + history destroyed atomically → toast “Channel wiped.” → F4, where the row simply isn't there. Keep or swipe-down → F7.1, untouched.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Released early → cancels — nothing happens</b>, track resets to zero instantly, sheet stays. No partial wipe state can exist (single atomic delete). Wiping while on the line → session drops as the keys vanish; the peer just sees the line go dotted.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F7.3 -->
+  <section class="cell">
+    <div class="frame-tag">F7.3 · Holding — the line burns down</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
+        <p class="cap">Line settings — this phone only</p>
+        <div class="setrow"><span class="txt"><span class="lbl">Label</span></span><span class="chev">›</span></div>
+        <div class="setrow"><span class="txt"><span class="lbl">Notify me when they knock</span></span><span class="toggle"></span></div>
+      </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <p class="h" style="font-size:17px">Wipe this line?</p>
+        <p class="bodytext">Keys and messages for this line are destroyed on this phone. Nothing can bring them back.</p>
+        <div class="hold" style="border-width:2px">
+          <span>Hold to wipe</span>
+          <span class="track"><span class="fill" style="width:60%"></span></span>
+        </div>
+        <p class="meta center">[finger down: the channel's line burns down right→left while held (here ~0.9 s of 1.5 s). Release at ANY point before the end → cancels, bar snaps back, nothing happens. On completion: the line shrinks from center to two dots, which fade — 480 ms, once]</p>
+        <div class="btn ghost">Keep</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The USER-locked interaction made visible: destruction requires sustained intent, measured in the same visual language as the product — the line itself burning down.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Finger down on Hold to wipe in F7.2.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Hold reaches 1.5 s → wipe executes → toast “Channel wiped.” → F4. Release before 1.5 s → back to F7.2 exactly as it was.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Accidental pocket-touch cannot wipe: it takes a deliberate 1.5 s press on a button inside a sheet two taps deep. Interruption mid-hold (call, notification banner) → treated as release → cancel. Haptics tick with the burn; on cancel, one soft settle — never a celebratory buzz for destruction.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

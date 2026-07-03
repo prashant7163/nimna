@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F8 · App settings</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html">f2</a>
+    <a href="f3-join-channel.html">f3</a>
+    <a href="f4-channel-list.html">f4</a>
+    <a href="f5-chat-session.html">f5</a>
+    <a href="f6-receiving-knock.html">f6</a>
+    <a href="f7-channel-settings.html">f7</a>
+    <a href="f8-app-settings.html" class="here">f8</a>
+    <a href="f9-paywall.html">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F8 — App settings (app lock · panic wipe · relay info · licenses)</h1>
+  <p>The whole-phone controls. App lock is the zero-leak gate (USER decision). Panic wipe is hold-to-wipe, 2.5 s — a full second longer than a channel wipe — with voice string 8 verbatim. Relay info states plainly what the relay sees, and links the source.</p>
+</div>
+
+<main class="strip">
+
+  <!-- F8.1 -->
+  <section class="cell">
+    <div class="frame-tag">F8.1 · Settings root</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Settings</span></span><span></span></div>
+      <div style="height:8px"></div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">App lock</span>
+        <span class="cap" style="display:block">Off — a PIN or your face, before anything shows</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Notifications</span>
+        <span class="cap" style="display:block">Per line, off unless you turn them on</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Relay</span>
+        <span class="cap" style="display:block">relay.nimna.app</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Licenses</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div style="height:24px"></div>
+      <div class="setrow danger" style="border-bottom:none">
+        <span class="txt"><span class="lbl">Wipe everything</span>
+        <span class="cap" style="display:block">Every line, every message — this phone.</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div class="grow"></div>
+      <p class="meta">[no “account”, no “backup & sync”, no “devices” rows — they cannot exist here, and their absence is the product]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Five rows, alphabetical honesty. The destructive row sits apart at the bottom, never adjacent to anything routine (foundations).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Settings from F4 (list footer).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>App lock → F8.2. Notifications → per-channel list (each row jumps to that channel's F7.1 toggle). Relay → F8.4. Licenses → standard OSS list. Wipe everything → F8.3.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Notifications row is a directory, not a master switch — a master “on” would flip channels the user meant to keep silent; default-off stays per-channel (spec §3.2.2).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F8.2 -->
+  <section class="cell">
+    <div class="frame-tag">F8.2 · App-lock setup</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">App lock</span></span><span></span></div>
+      <div style="height:24px"></div>
+      <p class="h">Choose a PIN</p>
+      <p class="cap">When locked, the screen shows only the symbol and this pad. Nothing else — not even how many lines you have.</p>
+      <div style="height:20px"></div>
+      <div class="pindots">
+        <span class="pindot fill"></span><span class="pindot fill"></span><span class="pindot fill"></span>
+        <span class="pindot"></span><span class="pindot"></span><span class="pindot"></span>
+      </div>
+      <div style="height:20px"></div>
+      <div class="pinpad">
+        <span class="pinkey">1</span><span class="pinkey">2</span><span class="pinkey">3</span>
+        <span class="pinkey">4</span><span class="pinkey">5</span><span class="pinkey">6</span>
+        <span class="pinkey">7</span><span class="pinkey">8</span><span class="pinkey">9</span>
+        <span class="pinkey blank"></span><span class="pinkey">0</span><span class="pinkey txt">⌫</span>
+      </div>
+      <div style="height:16px"></div>
+      <div class="setrow" style="border-bottom:none">
+        <span class="txt"><span class="lbl">Unlock with Face ID</span>
+        <span class="cap" style="display:block">Recommended. Falls back to your PIN.</span></span>
+        <span class="toggle on"></span>
+      </div>
+      <div class="grow"></div>
+      <p class="cap">There's no way to recover a forgotten PIN — there's no account to prove you're you. Forgetting it means reinstalling, which wipes this phone's lines.</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Set the zero-leak gate. The biometric toggle ships ON in this flow (spec §6: strongly recommended); the no-recovery consequence is stated at setup time, not discovered later.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F8.1 → App lock. The app also offers this setup once, right after the first channel is created (recommended-on posture; declinable).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>PIN entered twice (confirm step, same frame pattern) → lock active → back to F8.1, caption now “On — PIN + Face ID”. ‹ → no lock, no scolding.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>PIN length: 6 digits shown; the pad accepts 4–8 (noted as a product decision in README, no protocol impact). Biometric hardware absent → toggle row hidden, PIN-only. Turning lock OFF later requires the current PIN first.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F8.3 -->
+  <section class="cell">
+    <div class="frame-tag">F8.3 · Panic wipe — hold 2.5 s</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div class="chathead"><span><span class="cap">‹</span> <span class="h">Settings</span></span><span></span></div>
+        <div class="setrow"><span class="txt"><span class="lbl">App lock</span></span><span class="chev">›</span></div>
+        <div class="setrow"><span class="txt"><span class="lbl">Notifications</span></span><span class="chev">›</span></div>
+      </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <p class="h" style="font-size:17px">Wipe everything?</p>
+        <p class="bodytext">Keys and messages are destroyed on this phone. There is no backup, anywhere, by design — nothing can bring them back.</p>
+        <div class="hold" style="border-width:2px">
+          <span>Wipe now</span>
+          <span class="track"><span class="fill" style="width:35%"></span></span>
+        </div>
+        <p class="cap center">Hold for 2.5 seconds. Let go to keep everything.</p>
+        <p class="meta center">[every line in the app burns down together while held; release at any point cancels — nothing happens. Longer than the 1.5 s channel wipe on purpose]</p>
+        <div class="btn ghost">Keep</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The panic action: fast under stress, impossible by accident. Voice string 8 verbatim — including the button pair, where the safe word is “Keep”, warm, never “Cancel”.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F8.1 → Wipe everything.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Hold completes (2.5 s) → all keys + all history destroyed atomically → F4.4 empty list, indistinguishable from a fresh install. Keep / release early / swipe down → F8.1, untouched.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Release cancels — nothing happens</b>, ever partially. Destroying the keys makes any intercepted past ciphertext permanently undecryptable (spec §6 + forward secrecy, §7.3) — that's why wiping keys, not just messages, is the point. The paid unlock survives: it lives with the store account, not this phone (F9.5).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F8.4 -->
+  <section class="cell">
+    <div class="frame-tag">F8.4 · Relay info</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Relay</span></span><span></span></div>
+      <div style="height:8px"></div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Address</span>
+        <span class="cap mono" style="display:block">wss://relay.nimna.app</span></span>
+      </div>
+      <div style="height:16px"></div>
+      <p class="bodytext">The relay stores nothing. Verify it yourself.</p>
+      <div style="height:8px"></div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Relay source code</span>
+        <span class="cap mono" style="display:block">github.com/nimna/relay</span></span>
+        <span class="chev">›</span>
+      </div>
+      <div style="height:16px"></div>
+      <p class="cap">While you're connected, the relay does see: your IP address, connection times, and the size and timing of what passes through. Never content, names, codes, or who you are.</p>
+      <div class="grow"></div>
+      <p class="meta">[bring-your-own-relay is a planned pro feature (spec §8) — this screen grows an “Address” editor then, not before]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The auditability claim, in the app itself: one address, one plain sentence, one link to the code, and the honest list of what IS visible (spec §4). Trust by inspection, not assertion.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F8.1 → Relay. Also linked from onboarding's F1.3 caption (“Details live in Settings → Relay”).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Relay source code → external browser (the one outbound link in the app). ‹ → F8.1.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Copy here must never say “anonymous” — account-less is not anonymity, and the IP line keeps the claim honest (voice checklist). Relay unreachable → this screen still renders; connectivity states belong to the line in each chat, not to a settings page.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

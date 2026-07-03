@@ -27,27 +27,27 @@ Completed: 2026-07-03
 ---
 
 ## Task 2 — Design System, Wireframes & Hi-Fi Screens
-**Status:** in-progress (opened 2026-07-03; consolidated question list issued)
+**Status:** done (2026-07-03)
 
 Spec sections: design prompt §3 (Design System), §4 (Wireframes F1–F9), §5 (Hi-Fi Screens), §6 (Handoff Notes).
-No taste checkpoints; front-load user questions before starting.
 
 Deliverables:
-- [ ] 3.1 Spacing/grid, radii, elevation, motion principles → `/designs/system/`
-- [ ] 3.2 Core components, all states → `/designs/system/components.md`
-- [ ] 3.3 Iconography style + ~20 icons → `/designs/system/icons/`
-- [ ] 4 Annotated wireframes F1–F9 → `/designs/wireframes/`
-- [ ] 5.1–5.2 12 hi-fi screens, HTML/CSS 390×844, dark-first + 4 light variants → `/designs/screens/`
-- [ ] 5.3 Design tokens JSON (Flutter ThemeData-ready) → `/designs/system/tokens.json`
-- [ ] 6 Flutter handoff notes + asset checklist + brand cheat sheet → `/designs/handoff/`
-- [ ] README indexes for system / wireframes / screens / handoff
+- [x] 3.1 Spacing/grid, radii, elevation, motion principles → `/designs/system/foundations.md` (2026-07-03)
+- [x] 3.2 Core components, all states → `/designs/system/components.md` (2026-07-03)
+- [x] 3.3 Iconography style + 22 icons → `/designs/system/icons/` (2026-07-03)
+- [x] 4 Annotated wireframes F1–F9, 46 frames, all six mandated edge cases → `/designs/wireframes/` (2026-07-03)
+- [x] 5.1–5.2 12 hi-fi screens 390×844 dark + 4 light variants, render-verified → `/designs/screens/` (2026-07-03)
+- [x] 5.3 Design tokens JSON (Flutter ThemeData-ready) → `/designs/system/tokens.json` (2026-07-03)
+- [x] 6 Flutter handoff notes + asset checklist + brand cheat sheet → `/designs/handoff/` (2026-07-03)
+- [x] README indexes for system / wireframes / screens / handoff (2026-07-03)
 
-Completed: —
+Completed: 2026-07-03
+Open items: paywall price (USER, pending) · FLAG_SECURE stance (build phase)
 
 ---
 
 ## Task 3 — Website
-**Status:** pending
+**Status:** blocked-on-user (Checkpoint B — outline + hero/relay-diagram concepts presented 2026-07-03)
 
 Spec: design prompt "Prompt 2" in full; reuse Task 1–2 tokens/logo/screens verbatim.
 Taste Checkpoint B: content outline + hero & relay-diagram visual concepts → pause → build.

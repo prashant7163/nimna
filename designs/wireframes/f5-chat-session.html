@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F5 · Chat session</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html">f2</a>
+    <a href="f3-join-channel.html">f3</a>
+    <a href="f4-channel-list.html">f4</a>
+    <a href="f5-chat-session.html" class="here">f5</a>
+    <a href="f6-receiving-knock.html">f6</a>
+    <a href="f7-channel-settings.html">f7</a>
+    <a href="f8-app-settings.html">f8</a>
+    <a href="f9-paywall.html">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F5 — Chat session (offline → knock → live → hangup)</h1>
+  <p>The session line under the header is never absent — its state IS the screen's truth. Dotted = not on the line, solid = knocking/live, always with a text label. Edge frames (dashed): knock lapses · line drops mid-session. “Peer never accepts” is covered in F5.1/F5.7 annotations.</p>
+</div>
+
+<main class="strip">
+
+  <!-- F5.1 -->
+  <section class="cell">
+    <div class="frame-tag">F5.1 · Peer offline — compose to outbox</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Knock</span></div>
+      <div class="line dotted"></div>
+      <p class="line-lbl">Not on the line</p>
+      <div style="height:8px"></div>
+      <p class="cap">They're not on the line right now.<br>Anything you write waits here — on your phone only — and goes through when you're both on.</p>
+      <div style="height:16px"></div>
+      <p class="micro">Waiting — on your phone only</p>
+      <div class="msgs">
+        <div class="bubble wait">Call me when you land.</div>
+        <div class="bubble wait">No rush — tonight is fine.</div>
+      </div>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Make “no store-and-forward” feel like patience, not failure. Voice string 5 verbatim as the state copy; dashed bubbles under the WAITING overline are visibly not-sent (spec §3.4: local-only until bridged).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F4 row tap while channel is quiet · F2.6/F3.5 Done (fresh channel) · after hangup (F5.6).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Send (↑) → message joins the outbox AND triggers a knock → F5.2 (spec §3.4). Knock button → F5.2 without writing. ◷ → F5.5 timer sheet. ‹ → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Peer never accepts:</b> messages stay here indefinitely, calm — no retries, no badges, no “delivery failed”. Nothing has left this phone, and the copy already said so. Deleting a waiting message is a plain local delete (long-press → Delete).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.2 -->
+  <section class="cell">
+    <div class="frame-tag">F5.2 · Knock sent</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
+      <div class="line"></div>
+      <p class="line-lbl">Knocked — waiting… 0:47</p>
+      <p class="meta">[line breathes while knocking (2.8 s loop) — annotated, not animated; counter runs down from 60 s, the relay-side knock TTL, spec §3.2]</p>
+      <div style="height:8px"></div>
+      <p class="cap">Knocked. If they pick up in the next minute, the line opens.</p>
+      <div style="height:16px"></div>
+      <p class="micro">Waiting — on your phone only</p>
+      <div class="msgs">
+        <div class="bubble wait">Call me when you land.</div>
+        <div class="bubble wait">No rush — tonight is fine.</div>
+      </div>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The doorbell moment. Voice string 6 verbatim. One knock, one minute, no auto-retry — knocking twice is a human decision, not an app behavior.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Send or Knock from F5.1. If the peer was offline, the relay answered PEER_OFFLINE and (only if that channel opted in, F7.1) a content-free push went out.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Peer accepts → F5.3. TTL lapses → F5.7 (edge). ‹ → F4 (knock keeps running its minute in the background).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Writing more while knocking → joins the outbox, no extra knock (one live knock at a time). Own connection drops mid-knock → back to F5.1 with a plain note: “You went offline. Knock again when you're back.”</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.3 -->
+  <section class="cell">
+    <div class="frame-tag">F5.3 · Peer accepts — the line connects</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <p class="meta">[connect moment: dots travel from both ends and meet in the middle — 320 ms, once. Then the line holds solid and still]</p>
+      <div style="height:8px"></div>
+      <p class="cap">They picked up.</p>
+      <div style="height:16px"></div>
+      <div class="msgs">
+        <div class="bubble sent">Call me when you land.</div>
+        <div class="bubble sent">No rush — tonight is fine.</div>
+        <span class="bub-meta">21:03 ✓</span>
+      </div>
+      <p class="meta">[the waiting messages just transmitted themselves, in order — spec §3.4; dashed borders became solid, each earns its ✓ on the peer's encrypted ACK]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The payoff frame: the outbox drains by itself the instant the bridge exists. The user does nothing — patience is rewarded, not managed.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Peer sends ACCEPT within the knock's minute (from their F6 banner or knock screen).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Settles into F5.4 live session (same screen, moment passes). Hang up → F5.6.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Bridge forms but a waiting message's ACK doesn't arrive (drop at the worst moment) → that message keeps its pending state and resends on the next bridge; the ✓ only ever means “decrypted and displayed on their phone” (spec §3.3).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.4 -->
+  <section class="cell">
+    <div class="frame-tag">F5.4 · Live session</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble sent">Call me when you land.</div>
+        <span class="bub-meta">21:03 ✓</span>
+        <div class="bubble recv">Just did. On the line now.</div>
+        <div class="bubble recv">Cab in ten.</div>
+        <span class="bub-meta l">21:04</span>
+        <div class="bubble sent">Good flight?</div>
+        <span class="bub-meta">21:04 ✓</span>
+        <div class="bubble recv">Long. Tell you tonight.</div>
+        <span class="bub-meta l">21:05</span>
+      </div>
+      <p class="meta">[✓ = delivered (peer ACK). No double-ticks. “Seen” appears under the last bubble only if this channel opted into read receipts, F7.1]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The live window — a text call. Messages flow phone-to-phone through the bridged relay, verbatim and unstored (spec §3.3). The solid line is the only status anyone needs.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F5.3 settles here · accepting an incoming knock (F6) lands here directly.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Hang up → F5.6. ‹ → F4 with the session alive (backgrounding keeps the socket on a ~10 min decay, spec §3.3 — leaving the screen is not hanging up).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Connection drops mid-session → F5.8 (edge).</b> Peer hangs up → line plays its cut, label reads “They hung up.”, composer stays (writing resumes the F5.1 waiting pattern).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.5 -->
+  <section class="cell">
+    <div class="frame-tag">F5.5 · Disappearing-message timer</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+        <div class="line"></div>
+        <p class="line-lbl">On the line</p>
+        <div style="height:8px"></div>
+        <div class="msgs">
+          <div class="bubble recv">Cab in ten.</div>
+        </div>
+      </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <p class="h" style="font-size:17px">This message disappears</p>
+        <div class="choice"><span>Off</span><span class="radio"></span></div>
+        <div class="choice"><span>1 minute after read</span><span class="radio"></span></div>
+        <div class="choice"><span>15 minutes after read</span><span class="radio sel"></span></div>
+        <div class="choice"><span>1 hour after read</span><span class="radio"></span></div>
+        <div class="choice" style="border-bottom:none"><span>24 hours after read</span><span class="radio"></span></div>
+        <p class="cap">Their app will delete this on schedule, and yours will too.<br>A timer can't undo being read — a screenshot is still a screenshot. It's a courtesy between the two of you, not a guarantee.</p>
+        <div class="btn primary">Done</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Sender-dictated, per-message expiry (spec §5 TEXT expiry field). Five calm presets (USER-locked set: Off / 1 min / 15 min / 1 hr / 24 hr after read). The honor-system disclaimer is voice string 7, verbatim, shown right where the timer is set — never buried in help.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>◷ in the composer, any session state (timers can be set on waiting messages too).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Done → back to composer; ◷ shows the active preset (e.g. “15m”). The chosen value rides on each message and stays selected for this channel until changed.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Timed bubble renders with timer glyph + remaining time; removal is a quiet fade + collapse, no shredding theatrics. Peer's app ignoring the expiry (modified client) → exactly why string 7 promises courtesy, not guarantee.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.6 -->
+  <section class="cell">
+    <div class="frame-tag">F5.6 · Hangup</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Knock</span></div>
+      <div class="line dotted"></div>
+      <p class="line-lbl">Not on the line</p>
+      <p class="meta">[hangup plays the connect moment in reverse — the line parts to dots, then rests dotted]</p>
+      <div style="height:8px"></div>
+      <p class="cap">You hung up.</p>
+      <div style="height:16px"></div>
+      <div class="msgs">
+        <div class="bubble sent">Good flight?</div>
+        <span class="bub-meta">21:04 ✓</span>
+        <div class="bubble recv">Long. Tell you tonight.</div>
+        <span class="bub-meta l">21:05</span>
+      </div>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>End cleanly, keep everything local. HANGUP tears the bridge down and the relay forgets the CRID immediately (spec §3.3). History stays on the phone — kept by default, per user retention choice (spec §6).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Hang up from F5.3/F5.4 — or the peer hung up (label then reads “They hung up.”).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Knock → F5.2. Writing → F5.1's waiting pattern (send triggers a knock). ‹ → F4, row caption back to “Quiet”.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Hangup vs. backgrounding: leaving the app is NOT hanging up (socket decays ~10 min, spec §3.3); only this explicit action or a real disconnect ends the session. Undelivered messages at hangup instant → remain pending, resend next bridge.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.7 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F5.7 · EDGE — knock TTL lapses</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
+      <div class="line dotted"></div>
+      <p class="line-lbl">Not on the line</p>
+      <div style="height:8px"></div>
+      <p class="cap">They didn't pick up.</p>
+      <div class="btn small" style="align-self:flex-start">Knock again</div>
+      <div style="height:16px"></div>
+      <p class="micro">Waiting — on your phone only</p>
+      <div class="msgs">
+        <div class="bubble wait">Call me when you land.</div>
+        <div class="bubble wait">No rush — tonight is fine.</div>
+      </div>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The 60-second knock TTL (spec §3.2.3) expiring is ordinary, like an unanswered doorbell. One factual line, one optional action, no urgency styling.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F5.2's counter reaches zero without an ACCEPT.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Knock again → F5.2 (a fresh knock, fresh minute). ‹ → F4, caption “Waiting: 2”.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Peer never accepts, ever:</b> this loop can repeat forever without harm — messages stay in the local outbox, nothing accumulates server-side (there is no server-side), and the app never nags either party. The calm here is a feature, not neglect.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.8 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F5.8 · EDGE — line drops mid-session</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line dotted"></div>
+      <p class="line-lbl">The line dropped. Trying to reconnect…</p>
+      <p class="meta">[dotted but quietly active — client retries as keepalive pings fail, spec §3.3. On recovery the label swaps to:]</p>
+      <p class="cap">You're both here.</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble recv">Cab in ten.</div>
+        <span class="bub-meta l">21:04</span>
+        <div class="bubble sent">Good flight?</div>
+        <span class="bub-meta">pending…</span>
+      </div>
+      <p class="meta">[the unacked message holds “pending” — never a scary red badge — and resends itself when the bridge is back]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Handle the mid-session drop with voice string 10, verbatim, in both halves: “The line dropped. Trying to reconnect…” then, on recovery, “You're both here.” Composer stays usable throughout — new writing simply queues.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Missed keepalive window during F5.4 (either side's network, or the relay).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Recovery → F5.4, pending messages transmit in order. No recovery (peer stayed gone) → settles into F5.1's offline state; a fresh knock is offered, not fired automatically.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Drop during the peer's reply → their message simply never arrived here; no “message lost” alarm is possible or honest (this phone can't know). Repeated flapping → reconnect backs off quietly; the label never counts attempts.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

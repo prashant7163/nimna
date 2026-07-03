@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F9 · Paywall</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html">f2</a>
+    <a href="f3-join-channel.html">f3</a>
+    <a href="f4-channel-list.html">f4</a>
+    <a href="f5-chat-session.html">f5</a>
+    <a href="f6-receiving-knock.html">f6</a>
+    <a href="f7-channel-settings.html">f7</a>
+    <a href="f8-app-settings.html">f8</a>
+    <a href="f9-paywall.html" class="here">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F9 — Paywall (first initiated line free · one-time unlock · store-mediated restore)</h1>
+  <p>The gate exists only at the SECOND initiated channel; joining is always free. A calm full-screen page (USER decision) — price as fact, not nag. No account, no email, anywhere: purchase and restore are entirely store-mediated. Edge frame (dashed): restore on reinstall.</p>
+</div>
+
+<main class="strip">
+
+  <!-- F9.1 -->
+  <section class="cell">
+    <div class="frame-tag">F9.1 · Trigger — “+” with one initiated line</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div class="listhead">
+          <span class="wordmark">nimna</span>
+          <span class="plus" style="border-width:2px">+</span>
+        </div>
+        <div style="height:8px"></div>
+        <div class="chanrow">
+          <span class="txt"><span class="lbl">Marlowe</span><span class="cap" style="display:block">Quiet</span></span>
+          <span class="mini dotted"></span>
+        </div>
+      </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="btn">Create a code</div>
+        <div class="btn">Enter a code</div>
+        <p class="meta center">[“Create a code”: the user already initiated Marlowe and hasn't unlocked → tapping it goes to F9.2 first. “Enter a code” is never gated — joining is always free]</p>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Show where the gate lives — and where it doesn't. The check runs at intent (tapping Create), before any code or keypair exists, so nothing is half-made behind a payment.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>“+” on F4.1 when exactly one-or-more initiated channels exist and the unlock hasn't been purchased.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Create a code → F9.2 paywall (unpaid) or straight to F2.1 (paid). Enter a code → F3.1, always, free. Swipe down → F4.1.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>The free allowance counts channels INITIATED, ever, not currently held — wiping Marlowe doesn't reset the free slot (otherwise wipe becomes a paywall-evasion loop; noted as product decision in README). Joined channels never count, in any quantity.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F9.2 -->
+  <section class="cell">
+    <div class="frame-tag">F9.2 · Paywall — calm full-screen</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">✕</span><span></span></div>
+      <div style="height:64px"></div>
+      <p class="h-lg">Your first line is free.<br>Pay once for as many as you like.</p>
+      <div style="height:12px"></div>
+      <p class="bodytext">No subscription. No account. The receipt stays between you and the app store — we never learn who you are.</p>
+      <div class="grow"></div>
+      <div class="btn primary">Unlock — one payment</div>
+      <p class="meta center">[price rendered on the button from the store's localized product info, e.g. “Unlock — $11.99, once”]</p>
+      <div style="height:4px"></div>
+      <div class="btn ghost">Restore purchase</div>
+      <div class="btn ghost">Not now</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Voice string 9 verbatim, as a full-screen page (USER decision) — stillness instead of a springy sheet. One primary action; restore and leave are equally quiet.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Create a code from F9.1 while unpaid. Never from joining, never on launch, never on a timer.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Unlock → F9.3 store sheet. Restore purchase → F9.5 flow. Not now / ✕ → F4.1, and nothing follows the user around afterward.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>No urgency mechanics of any kind: no countdown, no “offer”, no badge on the list after declining. Price is the store's localized truth — the app never hardcodes or inflates-then-discounts it.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F9.3 -->
+  <section class="cell">
+    <div class="frame-tag">F9.3 · Platform IAP sheet</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div style="height:48px"></div>
+        <p class="h-lg">Your first line is free.<br>Pay once for as many as you like.</p>
+        <p class="bodytext">No subscription. No account.</p>
+      </div>
+      <div class="grow"></div>
+      <div class="box" style="height:220px; border-radius:16px 16px 0 0; margin:0 -20px -20px">[App Store / Google Play purchase sheet — system UI placeholder. Face ID / fingerprint confirm, store account, store price. nimna draws none of this]</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Hand the money moment entirely to the platform. nimna receives an entitlement, not an identity — the store knows the buyer; the app only learns “unlocked: yes”.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Unlock — one payment from F9.2.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Purchase succeeds → F9.4. Fails or user cancels → sheet closes, F9.2 remains exactly as it was — same copy, no error banner, no “are you sure?”. Retry or leave, both fine.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Purchase fails / cancelled → return calmly, no nagging</b> (required edge). Interrupted purchase (app killed mid-sheet) → store settles it; next paywall visit reflects the truth via receipt check. Family sharing / regional store quirks are the store's domain — the app trusts the entitlement, nothing else.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F9.4 -->
+  <section class="cell">
+    <div class="frame-tag">F9.4 · Unlocked</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <div style="height:24px"></div>
+      <p class="h">Create a code</p>
+      <p class="bodytext">A code pairs your phone with one other. Share it however you like — in person is safest.</p>
+      <div style="height:12px"></div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Code works for</span>
+        <span class="cap" style="display:block">Shorter is safer. One use, either way.</span></span>
+        <span class="cap">24 hours ▾</span>
+      </div>
+      <div class="grow"></div>
+      <div class="toast">You're unlocked.</div>
+      <div style="height:8px"></div>
+      <div class="btn primary">Create a code</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>No celebration screen — the reward for paying is being exactly where you were going: F2.1, ready to create. One toast states the fact and leaves.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Successful purchase from F9.3, or successful restore from F9.5.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Toast auto-dismisses (3 s). Flow continues as plain F2: Create a code → F2.2.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>The paywall never appears again on this store account — including after panic wipe or reinstall (restore path, F9.5). Entitlement check is local-first with store receipt as truth; airplane-mode after purchase still works.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F9.5 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F9.5 · EDGE — restore on reinstall</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">✕</span><span></span></div>
+      <div style="height:64px"></div>
+      <p class="h-lg">Your first line is free.<br>Pay once for as many as you like.</p>
+      <div style="height:12px"></div>
+      <p class="bodytext">No subscription. No account. The receipt stays between you and the app store — we never learn who you are.</p>
+      <div style="height:24px"></div>
+      <div class="btn ghost" style="border:1px solid #999">Restore purchase</div>
+      <p class="cap center">Checking with the store…</p>
+      <div class="grow"></div>
+      <div class="toast">Purchase restored.</div>
+      <p class="meta center">[then straight on to F9.4's destination. If the store finds nothing: “The store has no purchase for this account.” — one line under the button, stays on this page, no drama]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Prove the no-account promise survives a reinstall: the store receipt is the only memory. Restore → platform receipt check → unlocked. No email, no login, no “enter the address you bought with” — those things don't exist here.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Restore purchase on F9.2 — typically after reinstall or panic wipe (F8.3), when the paywall reappears because local entitlement state was destroyed with everything else.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Receipt found → toast “Purchase restored.” → F9.4 (on to creating). Not found (different store account, never bought) → factual one-liner, page stays, Unlock remains available.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>IAP restore on reinstall</b> (required edge) is this frame. Restore is store-mediated end to end — annotate loudly: nimna cannot look the user up, by design; channels themselves are NOT restored (keys died with the wipe — spec §6; only the entitlement returns). Store unreachable → “Couldn't reach the store. Try again in a moment.”</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
