@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 276 120" role="img" aria-label="nimna logo concept 3: headstroke">
+  <!-- Concept 3 — "The Headstroke": Devanagari structure abstracted — one continuous
+       line above the whole word (shirorekha), letters hanging beneath it. -->
+  <!-- The headstroke -->
+  <path d="M2 26 H274" fill="none" stroke="#F2A65A" stroke-width="6" stroke-linecap="round"/>
+  <!-- Wordmark: custom monoline, letterforms intact beneath the line -->
+  <g fill="none" stroke="#E8E6E1" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 95 V53"/>
+    <path d="M5 73 C5 60 12.5 53 22 53 C31.5 53 39 60 39 73 V95"/>
+    <path d="M61 95 V53"/>
+    <path d="M83 95 V53"/>
+    <path d="M83 73 C83 60 90.5 53 100 53 C109.5 53 117 60 117 73 V95"/>
+    <path d="M117 73 C117 60 124.5 53 134 53 C143.5 53 151 60 151 73 V95"/>
+    <path d="M173 95 V53"/>
+    <path d="M173 73 C173 60 180.5 53 190 53 C199.5 53 207 60 207 73 V95"/>
+    <circle cx="250" cy="74" r="21"/>
+    <path d="M271 95 V53"/>
+  </g>
+  <circle cx="61" cy="36" r="5.5" fill="#E8E6E1"/>
+</svg>

@@ -11,3 +11,9 @@
 - Produced three directions: A "The Fine Object" (quiet luxury, brass/ember, Fraunces+Instrument Sans), B "Deep Water" (nimn etymology, ink indigo/lamp gold, Martel+Mukta), C "The Line" (protocol-as-motif, near-black/incandescent amber, Schibsted Grotesk). Recommended C.
 - Lives in designs/brand/brand-directions.md + direction-previews.html (browser side-by-side).
 - Next: user selects direction → 1.2 color, 1.3 type, 1.4 voice → 2.1 logo concepts → Checkpoint A2.
+
+## 2026-07-03 — A1: Direction C locked; 1.2–1.4 done; 2.1 logo concepts; Checkpoint A2 reached
+- USER selected Direction C "The Line" at A1.
+- 1.2 color system (dark hero + light "amber ink on paper"), all 33 WCAG pairings verified programmatically (temp/contrast_final.py). 1.3 type: Schibsted Grotesk + Spline Sans Mono for codes. 1.4 voice guide: 10 strings + protocol-honesty checklist. All in designs/brand/.
+- 2.1: three logo concepts, custom monoline wordmark (drawn, not typeset): "Two Ends" (recommended), "The Dash", "The Headstroke". SVGs + logo-previews.html in designs/brand/logo/concepts/. Concept-3 first draft (stems touching headstroke) killed for legibility — read "hlmhd".
+- Next: A2 selection → 2.2 refine logo → 2.3 app icons → Task 1 done.
