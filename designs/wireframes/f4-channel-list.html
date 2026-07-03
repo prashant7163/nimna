@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F4 · Channel list</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html">f2</a>
+    <a href="f3-join-channel.html">f3</a>
+    <a href="f4-channel-list.html" class="here">f4</a>
+    <a href="f5-chat-session.html">f5</a>
+    <a href="f6-receiving-knock.html">f6</a>
+    <a href="f7-channel-settings.html">f7</a>
+    <a href="f8-app-settings.html">f8</a>
+    <a href="f9-paywall.html">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F4 — Channel list (locked · unlocked · label edit · empty)</h1>
+  <p>The home surface. A channel is a label and a line — no avatars, no photos, no initials-circles, ever (spec: no identity). Rows are 72 px cards. The locked state leaks nothing: symbol + PIN pad only (USER decision — no blur, no silhouettes).</p>
+</div>
+
+<main class="strip">
+
+  <!-- F4.1 -->
+  <section class="cell">
+    <div class="frame-tag">F4.1 · Unlocked list</div>
+    <div class="frame">
+      <div class="listhead">
+        <span class="wordmark">nimna</span>
+        <span class="plus">+</span>
+      </div>
+      <div style="height:8px"></div>
+      <div class="chanrow">
+        <span class="txt"><span class="lbl">Marlowe</span><span class="cap" style="display:block">Quiet</span></span>
+        <span class="mini dotted"></span>
+      </div>
+      <div class="chanrow">
+        <span class="txt"><span class="lbl">R.</span><span class="cap" style="display:block">Knocking…</span></span>
+        <span class="mini"></span>
+      </div>
+      <div class="chanrow">
+        <span class="txt"><span class="lbl">Dee</span><span class="cap" style="display:block">On the line</span></span>
+        <span class="mini"></span>
+      </div>
+      <div class="chanrow">
+        <span class="txt"><span class="lbl">Attic</span><span class="cap" style="display:block">Waiting: 2</span></span>
+        <span class="mini dotted"></span>
+      </div>
+      <p class="meta">[mini-line at the right edge mirrors each channel's session state: dotted = idle, solid = knocking/live (knocking breathes — annotated, not animated). “Waiting: N” counts messages sitting in the local outbox, spec §3.4]</p>
+      <div class="grow"></div>
+      <div class="setrow" style="border-bottom:none"><span class="cap">Settings</span><span class="chev">›</span></div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Show every line and its truth at a glance: label + state caption + mini-line. Nothing else — no previews (would require content on this screen), no timestamps of “last seen”.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>App launch (after F4.2 if app-lock is on) · Back from any chat · after F2.6/F3.5 Done.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Row tap → F5 chat. Long-press row → F4.3 label edit. “+” → create/join sheet (F9.1; Create gated at second initiated line). Settings → F8.1.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>A wiped channel simply isn't there — no “archived”, no undo, no ghost row. Peer wiped their side → this side cannot know (nothing is shared); knocks just go unanswered from then on.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F4.2 -->
+  <section class="cell">
+    <div class="frame-tag">F4.2 · Locked (zero-leak)</div>
+    <div class="frame">
+      <div style="height:96px"></div>
+      <div class="glyph"><span class="dot"></span><span class="bar"></span><span class="dot"></span></div>
+      <div style="height:40px"></div>
+      <div class="pindots">
+        <span class="pindot fill"></span><span class="pindot fill"></span><span class="pindot"></span>
+        <span class="pindot"></span><span class="pindot"></span><span class="pindot"></span>
+      </div>
+      <div style="height:32px"></div>
+      <div class="pinpad">
+        <span class="pinkey">1</span><span class="pinkey">2</span><span class="pinkey">3</span>
+        <span class="pinkey">4</span><span class="pinkey">5</span><span class="pinkey">6</span>
+        <span class="pinkey">7</span><span class="pinkey">8</span><span class="pinkey">9</span>
+        <span class="pinkey txt">bio</span><span class="pinkey">0</span><span class="pinkey txt">⌫</span>
+      </div>
+      <div class="grow"></div>
+      <p class="meta center">[nothing else on this screen — no wordmark, no channel count, no badges, no blurred content behind. “bio” = Face/Touch ID re-prompt]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Zero-leak gate (USER decision): someone glancing at, or holding, this phone learns nothing — not even how much the app is used. Symbol + pad is the entire screen.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Every app open / return-to-foreground while app-lock is on (set up in F8.2). Biometric prompt fires first if enabled; this pad is the fallback.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Correct PIN or biometric → F4.1 (or straight to the knock screen F6.3 if a live knock is waiting).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Wrong PIN → dots clear, brief pause; escalating delays after repeated failures. No “forgot PIN” — there is no account to recover with; losing the PIN means wiping via reinstall (README notes this openly). Push tapped while locked → this screen first, always.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F4.3 -->
+  <section class="cell">
+    <div class="frame-tag">F4.3 · Label edit (inline)</div>
+    <div class="frame">
+      <div class="listhead">
+        <span class="wordmark">nimna</span>
+        <span class="plus">+</span>
+      </div>
+      <div style="height:8px"></div>
+      <div class="chanrow" style="border:2px solid #555">
+        <span class="txt"><span class="lbl">Marlowe|</span><span class="cap" style="display:block">Labels live only on this phone.</span></span>
+        <span class="mini dotted"></span>
+      </div>
+      <div class="chanrow dimmed">
+        <span class="txt"><span class="lbl">R.</span><span class="cap" style="display:block">Quiet</span></span>
+        <span class="mini dotted"></span>
+      </div>
+      <div class="chanrow dimmed">
+        <span class="txt"><span class="lbl">Dee</span><span class="cap" style="display:block">Quiet</span></span>
+        <span class="mini dotted"></span>
+      </div>
+      <div class="grow"></div>
+      <div class="box" style="height:180px">[keyboard]</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Rename in place — a label is just local text (spec §6), so editing it deserves no ceremony, no screen of its own. The caption restates the privacy fact right where the doubt would occur.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Long-press a row here, or F7.1 → Label.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Return key or tap-away → saved, back to F4.1. Nothing is transmitted — the peer's phone has its own label for its own end.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Cleared to empty → allowed; the row shows “—” and the line. Very long label → single line, truncated with ellipsis; full text visible in F7.1.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F4.4 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F4.4 · EDGE — empty list</div>
+    <div class="frame">
+      <div class="listhead">
+        <span class="wordmark">nimna</span>
+        <span class="plus">+</span>
+      </div>
+      <div style="height:96px"></div>
+      <p class="h-lg">No lines yet.</p>
+      <p class="bodytext">Create a code, or enter one you've been given.</p>
+      <div style="height:24px"></div>
+      <div class="btn primary">Create a code</div>
+      <div style="height:8px"></div>
+      <div class="btn">Enter a code</div>
+      <div class="grow"></div>
+      <div class="setrow" style="border-bottom:none"><span class="cap">Settings</span><span class="chev">›</span></div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>First useful screen after onboarding. Voice string 4 verbatim; two lines of copy, no illustration (foundations: the voice does the work). Both roads open — initiate or join.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Start/Skip from F1 · any time the last channel is wiped · first screen after a full panic wipe (F8.3), indistinguishable from a fresh install.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Create a code → F2.1 (first initiated line is free — no paywall here, ever). Enter a code → F3.1. Settings → F8.1.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Post-wipe arrival → same words, no “welcome back”, no residue acknowledging a past (there is none). Paywall state after wipe: the store still remembers the purchase — F9.5 restore.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
