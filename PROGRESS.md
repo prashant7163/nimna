@@ -17,3 +17,8 @@
 - 1.2 color system (dark hero + light "amber ink on paper"), all 33 WCAG pairings verified programmatically (temp/contrast_final.py). 1.3 type: Schibsted Grotesk + Spline Sans Mono for codes. 1.4 voice guide: 10 strings + protocol-honesty checklist. All in designs/brand/.
 - 2.1: three logo concepts, custom monoline wordmark (drawn, not typeset): "Two Ends" (recommended), "The Dash", "The Headstroke". SVGs + logo-previews.html in designs/brand/logo/concepts/. Concept-3 first draft (stems touching headstroke) killed for legibility — read "hlmhd".
 - Next: A2 selection → 2.2 refine logo → 2.3 app icons → Task 1 done.
+
+## 2026-07-03 — TASK 1 COMPLETE
+- A2: USER selected Concept 1 "Two Ends". 2.2: nine final SVGs (lockup/wordmark/symbol × dark/light/mono) + usage.md in designs/brand/logo/final/. 2.3: iOS 1024 master + Android adaptive bg/fg/monochrome layers + app-icon.md in designs/brand/app-icon/; 48px legibility render-verified.
+- Full brand foundation now in designs/brand/ (directions, color, type, voice, logo, icons), all READMEs current.
+- Next: Task 2 (design system → wireframes F1–F9 → 12 hi-fi screens → handoff). Front-loading user questions (wipe style, paywall presentation, lock-screen posture) before starting.

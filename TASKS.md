@@ -5,7 +5,7 @@ Single source of truth for loop status. Statuses: pending / in-progress / blocke
 ---
 
 ## Task 1 — Brand Foundation & Logo
-**Status:** blocked-on-user (Checkpoint A2 — logo concept selection; presented 2026-07-03)
+**Status:** done (2026-07-03)
 
 Spec sections: design prompt §1 (Brand Foundation), §2 (Logo & App Icon).
 Taste Checkpoint A — two pauses: A1 brand direction (after 1.1), A2 logo concept (after 2.1).
@@ -17,12 +17,12 @@ Deliverables:
 - [x] 1.3 Typography system (Schibsted Grotesk + Spline Sans Mono) → `/designs/brand/typography.md` (2026-07-03)
 - [x] 1.4 Voice & microcopy guide (10 strings + honesty checklist) → `/designs/brand/voice-and-microcopy.md` (2026-07-03)
 - [x] 2.1 Three logo concepts as SVG (wordmark + symbol) → `/designs/brand/logo/concepts/` (2026-07-03)
-- [ ] **CHECKPOINT A2** — user selects logo concept ← WAITING
-- [ ] 2.2 Refined final logo: clear-space, min sizes, mono/inverse, lockups → `/designs/brand/logo/final/`
-- [ ] 2.3 App icons: iOS + Android adaptive layers, 48px legibility check → `/designs/brand/app-icon/`
-- [ ] `/designs/README.md` + `/designs/brand/README.md` indexes updated
+- [x] **CHECKPOINT A2** — Concept 1 "Two Ends" selected (2026-07-03)
+- [x] 2.2 Refined final logo: 9 SVG variants + usage.md (clear-space, min sizes, mono/inverse, lockups) → `/designs/brand/logo/final/` (2026-07-03)
+- [x] 2.3 App icons: iOS 1024 master + Android adaptive (bg/fg/monochrome), 48px render-verified → `/designs/brand/app-icon/` (2026-07-03)
+- [x] `/designs/README.md` + `/designs/brand/README.md` indexes updated (2026-07-03)
 
-Completed: —
+Completed: 2026-07-03
 
 ---
 

@@ -14,4 +14,13 @@
 - Taste checkpoints: A1 (brand direction), A2 (logo concept), B (website outline + hero/relay-diagram concepts). Pause + set TASKS.md blocked-on-user at each.
 - Report in full to user only after all three tasks are done.
 
+**Locked brand (Task 1, do not re-decide):**
+- Direction C "The Line": the line motif renders protocol states — dotted grey offline, breathing amber knock, solid amber live, cut on wipe. Amber is rationed (session state, one primary action/screen, i-dot, timer glyph — never decorative). No green anywhere.
+- Palette dark (hero): surface #0B0B0C/#141416/#1B1B1E, text #E8E6E1/#A8A6A0/#7C7A75, accent #F2A65A (onAccent #201305), danger #E0655A (fill #8C2F27), lineIdle #6E6E74. Light: paper #F7F5F2, text #1C1B19, single accent "amber-ink" #96581A (onAccent #FFF). Full tokens: designs/brand/color-system.md (all WCAG-verified via temp/contrast_final.py).
+- Type: Schibsted Grotesk 400/500/600 only + Spline Sans Mono 500 for codes/safety phrase. Scale in designs/brand/typography.md. No italics, no all-caps except 11px micro overlines.
+- Logo: "Two Ends" ●—● + custom monoline lowercase wordmark, amber i-dot. Finals in designs/brand/logo/final/ (usage.md has clear-space/min-size/don'ts). Icons: designs/brand/app-icon/. Sub-12px degradation = the dash.
+- Voice: phone-call register (line/knock/pick up/hang up), facts not vows, admits limits plainly. Canonical strings: designs/brand/voice-and-microcopy.md.
+
+**Workflow notes:** run Python via files in git-ignored temp/ (never inline heredocs); qlmanage -t renders SVG→PNG for visual checks; user commits may appear between mine (pull-safe: remote = origin/main).
+
 **Current state:** see TASKS.md (single source of truth for status).
