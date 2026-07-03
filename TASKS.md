@@ -27,7 +27,7 @@ Completed: 2026-07-03
 ---
 
 ## Task 2 — Design System, Wireframes & Hi-Fi Screens
-**Status:** pending
+**Status:** in-progress (opened 2026-07-03; consolidated question list issued)
 
 Spec sections: design prompt §3 (Design System), §4 (Wireframes F1–F9), §5 (Hi-Fi Screens), §6 (Handoff Notes).
 No taste checkpoints; front-load user questions before starting.

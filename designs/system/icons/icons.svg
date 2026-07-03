@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+  <!-- nimna icon sprite — 24px grid, stroke 1.75, round caps/joins, currentColor.
+       Same DNA as the logo: everything is drawn with one calm line. -->
+  <defs>
+    <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
+    <g id="i-keypad"><g fill="currentColor" stroke="none"><circle cx="6" cy="6" r="1.6"/><circle cx="12" cy="6" r="1.6"/><circle cx="18" cy="6" r="1.6"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/><circle cx="6" cy="18" r="1.6"/><circle cx="12" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></g></g>
+    <g id="i-qr"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2.5v2.5H14zM17.5 17.5H20V20h-2.5z" fill="currentColor" stroke="none"/></g>
+    <g id="i-scan"><path d="M4 9V6a2 2 0 0 1 2-2h3M15 4h3a2 2 0 0 1 2 2v3M20 15v3a2 2 0 0 1-2 2h-3M9 20H6a2 2 0 0 1-2-2v-3"/></g>
+    <g id="i-copy"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></g>
+    <g id="i-share"><path d="M12 14V4M8.5 7.5 12 4l3.5 3.5"/><path d="M6 12v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6"/></g>
+    <g id="i-sliders"><path d="M4 7h16M4 12h16M4 17h16"/><g fill="currentColor" stroke="none"><circle cx="15" cy="7" r="2.2"/><circle cx="8" cy="12" r="2.2"/><circle cx="17" cy="17" r="2.2"/></g></g>
+    <g id="i-chevron-right"><path d="m9.5 6 6 6-6 6"/></g>
+    <g id="i-arrow-left"><path d="M19 12H5M10.5 6.5 5 12l5.5 5.5"/></g>
+    <g id="i-close"><path d="m6 6 12 12M18 6 6 18"/></g>
+    <g id="i-check"><path d="m5 13 4 4L19 7"/></g>
+    <g id="i-timer-fade"><path d="M12 4a8 8 0 1 0 8 8"/><g fill="currentColor" stroke="none"><circle cx="15.1" cy="4.6" r="1"/><circle cx="18" cy="6.8" r="1"/><circle cx="19.6" cy="9.6" r="1"/></g><path d="M12 8v4l2.5 2.5"/></g>
+    <g id="i-bell"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path d="M10.3 19a2 2 0 0 0 3.4 0"/></g>
+    <g id="i-bell-off"><path d="M8.2 5.2A6 6 0 0 1 18 10c0 2.7.7 4.3 1.1 5.1M6.3 8.6C6.1 9 6 9.5 6 10c0 4-1.5 5.5-1.5 5.5h11M10.3 19a2 2 0 0 0 3.4 0"/><path d="m4 4 16 16"/></g>
+    <g id="i-line-cut"><path d="M3.5 12h6M14.5 12h6"/><g fill="currentColor" stroke="none"><circle cx="3.5" cy="12" r="1.4"/><circle cx="20.5" cy="12" r="1.4"/></g></g>
+    <g id="i-hang-up"><path d="M4 14.5c4.5-5 11.5-5 16 0l-2.6 2.6c-.9-.7-2-1.2-3.4-1.5l-.4-2.4c-1-.2-2.2-.2-3.2 0l-.4 2.4c-1.4.3-2.5.8-3.4 1.5L4 14.5Z"/></g>
+    <g id="i-knock"><g fill="currentColor" stroke="none"><circle cx="7" cy="12" r="1.8"/></g><path d="M12 8.5a5 5 0 0 1 0 7M15.5 5.5a9.5 9.5 0 0 1 0 13"/></g>
+    <g id="i-pencil"><path d="m14.5 5.5 4 4M4 20l1.3-4.8L15.5 5l3.5 3.5L8.8 18.7 4 20Z"/></g>
+    <g id="i-info"><circle cx="12" cy="12" r="8.5"/><path d="M12 11.5V16"/><g fill="currentColor" stroke="none"><circle cx="12" cy="8.3" r="1.1"/></g></g>
+    <g id="i-restore"><path d="M4.5 5v5h5"/><path d="M4.5 10a8 8 0 1 1 1.7 6.3"/></g>
+    <g id="i-eye-off"><path d="M3 12c2.5-4.7 6-7 9-7 1.2 0 2.4.35 3.6 1M21 12c-2.5 4.7-6 7-9 7-1.2 0-2.4-.35-3.6-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m4 4 16 16"/></g>
+    <g id="i-external"><path d="M14 4h6v6M20 4l-8.5 8.5M18.5 13.5V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V7A1.5 1.5 0 0 1 5 5.5h5.5"/></g>
+  </defs>
+</svg>
