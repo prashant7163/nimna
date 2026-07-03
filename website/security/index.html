@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security — nimna</title>
+<meta name="description" content="The nimna protocol for technical readers: pairing handshake, E2E model, forward secrecy, safety phrase, and an honest metadata section.">
+<link rel="canonical" href="https://nimna.app/security/">
+<meta property="og:title" content="Security — nimna">
+<meta property="og:description" content="The protocol, explained without marketing.">
+<meta property="og:image" content="https://nimna.app/assets/img/og.png">
+<meta name="theme-color" content="#0B0B0C">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="mark" href="../" aria-label="nimna home">
+      <svg viewBox="0 0 112 32" height="16" aria-hidden="true"><circle cx="16" cy="16" r="6.5" fill="currentColor"/><circle cx="96" cy="16" r="6.5" fill="currentColor"/><path d="M30 16 H82" fill="none" stroke="#F2A65A" stroke-width="7" stroke-linecap="round"/></svg>
+      <span style="font-weight:500">nimna</span>
+    </a>
+    <nav class="links" aria-label="site">
+      <a href="../privacy/">Privacy</a>
+      <a href="../press/">Press</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+    <h1>Security model</h1>
+    <p class="updated">Written for technical readers. No marketing tone past this line. Protocol spec: <a href="https://github.com/prashant7163/nimna" rel="noopener">v0.1 draft in the repo</a>.</p>
+
+    <h2>Summary</h2>
+    <p>Nimna is a synchronous, end-to-end encrypted, account-less 1:1 messaging protocol. A stateless WebSocket relay bridges two live device connections and forwards opaque frames. There is no store-and-forward: if both peers are not connected, nothing is transmitted and nothing is queued server-side. All persistent state lives on the two devices, encrypted at rest.</p>
+
+    <h2>Pairing</h2>
+    <ol>
+      <li>Device A generates a fresh channel keypair and a short single-use pairing code <span class="mono">C</span> (unambiguous alphabet, default TTL 24 h, configurable shorter). A registers on the relay under the rendezvous topic <span class="mono">H(C)</span> — the relay sees only the hash, never the code.</li>
+      <li>The code travels out-of-band (in person, a call, paper — your choice, your threat model).</li>
+      <li>Device B generates its own fresh keypair and registers on <span class="mono">H(C)</span>. The relay bridges the two connections; the devices perform an authenticated key agreement through it.</li>
+      <li>Both devices derive a short <strong>safety phrase</strong> from the agreed key material and display it. You read it to each other over a channel you trust. A mismatch means a man-in-the-middle joined with your code — you discard and re-pair. Verification is strongly encouraged, not enforced.</li>
+      <li>Both devices derive an opaque channel routing ID (CRID) from the shared key material, persist the channel locally, and discard the code permanently. Codes are single-use; the rendezvous topic dies when both sides disconnect.</li>
+    </ol>
+    <div class="callout"><p><strong>Known pairing risk, stated plainly:</strong> a third party who intercepts the code before your peer uses it can pair with the initiator in their place. Mitigations: code TTL, single use, and the safety-phrase check. If your code-sharing channel is hostile, verify the phrase before saying anything that matters.</p></div>
+
+    <h2>Sessions</h2>
+    <p>Either side may <strong>knock</strong> on a paired channel. The relay forwards the knock if the peer holds a live connection, or returns <span class="mono">PEER_OFFLINE</span>; knocks expire after roughly 60 seconds. On accept, the relay bridges the two connections in memory and forwards frames verbatim. Frames are <span class="mono">[CRID][opaque ciphertext]</span> — typing indicators, acknowledgments, and hangups are encrypted control frames indistinguishable from messages at the relay. Either side disconnecting or hanging up tears down the bridge; the relay forgets the CRID immediately.</p>
+    <p>Messages composed while the peer is offline are stored only on the sender's device, marked waiting, and transmitted in order at the next bridge. To the network this is indistinguishable from live typing.</p>
+
+    <h2>Cryptography</h2>
+    <p>The v0.1 spec fixes <em>requirements</em>; the concrete, audited primitives are being finalized for v0.2 and will be published in the spec with test vectors before launch. We commit to boring, widely reviewed constructions — no novel cryptography, ever. The requirements the chosen scheme must satisfy:</p>
+    <ul>
+      <li>authenticated key agreement bridgeable through an untrusted relay,</li>
+      <li>AEAD confidentiality and integrity on every frame,</li>
+      <li>forward secrecy across sessions at minimum; per-message ratcheting is the target since sessions are live,</li>
+      <li>a human-comparable safety phrase derived from the agreed key,</li>
+      <li>replay protection within sessions,</li>
+      <li>availability in well-audited libraries on both device and relay platforms.</li>
+    </ul>
+    <p>Until v0.2 is published, treat cipher-level claims here as unfinished by our own admission. The architecture-level claims (no storage, no accounts, synchronous-only) are structural and inspectable today.</p>
+
+    <h2>On-device storage</h2>
+    <ul>
+      <li>Channel keys in the platform keystore (Secure Enclave / Android Keystore); history in a local database encrypted at rest.</li>
+      <li>Excluded from iCloud/Google backups by default. No cloud sync exists.</li>
+      <li><strong>Panic wipe</strong> destroys a channel's keys and history irrecoverably. With forward-secret primitives, previously captured ciphertext stays undecryptable after key destruction.</li>
+      <li>Disappearing messages are enforced by both clients, honor-system by nature; the UI says so explicitly rather than implying a guarantee.</li>
+    </ul>
+
+    <h2>Metadata — the honest section</h2>
+    <p>The relay necessarily observes: connecting IP addresses, connection timing, ciphertext sizes/timing, and opaque CRIDs. It holds these in memory for live connections only, writes nothing to disk, and keeps no production logs. This is a meaningful residual surface:</p>
+    <ul>
+      <li>A network observer learns that your device talked to the nimna relay, and when.</li>
+      <li>A global or relay-position observer could attempt traffic correlation between two endpoints (who talks to whom, when). v1 does not defend against this; we document it instead of hand-waving. Federation and transport overlays are future work.</li>
+      <li>Push, if opted in, involves Apple/Google push infrastructure delivering a fixed contentless string; the push token is the only piece of state that may outlive a connection, and push is default-off.</li>
+    </ul>
+
+    <h2>Threat model at a glance</h2>
+    <table>
+      <thead><tr><th>Adversary</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>Relay operator, including compelled</td><td>Ciphertext + live routing metadata at most; nothing stored to produce</td></tr>
+        <tr><td>Network observer</td><td>Sees TLS to the relay; learns participation and timing, not content</td></tr>
+        <tr><td>Pairing-time MITM</td><td>Detected by safety-phrase mismatch; bounded by code TTL + single use</td></tr>
+        <tr><td>Peer's device seized</td><td>Out of protocol scope; bounded by their app lock, timers, wipe</td></tr>
+        <tr><td>Your device seized</td><td>App lock, encrypted-at-rest storage, no cloud copies, panic wipe</td></tr>
+        <tr><td>Traffic correlation (IP/timing)</td><td>Acknowledged v1 limitation, documented above</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Verify, don't trust</h2>
+    <p>The relay is open source with a reproducible-deployment story (best-effort in v1) so third parties can compare the deployed relay with the repo: <a href="https://github.com/prashant7163/nimna" rel="noopener">github.com/prashant7163/nimna</a>. Issues and security reports: <a href="mailto:hello@nimna.app">hello@nimna.app</a>.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav aria-label="footer">
+      <a href="../">Home</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../press/">Press</a>
+      <a href="https://github.com/prashant7163/nimna" rel="noopener">GitHub</a>
+    </nav>
+    <p class="nocookies">This site sets no cookies and loads nothing from third parties.</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — nimna</title>
+<meta name="description" content="The nimna privacy policy. It is short because there is nothing collected.">
+<link rel="canonical" href="https://nimna.app/privacy/">
+<meta property="og:title" content="Privacy — nimna">
+<meta property="og:description" content="Short, because there is nothing collected.">
+<meta property="og:image" content="https://nimna.app/assets/img/og.png">
+<meta name="theme-color" content="#0B0B0C">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="mark" href="../" aria-label="nimna home">
+      <svg viewBox="0 0 112 32" height="16" aria-hidden="true"><circle cx="16" cy="16" r="6.5" fill="currentColor"/><circle cx="96" cy="16" r="6.5" fill="currentColor"/><path d="M30 16 H82" fill="none" stroke="#F2A65A" stroke-width="7" stroke-linecap="round"/></svg>
+      <span style="font-weight:500">nimna</span>
+    </a>
+    <nav class="links" aria-label="site">
+      <a href="../security/">Security</a>
+      <a href="../press/">Press</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+    <h1>Privacy policy</h1>
+    <p class="updated">Effective 2026 · applies to the nimna app and nimna.app</p>
+
+    <p style="margin-top:32px">This policy is short because there is very little to govern. Nimna has no accounts, no message storage, and no analytics. Most privacy policies describe what a company does with your data. Ours mostly describes data that does not exist.</p>
+
+    <h2>What we collect</h2>
+    <table>
+      <thead><tr><th>Category</th><th>Collected</th></tr></thead>
+      <tbody>
+        <tr><td>Name, email, phone number, or any account identifier</td><td>None — accounts do not exist</td></tr>
+        <tr><td>Message content</td><td>None — messages exist only on your two phones, end-to-end encrypted in transit</td></tr>
+        <tr><td>Message history or backups on our side</td><td>None — the relay has no database and no disk storage</td></tr>
+        <tr><td>Contact lists, address book, or social graph</td><td>None — never requested, never accessed</td></tr>
+        <tr><td>Analytics, advertising identifiers, or tracking</td><td>None — in the app or on this site</td></tr>
+        <tr><td>Payment identity</td><td>None — purchases are processed by Apple or Google; we receive an anonymous entitlement, not your identity</td></tr>
+      </tbody>
+    </table>
+
+    <h2>What passes through, transiently</h2>
+    <p>To route your messages while you are connected, the relay necessarily handles, in memory only:</p>
+    <ul>
+      <li>your IP address and connection times,</li>
+      <li>the sizes and timing of encrypted data,</li>
+      <li>an opaque routing identifier that reveals nothing about you.</li>
+    </ul>
+    <p>This is held for the lifetime of your live connection, is never written to disk, and is never logged in production. The relay's <a href="https://github.com/prashant7163/nimna" rel="noopener">source code is public</a>, so this claim can be checked rather than believed.</p>
+
+    <h2>Notifications, if you turn them on</h2>
+    <p>Push notifications are off by default. If you opt in, your device's push token is used to deliver a single fixed phrase — "New activity" — with no sender, no channel, and no content. Delivery uses Apple's and Google's push services, which see only that same contentless phrase.</p>
+
+    <h2>This website</h2>
+    <p>nimna.app sets no cookies, runs no analytics, and loads nothing from third parties. Our host may keep standard access logs for security and abuse prevention (IP address, requested page, time); we add nothing to that.</p>
+
+    <h2>Requests from authorities</h2>
+    <p>If we receive a lawful demand for user data, we can produce only what exists — and what exists is described above: nothing stored. There is no message archive, no account database, and no key escrow to hand over.</p>
+
+    <h2>Changes and contact</h2>
+    <p>If this policy changes, the change will be visible in this page's <a href="https://github.com/prashant7163/nimna" rel="noopener">public history</a>. Questions: <a href="mailto:hello@nimna.app">hello@nimna.app</a>.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav aria-label="footer">
+      <a href="../">Home</a>
+      <a href="../security/">Security</a>
+      <a href="../press/">Press</a>
+      <a href="https://github.com/prashant7163/nimna" rel="noopener">GitHub</a>
+    </nav>
+    <p class="nocookies">This site sets no cookies and loads nothing from third parties.</p>
+  </div>
+</footer>
+
+</body>
+</html>

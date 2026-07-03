@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna — a private line between two people</title>
+<meta name="description" content="A paid, account-less, end-to-end encrypted line between exactly two people. Synchronous only. Nothing stored anywhere, ever — and you can verify that.">
+<link rel="canonical" href="https://nimna.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="nimna">
+<meta property="og:title" content="nimna — a private line between two people">
+<meta property="og:description" content="No accounts. No cloud. Messages live on your two phones, nowhere else.">
+<meta property="og:url" content="https://nimna.app/">
+<meta property="og:image" content="https://nimna.app/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="nimna — a private line between two people">
+<meta name="twitter:description" content="No accounts. No cloud. Messages live on your two phones, nowhere else.">
+<meta name="twitter:image" content="https://nimna.app/assets/img/og.png">
+<meta name="theme-color" content="#0B0B0C">
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/img/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="mark" href="/" aria-label="nimna home">
+      <svg viewBox="0 0 276 120" height="20" aria-hidden="true" style="overflow:visible">
+        <g fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 95 V53"/><path d="M5 73 C5 60 12.5 53 22 53 C31.5 53 39 60 39 73 V95"/>
+          <path d="M61 95 V53"/><path d="M83 95 V53"/>
+          <path d="M83 73 C83 60 90.5 53 100 53 C109.5 53 117 60 117 73 V95"/>
+          <path d="M117 73 C117 60 124.5 53 134 53 C143.5 53 151 60 151 73 V95"/>
+          <path d="M173 95 V53"/><path d="M173 73 C173 60 180.5 53 190 53 C199.5 53 207 60 207 73 V95"/>
+          <circle cx="250" cy="74" r="21"/><path d="M271 95 V53"/>
+        </g>
+        <circle cx="61" cy="32" r="7" fill="#F2A65A"/>
+      </svg>
+    </a>
+    <nav class="links" aria-label="site">
+      <a href="#how" class="hide-s">How it works</a>
+      <a href="#architecture" class="hide-s">Architecture</a>
+      <a href="security/">Security</a>
+      <a href="privacy/">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ═══ 1 · HERO ═══ -->
+<section class="hero" aria-label="introduction">
+  <div class="wrap">
+    <h1>A private line between two people.</h1>
+    <p class="sub">Nothing stored anywhere, ever. No accounts. No cloud. Messages live on your two phones — nowhere else.</p>
+    <div class="heroline" aria-hidden="true">
+      <span class="dot a"></span><span class="ln"></span><span class="dot b"></span>
+    </div>
+    <div class="stores">
+      <a class="storebtn" href="#" aria-label="Download on the App Store (coming soon)">
+        <span></span><span><small>Download on the</small>App Store</span>
+      </a>
+      <a class="storebtn" href="#" aria-label="Get it on Google Play (coming soon)">
+        <span><small>Get it on</small>Google Play</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 2 · HOW IT WORKS ═══ -->
+<section id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <p class="kicker">How it works</p>
+    <h2 id="how-h">Like agreeing on a codeword.</h2>
+    <p class="lede">You pair once. After that, the line is yours — no names, no numbers, no directory anywhere.</p>
+    <div class="steps">
+      <div class="step">
+        <span class="n">01</span>
+        <h3>Share a code</h3>
+        <p>One of you makes a short code and hands it to the other however you like — in person, on a call, on paper. It works once, then it's gone for good.</p>
+        <div class="art"><span class="mono" style="color:var(--text3);letter-spacing:3px">KR7·FM2·XQ</span></div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <h3>Knock</h3>
+        <p>When you want to talk, you knock. If they pick up within the minute, the line opens. If not, nothing happened — anywhere.</p>
+        <div class="art">
+          <svg width="160" height="12" aria-hidden="true"><circle cx="5" cy="6" r="3.5" fill="var(--text2)"/><line x1="14" y1="6" x2="146" y2="6" stroke="var(--line-idle)" stroke-width="2" stroke-dasharray="2 7" stroke-linecap="round"/><circle cx="155" cy="6" r="3.5" fill="var(--text2)"/></svg>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <h3>The line is live</h3>
+        <p>You're both here, so messages flow — phone to phone, encrypted end to end. Hang up, and the line goes quiet. Nothing stays behind.</p>
+        <div class="art">
+          <svg width="160" height="12" aria-hidden="true"><circle cx="5" cy="6" r="3.5" fill="var(--accent)"/><line x1="14" y1="6" x2="146" y2="6" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/><circle cx="155" cy="6" r="3.5" fill="var(--accent)"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 3 · ARCHITECTURE ═══ -->
+<section id="architecture" aria-labelledby="arch-h">
+  <div class="wrap">
+    <p class="kicker">For the skeptics — rightly so</p>
+    <h2 id="arch-h">The architecture is the promise.</h2>
+    <p class="lede">We don't ask you to trust us. The relay that connects your two phones is an empty box, on purpose — and its code is public so you can check.</p>
+
+    <div class="relay">
+      <div class="relaybox">
+        <span class="packet" aria-hidden="true">▓ e2f9…c41a ▓</span>
+        <div class="relayrow">
+          <div class="node"><div class="ph"></div><small>your phone</small></div>
+          <div class="pipe"></div>
+          <div class="relaycore">
+            <div class="corebox" tabindex="0">
+              <em>the relay<br>— empty —</em>
+              <span class="tip" role="tooltip">Routing lives in memory only, for the life of the connection. No database. No disk. No logs in production.</span>
+            </div>
+            <small>stores nothing, by design</small>
+          </div>
+          <div class="pipe"></div>
+          <div class="node"><div class="ph"></div><small>their phone</small></div>
+        </div>
+      </div>
+      <button class="replay" type="button">Send a message through</button>
+      <p class="verify" style="margin-top:14px">What just passed through was ciphertext — opaque to the relay, readable only on the two phones.</p>
+    </div>
+
+    <div class="seecols">
+      <div class="seecol sees">
+        <h3>What the relay does see</h3>
+        <ul>
+          <li>IP addresses of connected phones</li>
+          <li>Connection times</li>
+          <li>Ciphertext sizes and timing</li>
+          <li>An opaque routing ID per channel</li>
+        </ul>
+      </div>
+      <div class="seecol never">
+        <h3>What it never sees</h3>
+        <ul>
+          <li>Your words — only ciphertext passes through</li>
+          <li>Names, numbers, or accounts — none exist</li>
+          <li>Who you are to each other</li>
+          <li>Any message history — there is none to see</li>
+        </ul>
+      </div>
+    </div>
+    <p class="verify">No accounts. No storage. No logs. <a href="https://github.com/prashant7163/nimna" rel="noopener">Verify it yourself — the relay is open source.</a></p>
+  </div>
+</section>
+
+<!-- ═══ 4 · LIVE-ONLY ═══ -->
+<section aria-labelledby="live-h">
+  <div class="wrap">
+    <p class="kicker">Live-only, by design</p>
+    <h2 id="live-h">Not a worse messenger. Not a messenger at all.</h2>
+    <div class="measure">
+      <p class="lede">Nimna is a text call. Both of you are on the line, or nothing moves. There is no inbox filling up on a server, because there is no inbox — and no server that keeps one.</p>
+      <p class="lede">Write while they're away and it simply waits on your phone, and goes through the moment you're both on. To everyone else, nothing happened at all.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 5 · DISCRETION ═══ -->
+<section aria-labelledby="disc-h">
+  <div class="wrap">
+    <p class="kicker">Discretion, as facts</p>
+    <h2 id="disc-h">Quiet on the outside. Yours on the inside.</h2>
+    <div class="facts">
+      <div class="fact">
+        <h3>App lock</h3>
+        <p>PIN or biometric on open. Locked, the app shows nothing — not even how many lines you have.</p>
+      </div>
+      <div class="fact">
+        <h3>Disappearing messages</h3>
+        <p>You set a timer per message; both apps delete on schedule. A screenshot is still a screenshot — we say that plainly, in the app, where you set the timer.</p>
+      </div>
+      <div class="fact">
+        <h3>Panic wipe</h3>
+        <p>One held press destroys keys and messages on your phone, irrecoverably. There is no backup anywhere to recover from. That is the point.</p>
+      </div>
+      <div class="fact">
+        <h3>Content-free notifications</h3>
+        <p>Off by default. If you opt in, a nudge says "New activity" — no name, no line, no content, ever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 6 · HONESTY ═══ -->
+<section class="honesty" aria-labelledby="hon-h">
+  <div class="wrap">
+    <p class="kicker">Read this before you rely on us</p>
+    <h2 id="hon-h">What nimna does not protect you from.</h2>
+    <p class="lede">Honesty is the feature. Here is the whole threat model, in plain words — including the parts that aren't flattering.</p>
+    <div class="threats">
+      <div class="threat">
+        <h3>Someone watching the network</h3>
+        <p>They can see that your phone talked to the nimna relay, when, and roughly how much. They cannot see words. If "talking to nimna at all" is dangerous for you, nimna is not enough.</p>
+      </div>
+      <div class="threat">
+        <h3>Traffic analysis</h3>
+        <p>The relay necessarily sees IPs and timing. A powerful observer could correlate who talks when. We say this because it's true; future versions aim to narrow it.</p>
+      </div>
+      <div class="threat">
+        <h3>The other person</h3>
+        <p>Nimna protects the line, not the human at the far end. They can screenshot, photograph, or retell anything you send. No app can fix trust.</p>
+      </div>
+      <div class="threat">
+        <h3>A seized, unlocked phone</h3>
+        <p>Whatever is on the screen is on the screen. The app lock, timers, and wipe narrow the window — they do not eliminate it.</p>
+      </div>
+      <div class="threat">
+        <h3>Pairing over a hostile channel</h3>
+        <p>If someone intercepts your code before your friend uses it, they could pair in their place. That's why codes die in 24 hours, work once, and why both apps show a safety phrase to read aloud after pairing.</p>
+      </div>
+      <div class="threat">
+        <h3>What we can't hand over</h3>
+        <p>If we are ever compelled to produce your messages, we cannot — not as a policy, but as a property of the design. There is nothing stored to produce. The compelled-relay scenario yields ciphertext routing metadata at most, and only for connections live at that moment.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 7 · PRICING ═══ -->
+<section aria-labelledby="price-h">
+  <div class="wrap">
+    <p class="kicker">Pricing</p>
+    <h2 id="price-h">Pay once. Or never.</h2>
+    <div class="price">
+      <div class="pcard">
+        <p class="for">Joining</p>
+        <p class="amt">Free, forever</p>
+        <p>Someone hands you a code, you're in. Joining a line never costs anything, and your first created line is free too.</p>
+      </div>
+      <div class="pcard">
+        <p class="for">Creating more lines</p>
+        <p class="amt">One payment</p>
+        <p>Unlock unlimited lines with a single purchase through the app store. No subscription. No account. The receipt stays between you and the store — we never learn who you are.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 8 · FAQ ═══ -->
+<section aria-labelledby="faq-h">
+  <div class="wrap">
+    <p class="kicker">Questions, answered plainly</p>
+    <h2 id="faq-h">FAQ</h2>
+    <div class="faq">
+      <details>
+        <summary>Why must we both be online?</summary>
+        <div class="a"><p>Because the alternative is a server that holds your messages while you're away — and a server that holds messages is a server that can leak, be breached, or be compelled. Nimna is a text call: live when you're both on the line, silent otherwise. The inconvenience is the security.</p></div>
+      </details>
+      <details>
+        <summary>What happens if I write while they're offline?</summary>
+        <div class="a"><p>Your message waits on your phone — only there — marked "waiting." When you're next both on the line, it goes through by itself. Optionally, they get a contentless nudge that says "New activity" and nothing more.</p></div>
+      </details>
+      <details>
+        <summary>Can you read my messages?</summary>
+        <div class="a"><p>Architecturally, no. Messages are encrypted on your phone and decrypted on theirs; the relay routes opaque ciphertext and keeps nothing. You don't have to take our word for it — <a href="https://github.com/prashant7163/nimna" rel="noopener">read the relay's source</a>.</p></div>
+      </details>
+      <details>
+        <summary>What do you know about me?</summary>
+        <div class="a"><p>We don't know who you are. There is no account, so there is nothing to know. The relay transiently sees what any internet service's pipe sees — IP addresses, timing, data sizes — in memory, unlogged, while you're connected. The full list is on the <a href="security/">security page</a>, including the unflattering parts.</p></div>
+      </details>
+      <details>
+        <summary>Why is there no signup?</summary>
+        <div class="a"><p>A line is defined by two keys that live on your two phones — nothing else identifies it. An account would be a list of users, and a list of users is a thing that can be demanded, sold, or stolen. So there isn't one.</p></div>
+      </details>
+      <details>
+        <summary>What if I lose my phone?</summary>
+        <div class="a"><p>Your messages lived only on that phone, encrypted at rest behind its lock and excluded from cloud backups. Losing it means they're gone — for you and for anyone who finds it. Pair fresh from a new phone with a new code. There is deliberately no restore.</p></div>
+      </details>
+      <details>
+        <summary>Do disappearing messages really disappear?</summary>
+        <div class="a"><p>Both apps delete them on the schedule the sender set. But we won't pretend a timer beats physics: a screenshot is still a screenshot. The app says exactly this where you set the timer. Treat it as a courtesy between two people who trust each other, not a guarantee against one who doesn't.</p></div>
+      </details>
+      <details>
+        <summary>Is this legal?</summary>
+        <div class="a"><p>Yes. End-to-end encryption is ordinary technology — it protects your banking, your video calls, and the messaging apps on billions of phones. Nimna applies the same mathematics with less storage, not more secrecy. Follow your local laws; nimna is a tool for privacy, which is a normal thing to want.</p></div>
+      </details>
+      <details>
+        <summary>What does it cost?</summary>
+        <div class="a"><p>Joining is free forever, and your first created line is free. One app-store payment unlocks unlimited lines. No subscription, no tiers, no account.</p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══ 9 · FOOTER ═══ -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <svg viewBox="0 0 112 32" height="16" aria-label="nimna symbol"><circle cx="16" cy="16" r="6.5" fill="var(--text2)"/><circle cx="96" cy="16" r="6.5" fill="var(--text2)"/><path d="M30 16 H82" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/></svg>
+      <nav aria-label="footer">
+        <a href="https://github.com/prashant7163/nimna" rel="noopener">GitHub</a>
+        <a href="security/">Security</a>
+        <a href="privacy/">Privacy</a>
+        <a href="press/">Press</a>
+        <a href="mailto:hello@nimna.app">Contact</a>
+      </nav>
+    </div>
+    <p class="etym"><span class="dev" lang="sa">निम्न</span> · <span class="mono">nimna</span> — Sanskrit: low, deep, beneath notice. The low ground, where water gathers and settles. Everything about this product is kept low: no accounts, no storage, no noise.</p>
+    <p class="nocookies">This site practices what the product preaches: it sets no cookies, runs no analytics, and loads nothing from third parties.</p>
+  </div>
+</footer>
+
+<script src="assets/site.js"></script>
+</body>
+</html>
