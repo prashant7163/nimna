@@ -8,7 +8,7 @@
 - `nimna-design-and-website-prompts.md` — task definitions (Prompt 1 = Tasks 1–2, Prompt 2 = Task 3).
 
 **Conventions:**
-- Outputs: `/design` (tasks 1–2), `/website` (task 3), each dir README-indexed. Work-loop prompt overrides the `designs/` name in the older prompt text.
+- Outputs: `/designs` (tasks 1–2), `/website` (task 3), each dir README-indexed.
 - Real microcopy always, never lorem ipsum. Spec beats visual ambition; flag conflicts in PROGRESS.md.
 - Commit every logical chunk + after every task. Update TASKS.md on every status change; append PROGRESS.md at milestones; every decision → DECISIONS.md (USER for taste/brand/money/scope; CODE for routine execution).
 - Taste checkpoints: A1 (brand direction), A2 (logo concept), B (website outline + hero/relay-diagram concepts). Pause + set TASKS.md blocked-on-user at each.
