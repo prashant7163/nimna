@@ -29,3 +29,10 @@
 - PROTOCOL FLAGS (from wireframe review, for spec v0.2): (1) joiner-side "expired vs never-existed" code states are indistinguishable to a stateless relay — a distinct expired UI needs a QR-carried expiry hint or stays folded into the wrong-code error, as wireframed; (2) after a lapsed knock from a cold open, the app cannot attribute the knocker (content-free push) — named strings only apply to knocks seen while connected, as wireframed.
 - Open items: paywall price (USER), FLAG_SECURE (build phase).
 - Next: Task 3 website — Checkpoint B (outline + hero/relay concepts).
+
+## 2026-07-03 — TASK 3 COMPLETE · ALL THREE TASKS DONE
+- Checkpoint B: USER approved outline as proposed, hero H1 "Line Draws Itself", relay R1 "Glass Relay".
+- Built website/: index (9 sections) + /privacy + /security + /press, tokens verbatim from designs/system, fonts self-hosted (latin woff2 + OFL notice), zero external requests, dark default + light via prefers-color-scheme, reduced-motion honored throughout.
+- Assets: favicon set + og.png generated from brand; press kit (3 logo SVGs, 512px icon, 3 screen PNGs cropped from hi-fi mockups).
+- Verified: link check ALL OK / zero external resources (temp/check_links.py); responsive at true 390px & 360px via iframe test (fixed a real relay-diagram overflow found in testing); copy honesty self-check vs spec recorded in website/launch-checklist.md.
+- Launch blockers intentionally left as placeholders: store URLs, repo must go public, hello@nimna.app mailbox, Lighthouse run on the deployed URL.

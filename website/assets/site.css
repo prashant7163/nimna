@@ -187,4 +187,11 @@ footer nav a { color:var(--text2); font-size:14.5px; }
   section { padding:80px 0; }
   .hero { min-height:74vh; padding:72px 0; }
   .nav .links a.hide-s { display:none; }
+  .node { width:60px; }
+  .node .ph { width:34px; height:58px; }
+  .relaycore { width:114px; }
+  .corebox { height:94px; font-size:12px; }
+  .pipe { min-width:18px; }
+  .packet { font-size:9px; padding:3px 6px; }
 }
+body { overflow-x:hidden; }

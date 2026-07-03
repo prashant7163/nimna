@@ -47,17 +47,18 @@ Open items: paywall price (USER, pending) · FLAG_SECURE stance (build phase)
 ---
 
 ## Task 3 — Website
-**Status:** blocked-on-user (Checkpoint B — outline + hero/relay-diagram concepts presented 2026-07-03)
+**Status:** done (2026-07-03)
 
 Spec: design prompt "Prompt 2" in full; reuse Task 1–2 tokens/logo/screens verbatim.
 Taste Checkpoint B: content outline + hero & relay-diagram visual concepts → pause → build.
 
 Deliverables:
-- [ ] **CHECKPOINT B** — content outline + hero/relay-diagram concepts approved
-- [ ] index.html (hero, how-it-works, architecture, live-only, discretion, honesty, pricing, FAQ, footer)
-- [ ] /privacy, /security, /press sub-pages
-- [ ] /assets (self-hosted fonts, logo, screenshots, favicons, OG image)
-- [ ] Deployment README + launch checklist (Lighthouse ≥95, link check, meta tags)
-- [ ] Copy self-checked against protocol spec for overclaiming
+- [x] **CHECKPOINT B** — outline approved; hero H1 "Line Draws Itself"; relay R1 "Glass Relay" (2026-07-03)
+- [x] index.html — all nine sections, hero H1 animation, R1 glass-relay diagram (2026-07-03)
+- [x] /privacy, /security, /press sub-pages (2026-07-03)
+- [x] /assets — self-hosted woff2 fonts (OFL notice), favicon set, OG image, press kit (logos + 3 screenshots) (2026-07-03)
+- [x] Deployment README + launch checklist (2026-07-03)
+- [x] Copy self-checked against protocol spec (checklist "Copy honesty" section); link check ALL OK, zero external resources; responsive verified at 390/360px (2026-07-03)
 
-Completed: —
+Completed: 2026-07-03
+Open items: store URLs, repo public, hello@nimna.app mailbox, Lighthouse on deployed URL (see website/launch-checklist.md)

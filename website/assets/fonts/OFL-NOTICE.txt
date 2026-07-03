@@ -1,0 +1,2 @@
+Fonts: Schibsted Grotesk & Spline Sans Mono, SIL Open Font License 1.1.
+See https://openfontlicense.org and each family page on Google Fonts.
