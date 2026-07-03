@@ -1,0 +1,284 @@
+/* ============================================================
+   nimna — low-fi wireframe stylesheet (shared by f1…f9)
+   Language: grey paper, white 390px frames, greyscale boxes.
+   The ONLY state convention borrowed from the brand: the session
+   line renders as a thin BLACK line — dotted = idle/offline,
+   solid = active (knocking/live) — always with a text label.
+   No brand colors, no brand fonts. Hierarchy + annotation only.
+   ============================================================ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #F4F4F4;
+  color: #222;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ---------- page chrome ---------- */
+
+.wfnav {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  padding: 10px 20px;
+  background: #F4F4F4; border-bottom: 1px solid #CCC;
+  font-size: 12px; white-space: nowrap; overflow-x: auto;
+}
+.wfnav .brand { font-weight: 600; }
+.wfnav .links a { margin-left: 10px; color: #555; text-decoration: none; }
+.wfnav .links a:hover { text-decoration: underline; }
+.wfnav .links a.here { color: #000; font-weight: 700; text-decoration: underline; }
+
+.flow-head { padding: 24px 20px 4px; }
+.flow-head h1 { font-size: 18px; }
+.flow-head p { color: #666; font-size: 13px; max-width: 660px; margin-top: 4px; }
+
+/* horizontally scrollable strip of frames */
+.strip {
+  display: flex; align-items: flex-start; gap: 16px;
+  overflow-x: auto; padding: 16px 20px 48px;
+}
+.cell { flex: 0 0 390px; width: 390px; }
+.arrow { flex: 0 0 auto; margin-top: 340px; color: #999; font-size: 20px; user-select: none; }
+
+.frame-tag {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: #555; margin-bottom: 6px;
+}
+
+/* ---------- the phone frame ---------- */
+
+.frame {
+  width: 390px; min-height: 700px;
+  background: #FFF; border: 1px solid #BBB; border-radius: 12px;
+  padding: 20px; overflow: hidden;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.cell.edge .frame { border-style: dashed; }
+
+/* ---------- annotation card (Purpose / Entry / Exit / Edge) ---------- */
+
+.anno {
+  margin-top: 12px;
+  background: #FFF; border: 1px solid #BBB; border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12px; color: #333;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.anno .r { display: grid; grid-template-columns: 80px 1fr; gap: 8px; }
+.anno .k {
+  font-weight: 700; font-size: 10px; letter-spacing: .08em;
+  text-transform: uppercase; color: #777; padding-top: 2px;
+}
+
+/* ---------- in-frame typography ---------- */
+
+.h    { font-size: 20px; font-weight: 600; }
+.h-lg { font-size: 24px; font-weight: 600; line-height: 1.25; }
+.bodytext { font-size: 15px; color: #333; }
+.cap   { font-size: 12px; color: #666; }
+.micro { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #666; }
+.meta  { font-size: 11px; font-style: italic; color: #8A8A8A; } /* wireframe note, not UI copy */
+.mono  { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.wordmark { font-size: 18px; font-weight: 650; letter-spacing: .01em; } /* always lowercase: nimna */
+.code-big { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 24px; letter-spacing: .08em; text-align: center; }
+
+.grow { flex: 1; }
+.center { text-align: center; }
+.mt-auto { margin-top: auto; }
+.dimmed { opacity: .35; }
+
+/* ---------- placeholder blocks ---------- */
+
+.box {
+  background: #DDD; border: 1px solid #999; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #666; font-size: 12px; text-align: center; padding: 8px;
+}
+.qr { width: 200px; height: 200px; margin: 0 auto; }
+
+/* ---------- buttons (bordered rectangles) ---------- */
+
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: 0 16px;
+  border: 1px solid #999; border-radius: 10px; background: #FFF;
+  font-size: 15px; font-weight: 500; text-align: center;
+}
+.btn.primary  { border: 2px solid #222; font-weight: 650; }
+.btn.ghost    { border: none; color: #666; min-height: 40px; }
+.btn.small    { min-height: 36px; font-size: 13px; padding: 0 14px; display: inline-flex; }
+.btn.disabled { border-color: #CCC; color: #BBB; background: #F8F8F8; font-weight: 500; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row .btn { flex: 1; }
+
+/* hold-to-wipe: bordered rect + burn-down track (black fill = progress) */
+.hold {
+  min-height: 56px; border: 1px solid #999; border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 7px; font-size: 15px; font-weight: 650; padding: 10px 16px;
+}
+.hold .track { width: 82%; height: 4px; background: #DDD; border-radius: 2px; position: relative; overflow: hidden; }
+.hold .fill  { position: absolute; right: 0; top: 0; height: 100%; background: #111; border-radius: 2px; }
+
+/* ---------- the session line ---------- */
+
+.line { border-top: 2px solid #000; height: 0; }
+.line.dotted { border-top-style: dotted; }
+.line-lbl { font-size: 11px; color: #444; margin-top: 4px; }
+
+/* mini-line at the right edge of channel rows */
+.mini { flex: 0 0 24px; width: 24px; border-top: 2px solid #000; }
+.mini.dotted { border-top-style: dotted; }
+
+/* two-ends symbol (lock screen, onboarding) */
+.glyph { display: flex; align-items: center; justify-content: center; }
+.glyph .dot { width: 10px; height: 10px; border-radius: 50%; background: #333; }
+.glyph .bar { width: 36px; height: 2px; background: #333; }
+.glyph .bar.dotted { height: 0; border-top: 2px dotted #333; background: none; }
+
+/* ---------- chat ---------- */
+
+.chathead { display: flex; justify-content: space-between; align-items: center; }
+.msgs { display: flex; flex-direction: column; gap: 8px; }
+.bubble {
+  max-width: 75%; padding: 10px 12px;
+  border-radius: 14px; font-size: 14px;
+}
+.bubble.sent { align-self: flex-end; background: #DDD; border: 1px solid #DDD; border-bottom-right-radius: 4px; }
+.bubble.recv { align-self: flex-start; background: #FFF; border: 1px solid #999; border-bottom-left-radius: 4px; }
+.bubble.wait { align-self: flex-end; background: transparent; border: 1px dashed #999; border-bottom-right-radius: 4px; }
+.bub-meta { font-size: 10px; color: #888; align-self: flex-end; margin-top: -4px; }
+.bub-meta.l { align-self: flex-start; }
+
+.composer { display: flex; gap: 8px; align-items: center; border-top: 1px solid #DDD; padding-top: 12px; }
+.composer .field {
+  flex: 1; height: 44px; border: 1px solid #999; border-radius: 22px;
+  display: flex; align-items: center; padding: 0 14px; color: #999; font-size: 14px;
+}
+.composer .icon {
+  flex: 0 0 44px; width: 44px; height: 44px; border: 1px solid #999; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; color: #444;
+}
+
+/* ---------- channel list ---------- */
+
+.listhead { display: flex; justify-content: space-between; align-items: center; }
+.plus {
+  width: 44px; height: 44px; border: 1px solid #999; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; color: #333;
+}
+.chanrow {
+  height: 72px; background: #FFF; border: 1px solid #999; border-radius: 12px;
+  display: flex; align-items: center; gap: 12px; padding: 0 14px;
+}
+.chanrow .txt { flex: 1; min-width: 0; }
+.chanrow .lbl { font-size: 15px; font-weight: 600; }
+.chanrow .cap { margin-top: 2px; }
+
+/* ---------- settings ---------- */
+
+.setrow {
+  min-height: 56px; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 0; border-bottom: 1px solid #E3E3E3;
+}
+.setrow .txt .lbl { font-size: 15px; }
+.setrow .txt .cap { margin-top: 2px; max-width: 250px; }
+.setrow .chev { color: #999; font-size: 16px; }
+.setrow.danger .lbl { font-weight: 650; }
+
+.toggle { flex: 0 0 46px; width: 46px; height: 26px; border: 1px solid #999; border-radius: 13px; position: relative; }
+.toggle::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+  border-radius: 50%; border: 1px solid #999; background: #FFF;
+}
+.toggle.on { background: #DDD; }
+.toggle.on::after { left: auto; right: 2px; background: #333; border-color: #333; }
+
+/* ---------- code entry ---------- */
+
+.segs { display: flex; gap: 4px; align-items: center; justify-content: center; }
+.seg {
+  width: 30px; height: 44px; border: 1px solid #999; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 16px;
+}
+.seg.active { border: 2px solid #555; }
+.seg.err { border: 2px solid #000; }
+.seg.dim { border-color: #CCC; color: #BBB; background: #F8F8F8; }
+.segdot { color: #999; padding: 0 1px; }
+
+/* ---------- PIN pad ---------- */
+
+.pindots { display: flex; gap: 12px; justify-content: center; }
+.pindot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid #666; }
+.pindot.fill { background: #333; border-color: #333; }
+.pinpad { display: grid; grid-template-columns: repeat(3, 64px); gap: 14px; justify-content: center; }
+.pinkey {
+  width: 64px; height: 64px; border: 1px solid #999; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 18px; color: #333;
+}
+.pinkey.blank { border: none; }
+.pinkey.txt { font-size: 11px; color: #666; }
+
+/* ---------- QR scanner ---------- */
+
+.scan {
+  position: relative; height: 300px;
+  background: #DDD; border: 1px solid #999; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; color: #666; font-size: 12px;
+}
+.scan i { position: absolute; width: 26px; height: 26px; border: 0 solid #222; }
+.scan i:nth-of-type(1) { top: 70px;    left: 94px;  border-top-width: 2px; border-left-width: 2px;  border-top-left-radius: 10px; }
+.scan i:nth-of-type(2) { top: 70px;    right: 94px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 10px; }
+.scan i:nth-of-type(3) { bottom: 70px; left: 94px;  border-bottom-width: 2px; border-left-width: 2px;  border-bottom-left-radius: 10px; }
+.scan i:nth-of-type(4) { bottom: 70px; right: 94px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 10px; }
+
+/* ---------- sheets, banners, toasts, misc ---------- */
+
+.sheet {
+  margin: auto -20px -20px;
+  background: #FFF; border: 1px solid #999; border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  padding: 12px 20px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.grab { width: 32px; height: 4px; background: #CCC; border-radius: 2px; margin: 0 auto; }
+
+.banner {
+  border: 1px solid #999; border-radius: 12px; background: #FFF;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;
+}
+
+.toast {
+  align-self: center; background: #333; color: #FFF;
+  font-size: 13px; padding: 8px 16px; border-radius: 8px;
+}
+
+.choice { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #E3E3E3; }
+.radio { position: relative; width: 18px; height: 18px; border: 1px solid #666; border-radius: 50%; flex: 0 0 18px; }
+.radio.sel::after { content: ""; position: absolute; inset: 3px; background: #333; border-radius: 50%; }
+
+.pips { display: flex; gap: 6px; justify-content: center; }
+.pip { width: 6px; height: 6px; border-radius: 50%; background: #CCC; }
+.pip.on { background: #333; }
+
+.prog { display: flex; gap: 8px; justify-content: center; }
+.prog .dot { width: 8px; height: 8px; border-radius: 50%; background: #CCC; }
+.prog .dot.on { background: #333; }
+
+/* lock-screen push mock */
+.lock-time { font-size: 56px; font-weight: 300; text-align: center; letter-spacing: .02em; }
+.lock-date { font-size: 14px; color: #666; text-align: center; }
+.push-card {
+  border: 1px solid #999; border-radius: 12px; background: #FFF;
+  padding: 12px; display: flex; gap: 10px; align-items: center;
+}
+.push-card .appicon {
+  flex: 0 0 28px; width: 28px; height: 28px; border: 1px solid #999; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 650;
+}
+
+hr.hairline { border: none; border-top: 1px solid #E3E3E3; }

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>nimna — knock received</title><link rel="stylesheet" href="screens.css"></head>
+<body>
+<div class="screen dark">
+  <div class="statusbar"><span>9:41</span><span class="batt"></span></div>
+  <div style="padding:8px 16px 0">
+    <div class="card" style="background:var(--surface2);padding:18px 18px 16px">
+      <div class="body" style="font-weight:500">Marlowe is knocking.</div>
+      <div style="height:12px"></div>
+      <div class="line knock"><i></i></div>
+      <div style="height:14px"></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="btn primary compact">Pick up</div>
+        <div class="btn ghost compact">Ignore</div>
+        <div style="flex:1"></div>
+        <span class="caption t3">Lapses in 42s</span>
+      </div>
+    </div>
+  </div>
+  <div class="navbar" style="margin-top:4px">
+    <div class="title2" style="letter-spacing:.02em">nimna</div>
+    <svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+  </div>
+  <div class="content" style="gap:12px;padding-top:12px;opacity:.55">
+    <div class="row">
+      <div class="grow">
+        <div class="body" style="font-weight:500">Marlowe</div>
+        <div class="caption" style="color:var(--accent)">Knocking…</div>
+      </div>
+      <div class="minil"><div class="line knock"><i></i></div></div>
+    </div>
+    <div class="row">
+      <div class="grow">
+        <div class="body" style="font-weight:500">R.</div>
+        <div class="caption t3">Quiet</div>
+      </div>
+      <div class="minil"><div class="line idle"><i></i></div></div>
+    </div>
+  </div>
+  <div class="homebar"></div>
+</div>
+</body></html>

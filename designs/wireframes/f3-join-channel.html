@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F3 · Join channel</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html">f2</a>
+    <a href="f3-join-channel.html" class="here">f3</a>
+    <a href="f4-channel-list.html">f4</a>
+    <a href="f5-chat-session.html">f5</a>
+    <a href="f6-receiving-knock.html">f6</a>
+    <a href="f7-channel-settings.html">f7</a>
+    <a href="f8-app-settings.html">f8</a>
+    <a href="f9-paywall.html">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F3 — Join a channel (code-holder side)</h1>
+  <p>Enter or scan the code → handshake → safety phrase → ready. Joining is always free (F9 never intercepts here). Edge frames (dashed): wrong code · expired code — see the honesty note on F3.7 about what the relay can and cannot distinguish.</p>
+</div>
+
+<main class="strip">
+
+  <!-- F3.1 -->
+  <section class="cell">
+    <div class="frame-tag">F3.1 · Enter code</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <div style="height:24px"></div>
+      <p class="h">Enter a code</p>
+      <p class="cap">Codes come from the other person. Each one works once.</p>
+      <div style="height:12px"></div>
+      <div class="segs">
+        <span class="seg">K</span><span class="seg">R</span><span class="seg">7</span><span class="segdot">·</span>
+        <span class="seg">F</span><span class="seg">M</span><span class="seg">2</span><span class="segdot">·</span>
+        <span class="seg">X</span><span class="seg active"></span><span class="seg"></span>
+      </div>
+      <p class="meta center">[auto-advance per character; paste fills all 9; unambiguous alphabet — no 0/O, 1/I]</p>
+      <div class="grow"></div>
+      <div class="box" style="height:160px">[keyboard]</div>
+      <div style="height:8px"></div>
+      <div class="btn primary disabled">Join</div>
+      <div class="btn ghost">Scan instead</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Take the code with the least friction possible: segmented field, grouped like it's spoken (KR7 · FM2 · XQ4). Join enables only when complete.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F4 “+” → Enter a code (incl. from the empty list, F4.4). Never gated by F9 — joining is always free.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Join → F3.3 handshake. Scan instead → F3.2. Back → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Wrong code → F3.6.</b> <b>Expired code → F3.7</b> (and see its honesty note). Device offline → “You're offline. Joining needs a connection.” Nothing sent until Join.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F3.2 -->
+  <section class="cell">
+    <div class="frame-tag">F3.2 · Scan QR</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <p class="h">Scan their code</p>
+      <p class="cap">Point your camera at the code on their screen.</p>
+      <div class="scan"><i></i><i></i><i></i><i></i>[camera]</div>
+      <p class="meta center">[corner brackets only — no full box, no crosshair; on detect, brackets confirm once, then navigate; no beep]</p>
+      <div class="grow"></div>
+      <div class="btn ghost">Enter it instead</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The in-person path: scan the QR from F2.2. Same code, zero typing. The QR encodes only the code itself (spec §3.1.1).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Scan instead from F3.1, or F4 “+” → Enter a code → Scan instead.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Successful detect → F3.3 handshake, automatically. Enter it instead → F3.1. Back → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Camera permission denied → drop to F3.1 with a plain note: “No camera access — type the code instead.” Unreadable/foreign QR → nothing happens; brackets just keep looking (no error state for a QR that isn't ours).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F3.3 -->
+  <section class="cell">
+    <div class="frame-tag">F3.3 · Handshake</div>
+    <div class="frame">
+      <div style="height:96px"></div>
+      <p class="h-lg">Found them.</p>
+      <div style="height:16px"></div>
+      <div class="line"></div>
+      <p class="line-lbl">Setting up the line…</p>
+      <div style="height:8px"></div>
+      <div class="prog"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></div>
+      <p class="meta center">[usually sub-second; this frame may only flash. Fresh keypair generated on this side; the code is discarded forever the moment this completes — spec §3.1.6]</p>
+      <div class="grow"></div>
+      <p class="cap center">The code has done its job. It won't work again for anyone.</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Bridge moment: relay matched both phones on the code's hash; key agreement runs beneath (spec §3.1.3–4). No crypto vocabulary in UI copy.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Join from F3.1, or QR detect from F3.2.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Automatic → F3.4 safety phrase on completion.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Connection drops mid-handshake → “That didn't finish. The code is spent — ask them to make a new one.” Partial state discarded on both sides; a half-made channel never exists. (Codes are single-use even on failure — safer than replayable codes.)</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F3.4 -->
+  <section class="cell">
+    <div class="frame-tag">F3.4 · Safety phrase</div>
+    <div class="frame">
+      <div style="height:56px"></div>
+      <p class="h">Check the line</p>
+      <div style="height:16px"></div>
+      <p class="code-big" style="font-size:22px">ember · canyon · plume</p>
+      <div style="height:16px"></div>
+      <p class="bodytext">Read these three words to each other. If they match, the line is yours alone.</p>
+      <div class="grow"></div>
+      <div class="btn primary">They match</div>
+      <div style="height:8px"></div>
+      <div class="btn">They don't match</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Same ritual, same words as the initiator's F2.5 — both phones derive the phrase from the same shared key material (spec §7.4), so a middleman produces two different phrases.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Automatic from F3.3.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>They match → F3.5. They don't match → mismatch screen (identical to F2.8): pairing discarded on both sides, make a new code.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>One side confirms, the other declines → decline wins; the confirming side is told plainly: “They said the words didn't match. This pairing was thrown away.” No half-verified channels.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F3.5 -->
+  <section class="cell">
+    <div class="frame-tag">F3.5 · Channel ready</div>
+    <div class="frame">
+      <div style="height:64px"></div>
+      <p class="h-lg">The line is yours.</p>
+      <div style="height:24px"></div>
+      <p class="cap">Name this line</p>
+      <div class="btn" style="justify-content:flex-start; font-weight:400">Attic|</div>
+      <p class="cap">Labels live only on this phone. They're never sent anywhere.</p>
+      <div class="grow"></div>
+      <div class="box" style="height:160px">[keyboard]</div>
+      <div style="height:8px"></div>
+      <div class="btn primary">Done</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Mirror of F2.6: persist the channel locally, name it locally. Each side names its own end — there is no shared name, because there is no shared record anywhere.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>They match from F3.4.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Done → F5 chat, line quiet. Empty label allowed → row shows “—”.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Label collisions (two lines named the same) are the user's own business — labels are local text, nothing more. No uniqueness rule, no validation beyond length.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F3.6 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F3.6 · EDGE — wrong code</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <div style="height:24px"></div>
+      <p class="h">Enter a code</p>
+      <div style="height:12px"></div>
+      <div class="segs">
+        <span class="seg err">K</span><span class="seg err">R</span><span class="seg err">7</span><span class="segdot">·</span>
+        <span class="seg err">F</span><span class="seg err">M</span><span class="seg err">2</span><span class="segdot">·</span>
+        <span class="seg err">X</span><span class="seg err">O</span><span class="seg err">4</span>
+      </div>
+      <p class="cap">That code didn't match anything. Codes expire — ask them to make a new one.</p>
+      <p class="meta center">[segments do the product's one permitted shake: 2 px horizontal, once]</p>
+      <div class="grow"></div>
+      <div class="box" style="height:160px">[keyboard]</div>
+      <div style="height:8px"></div>
+      <div class="btn ghost">Clear</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Fail without blame. The canonical error string covers both mistype and expiry honestly, because from this phone they are indistinguishable (see F3.7).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Join from F3.1 (or a scanned QR) when the relay finds nobody on that code's hash.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Clear → empty field, try again. Back → F4. No retry limit in UI; the relay throttles rendezvous lookups to stop brute-forcing (spec §4), which never triggers for a human correcting a typo.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Code was right but the creator cancelled it → same state, same words; the string's “ask them” hands the pair back to each other. Repeated rapid failures → relay throttling may slow responses; UI stays calm, never mentions “security”.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F3.7 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F3.7 · EDGE — expired code</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <div style="height:24px"></div>
+      <p class="h">Enter a code</p>
+      <div style="height:12px"></div>
+      <div class="segs">
+        <span class="seg dim">K</span><span class="seg dim">R</span><span class="seg dim">7</span><span class="segdot">·</span>
+        <span class="seg dim">F</span><span class="seg dim">M</span><span class="seg dim">2</span><span class="segdot">·</span>
+        <span class="seg dim">X</span><span class="seg dim">Q</span><span class="seg dim">4</span>
+      </div>
+      <p class="cap">This code has expired. Ask them to make a new one.</p>
+      <div class="grow"></div>
+      <div class="box" style="height:160px">[keyboard]</div>
+      <div style="height:8px"></div>
+      <div class="btn ghost">Clear</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The dimmed “expired” rendering from the design system, shown when expiry is knowable on this phone.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Only when the app can know locally that the code is stale — e.g. re-submitting a code already tried this session, or a scanned QR that carries an expiry hint alongside the code (the latter needs a small spec addition — flagged in the README, not silently assumed).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Clear → empty field. Back → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Honesty note:</b> the relay is stateless and sees only code hashes — it cannot tell “expired” from “never existed” (spec §4). In the general case the wrong-code state (F3.6) appears instead, and its copy already says “codes expire”. This frame is the special case, not the default.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

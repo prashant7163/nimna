@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>nimna — wipe everything</title><link rel="stylesheet" href="screens.css"></head>
+<body>
+<div class="screen dark">
+  <div class="statusbar"><span>9:41</span><span class="batt"></span></div>
+  <div class="navbar">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M10.5 6.5 5 12l5.5 5.5"/></svg>
+    <div class="title2">Settings</div>
+  </div>
+  <div class="content" style="gap:1px;padding-top:8px;opacity:.5">
+    <div class="card" style="border-radius:16px 16px 0 0;display:flex;align-items:center;gap:14px;padding:16px 20px">
+      <svg class="ic" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="6" cy="6" r="1.6"/><circle cx="12" cy="6" r="1.6"/><circle cx="18" cy="6" r="1.6"/><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/><circle cx="6" cy="18" r="1.6"/><circle cx="12" cy="18" r="1.6"/><circle cx="18" cy="18" r="1.6"/></g></svg>
+      <span class="body" style="flex:1">App lock</span><span class="caption t3">On</span>
+    </div>
+    <div class="card" style="border-radius:0;display:flex;align-items:center;gap:14px;padding:16px 20px">
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11.5V16"/><circle cx="12" cy="8.3" r="1.1" fill="currentColor" stroke="none"/></svg>
+      <span class="body" style="flex:1">Relay</span><span class="caption t3">relay.nimna.app</span>
+    </div>
+    <div class="card" style="border-radius:0 0 16px 16px;display:flex;align-items:center;gap:14px;padding:16px 20px">
+      <svg class="ic" viewBox="0 0 24 24" style="stroke:var(--danger)"><path d="M3.5 12h6M14.5 12h6"/><circle cx="3.5" cy="12" r="1.4" fill="var(--danger)" stroke="none"/><circle cx="20.5" cy="12" r="1.4" fill="var(--danger)" stroke="none"/></svg>
+      <span class="body" style="flex:1;color:var(--danger)">Wipe everything</span>
+    </div>
+  </div>
+
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="title1">Wipe <span style="font-weight:600">everything</span>?</div>
+    <div style="height:10px"></div>
+    <div class="body t2">Keys and messages are destroyed on this phone. There is no backup, anywhere, by design — nothing can bring them back.</div>
+    <div style="height:24px"></div>
+    <div class="btn hold">
+      <div class="burn"></div>
+      <span style="position:relative">Hold to wipe</span>
+    </div>
+    <div style="height:8px"></div>
+    <div class="caption t3" style="text-align:center">Hold for 2½ seconds. Release to cancel.</div>
+    <div style="height:10px"></div>
+    <div class="btn ghost">Keep</div>
+  </div>
+  <div class="homebar" style="z-index:5"></div>
+</div>
+</body></html>

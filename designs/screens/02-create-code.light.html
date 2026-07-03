@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>nimna — create a code (light)</title><link rel="stylesheet" href="screens.css"></head>
+<body>
+<div class="screen light">
+  <div class="statusbar"><span>9:41</span><span class="batt"></span></div>
+  <div class="navbar">
+    <svg class="ic" viewBox="0 0 24 24"><path d="M19 12H5M10.5 6.5 5 12l5.5 5.5"/></svg>
+    <div class="title2">Create a code</div>
+  </div>
+  <div class="content">
+    <div style="height:20px"></div>
+    <div class="qrcard"><div class="qr" id="qr"></div></div>
+    <div style="height:24px"></div>
+    <div class="codeDisplay" style="text-align:center">KR7·FM2·XQ</div>
+    <div style="height:12px"></div>
+    <div class="caption t3" style="text-align:center">This code works for 24 hours, once.<br>Share it however you like — in person is best.</div>
+    <div style="height:24px"></div>
+    <div style="display:flex;gap:12px">
+      <div class="btn secondary" style="flex:1">Copy</div>
+      <div class="btn secondary" style="flex:1">Share…</div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="line idle"><i></i></div>
+    <div style="height:8px"></div>
+    <div class="caption t3" style="text-align:center;margin-bottom:24px">Waiting for them to join…</div>
+  </div>
+  <div class="homebar"></div>
+</div>
+<script>
+/* deterministic mock QR pattern */
+const q=document.getElementById('qr');let s=7;const rnd=()=>(s=(s*137+29)%251)/251;
+let h='';for(let y=0;y<19;y++)for(let x=0;x<19;x++){
+  const f=(x<5&&y<5)||(x>13&&y<5)||(x<5&&y>13);
+  let on;
+  if(f){const lx=x>13?x-14:x,ly=y>13?y-14:y;on=!(lx===1&&ly>0&&ly<4&&false);on=(lx===0||lx===4||ly===0||ly===4||(lx>1&&lx<3&&ly>1&&ly<3));}
+  else on=rnd()>0.52;
+  h+=`<span class="${on?'':'w'}"></span>`;}
+q.innerHTML=h;
+</script>
+</body></html>

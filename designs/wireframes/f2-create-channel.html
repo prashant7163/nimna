@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nimna wireframes — F2 · Create channel</title>
+<link rel="stylesheet" href="wf.css">
+</head>
+<body>
+
+<nav class="wfnav">
+  <span class="brand">nimna · low-fi wireframes</span>
+  <span class="links">
+    <a href="README.md">index</a>
+    <a href="f1-onboarding.html">f1</a>
+    <a href="f2-create-channel.html" class="here">f2</a>
+    <a href="f3-join-channel.html">f3</a>
+    <a href="f4-channel-list.html">f4</a>
+    <a href="f5-chat-session.html">f5</a>
+    <a href="f6-receiving-knock.html">f6</a>
+    <a href="f7-channel-settings.html">f7</a>
+    <a href="f8-app-settings.html">f8</a>
+    <a href="f9-paywall.html">f9</a>
+  </span>
+</nav>
+
+<div class="flow-head">
+  <h1>F2 — Create a channel (initiator side)</h1>
+  <p>Generate code → share → wait → key exchange → safety phrase → ready. Codes are single-use with a TTL (spec §3.1); the safety phrase is the MITM defense (spec §3.1.5, §9) and is spoken calmly, never dramatically. Edge frames (dashed): code expires unused · safety-phrase mismatch.</p>
+</div>
+
+<main class="strip">
+
+  <!-- F2.1 -->
+  <section class="cell">
+    <div class="frame-tag">F2.1 · Generate code</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <div style="height:24px"></div>
+      <p class="h">Create a code</p>
+      <p class="bodytext">A code pairs your phone with one other. Share it however you like — in person is safest.</p>
+      <div style="height:12px"></div>
+      <div class="setrow">
+        <span class="txt"><span class="lbl">Code works for</span>
+        <span class="cap" style="display:block">Shorter is safer. One use, either way.</span></span>
+        <span class="cap">24 hours ▾</span>
+      </div>
+      <div class="grow"></div>
+      <div class="btn primary">Create a code</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>One calm decision (TTL, default 24 h — configurable at generation, spec §3.1.2) and one action. Generating creates a fresh keypair and registers the hashed code at the relay.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F4 “+” → Create a code. If this would be the user's second <em>initiated</em> channel and they haven't paid, F9 paywall intercepts before this screen (joining never counts).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Create a code → F2.2. Back → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Device offline → “You're offline. A code needs the relay listening for it — try again when you're connected.” Nothing is generated without the relay; no phantom codes.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F2.2 -->
+  <section class="cell">
+    <div class="frame-tag">F2.2 · Share the code</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <p class="h">Your code</p>
+      <div class="box qr">[QR — encodes the same code]</div>
+      <p class="code-big">KR7·FM2·XQ4</p>
+      <div class="btn-row">
+        <div class="btn">Copy</div>
+        <div class="btn">Share</div>
+      </div>
+      <p class="cap center">Works for 24 hours, once. After you're paired, it's gone for good.</p>
+      <div class="grow"></div>
+      <div class="toast">Code copied.</div>
+      <p class="meta center">[toast appears only after Copy; auto-dismiss 3 s]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Hand over the code in whichever way suits the moment: QR in person, Copy/Share for a call or paper. TTL and single-use stated plainly beneath — no small print.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Create a code from F2.1.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Screen advances to F2.3 automatically (it is already listening). Back → confirm-discard: “Stop waiting? The code stops working.” → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Code shared over an insecure channel and intercepted → a stranger could pair in the peer's place (spec §3.1 failure modes); the safety phrase at F2.5 is the catch. TTL and single-use bound the exposure window.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F2.3 -->
+  <section class="cell">
+    <div class="frame-tag">F2.3 · Waiting for peer</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <p class="h">Your code</p>
+      <p class="code-big">KR7·FM2·XQ4</p>
+      <div style="height:16px"></div>
+      <div class="line dotted"></div>
+      <p class="line-lbl">Waiting for them to enter it…</p>
+      <p class="cap">Expires in 23:58. You can put the phone away — we'll be here.</p>
+      <div class="grow"></div>
+      <div class="btn ghost">Cancel this code</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>A patient, quiet hold state. The dotted line reads “nothing yet” — the same visual language every other screen uses.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Automatic from F2.2 once the code exists (F2.2 and F2.3 are the same screen; the wait state surfaces when the user stops interacting with share actions).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Peer registers on the code's hash → F2.4 automatically. Cancel this code → discards code and keypair, → F4 (“nothing was created”).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Code expires unused → F2.7 (edge frame).</b> App backgrounded while waiting → rendezvous keeps listening while the socket lives; if the OS kills the connection, reopening the app resumes listening until TTL.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F2.4 -->
+  <section class="cell">
+    <div class="frame-tag">F2.4 · Key exchange / paired moment</div>
+    <div class="frame">
+      <div style="height:96px"></div>
+      <p class="h-lg">They're here.</p>
+      <div style="height:16px"></div>
+      <div class="line"></div>
+      <p class="line-lbl">Setting up the line…</p>
+      <p class="meta">[connect moment: dots travel from both ends and meet in the middle — 320 ms, once; then straight to F2.5. No spinner, no progress %]</p>
+      <div class="grow"></div>
+      <p class="cap center">The code has done its job. It won't work again for anyone.</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Mark the meeting without ceremony. Key agreement (spec §3.1.4) runs beneath this screen; the UI never says “keys” or “encryption” — the /security page holds the technical register.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Automatic from F2.3 when the relay bridges the rendezvous.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Automatic → F2.5 (safety phrase) on completion — typically under a second; this frame may only flash.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Exchange fails mid-handshake (connection lost) → “That didn't finish. The code is spent — make a new one.” Both sides discard partial state; a half-made channel never exists.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F2.5 -->
+  <section class="cell">
+    <div class="frame-tag">F2.5 · Safety phrase</div>
+    <div class="frame">
+      <div class="chathead"><span></span><span></span></div>
+      <div style="height:40px"></div>
+      <p class="h">Check the line</p>
+      <div style="height:16px"></div>
+      <p class="code-big" style="font-size:22px">ember · canyon · plume</p>
+      <div style="height:16px"></div>
+      <p class="bodytext">Read these three words to each other. If they match, the line is yours alone.</p>
+      <div class="grow"></div>
+      <div class="btn primary">They match</div>
+      <div style="height:8px"></div>
+      <div class="btn">They don't match</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The MITM check (spec §3.1.5), phrased as a two-person ritual, not a warning. Both phones derive the same three words from the shared key material — comparing them out loud proves nobody sat in the middle.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Automatic from F2.4. The identical screen appears on the joiner's phone (F3.4) with the identical words.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>They match → F2.6. They don't match → F2.8 (edge frame). Destructive option is spaced below primary, never adjacent (foundations).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Peers can't talk right now (code was shared on paper, peer is remote) → they can compare over any channel they trust; spec makes verification strongly encouraged, not enforced — this design always shows the screen and offers no skip (flagged as an open product question in the README).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F2.6 -->
+  <section class="cell">
+    <div class="frame-tag">F2.6 · Channel ready</div>
+    <div class="frame">
+      <div style="height:64px"></div>
+      <p class="h-lg">The line is yours.</p>
+      <div style="height:24px"></div>
+      <p class="cap">Name this line</p>
+      <div class="btn" style="justify-content:flex-start; font-weight:400">Marlowe|</div>
+      <p class="cap">Labels live only on this phone. They're never sent anywhere.</p>
+      <div class="grow"></div>
+      <div class="box" style="height:160px">[keyboard]</div>
+      <div style="height:8px"></div>
+      <div class="btn primary">Done</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Finalize: channel persisted locally (own keypair, peer key, CRID, label — spec §3.1.6, §6), pairing code permanently discarded. The label is the only naming that exists anywhere, and it is local.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>They match from F2.5.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Done → F5 chat for the new channel, line quiet (pairing rendezvous is not a session — the first knock is one tap away). Empty label allowed → row shows “—”.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>User expects to be “connected” now → the chat screen's dotted line plus the Knock control teach the session model immediately, without a lecture.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F2.7 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F2.7 · EDGE — code expired unused</div>
+    <div class="frame">
+      <div style="height:96px"></div>
+      <p class="h-lg">This code expired unused.</p>
+      <p class="bodytext">Nothing was created. Make a new one whenever you're ready.</p>
+      <div class="grow"></div>
+      <div class="btn primary">Make a new code</div>
+      <div class="btn ghost">Not now</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Close the loop with zero drama. Spec §3.1 failure modes: expiry means literally nothing happened — no channel, no residue. The copy says exactly that.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>TTL lapses while F2.3 is open (state swaps in place), or on next app open if it lapsed while away.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Make a new code → F2.1 (fresh keypair, fresh code). Not now → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Peer tries the expired code on their side → they get F3's wrong-code error (“Codes expire — ask them to make a new one.”); the two error texts hand the pair back to each other.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F2.8 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F2.8 · EDGE — safety phrase mismatch</div>
+    <div class="frame">
+      <div style="height:80px"></div>
+      <p class="h-lg">The words didn't match.</p>
+      <p class="bodytext">That can mean someone got between you while pairing. This pairing has been thrown away — nothing was kept.</p>
+      <p class="bodytext">Make a new code and share it somewhere safer. In person is safest.</p>
+      <div class="grow"></div>
+      <div class="btn primary">Make a new code</div>
+      <div class="btn ghost">Not now</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The MITM defense working as designed (spec §3.1.5, §9). Tone stays level: state what it can mean, state what was done (everything discarded), point forward. No sirens, no red.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>They don't match on F2.5 (or on the joiner's F3.4 — both sides land on their own copy of this screen once either declines).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Make a new code → F2.1. Not now → F4. Either way the discarded pairing is unrecoverable — keypairs deleted on both sides.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>False alarm (misread word) → cost is one minute: make a new code. Design accepts false positives cheerfully; the asymmetry (cheap redo vs. silent interception) is the whole point.</span></div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
