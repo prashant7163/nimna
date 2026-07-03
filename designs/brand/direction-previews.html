@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nimna — brand direction previews (1.1)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Instrument+Sans:wght@400;500&family=Martel:wght@400;600&family=Mukta:wght@300;400;500&family=Schibsted+Grotesk:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #060607; color: #cfcdc9;
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    padding: 48px 24px; line-height: 1.5;
+  }
+  .intro { max-width: 1280px; margin: 0 auto 40px; }
+  .intro h1 { font-size: 15px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: #8a8884; }
+  .intro p { font-size: 13px; color: #6d6b67; margin-top: 6px; }
+  .grid {
+    max-width: 1280px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;
+  }
+  .card { border-radius: 14px; overflow: hidden; border: 1px solid #1c1c1e; display: flex; flex-direction: column; }
+  .card .body { padding: 28px 26px 30px; flex: 1; display: flex; flex-direction: column; gap: 18px; }
+  .tag { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .55; }
+  .name { font-size: 26px; }
+  .adj { font-size: 12.5px; opacity: .6; }
+  .swatches { display: flex; gap: 8px; }
+  .sw { flex: 1; height: 52px; border-radius: 8px; position: relative; border: 1px solid rgba(255,255,255,.07); }
+  .sw span { position: absolute; bottom: -18px; left: 2px; font-size: 9.5px; font-family: ui-monospace, monospace; opacity: .45; }
+  .swatches { margin-bottom: 14px; }
+  .sample { font-size: 15px; line-height: 1.55; }
+  .micro { font-size: 12.5px; opacity: .55; border-left: 2px solid rgba(255,255,255,.14); padding-left: 12px; }
+  .motif { height: 120px; display: flex; align-items: center; justify-content: center; }
+  .typeline { font-size: 11px; opacity: .5; letter-spacing: .04em; }
+
+  /* ── A: The Fine Object ── */
+  .a { background: #161310; color: #EDE7DC; }
+  .a .name { font-family: 'Fraunces', serif; font-weight: 500; letter-spacing: .01em; }
+  .a .sample { font-family: 'Fraunces', serif; font-size: 17px; }
+  .a .accent { color: #C2A26B; }
+
+  /* ── B: Deep Water ── */
+  .b { background: #0C1017; color: #DDE3EA; }
+  .b .name { font-family: 'Martel', serif; font-weight: 400; }
+  .b .sample { font-family: 'Mukta', sans-serif; font-weight: 300; font-size: 16px; }
+  .b .body { font-family: 'Mukta', sans-serif; }
+  .b .accent { color: #E3B34C; }
+
+  /* ── C: The Line ── */
+  .c { background: #0B0B0C; color: #E8E6E1; }
+  .c .name, .c .body { font-family: 'Schibsted Grotesk', sans-serif; }
+  .c .name { font-weight: 500; letter-spacing: -.01em; }
+  .c .accent { color: #F2A65A; }
+
+  @keyframes breathe { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+  .c .pulse { animation: breathe 2.8s ease-in-out infinite; }
+  @keyframes ripple { 0% { r: 4; opacity: .8; } 100% { r: 46; opacity: 0; } }
+  .b .rip { animation: ripple 3.2s ease-out infinite; }
+  .b .rip2 { animation: ripple 3.2s ease-out 1.6s infinite; }
+  @media (prefers-reduced-motion: reduce) { .c .pulse, .b .rip, .b .rip2 { animation: none; } }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>nimna — brand directions (1.1)</h1>
+    <p>Three directions for Checkpoint A1. Each card renders in its own palette and typefaces. Wordmark is lowercase per decision record.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- ─────────── A ─────────── -->
+    <div class="card a">
+      <div class="body">
+        <div>
+          <div class="tag accent">Direction A</div>
+          <div class="name">The Fine Object</div>
+          <div class="adj">warm · weighted · unhurried · tactile · private</div>
+        </div>
+        <div class="motif">
+          <svg viewBox="0 0 260 100" width="260" height="100" aria-label="engraved plate motif">
+            <rect x="30" y="22" width="200" height="56" rx="6" fill="none" stroke="#C2A26B" stroke-width="1"/>
+            <text x="130" y="46" text-anchor="middle" font-family="Fraunces, serif" font-size="13" fill="#EDE7DC" letter-spacing="6">nimna</text>
+            <line x1="52" y1="60" x2="208" y2="60" stroke="#C2A26B" stroke-width=".6"/>
+            <text x="130" y="72" text-anchor="middle" font-family="ui-monospace, monospace" font-size="7.5" fill="#C2A26B" letter-spacing="3">KR7·FM2·XQ4</text>
+          </svg>
+        </div>
+        <div class="swatches">
+          <div class="sw" style="background:#161310"><span>#161310</span></div>
+          <div class="sw" style="background:#EDE7DC"><span>#EDE7DC</span></div>
+          <div class="sw" style="background:#C2A26B"><span>#C2A26B</span></div>
+          <div class="sw" style="background:#D9814E"><span>#D9814E</span></div>
+        </div>
+        <div class="sample">A small, heavy, beautifully made thing. The pairing code, engraved like a serial number. A latch that closes with a soft click.</div>
+        <div class="micro">“Nothing is kept. That is the luxury.”</div>
+        <div class="typeline">Fraunces (display) + Instrument Sans (UI)</div>
+      </div>
+    </div>
+
+    <!-- ─────────── B ─────────── -->
+    <div class="card b">
+      <div class="body">
+        <div>
+          <div class="tag accent">Direction B</div>
+          <div class="name">Deep Water</div>
+          <div class="adj">deep · still · inky · settled · unreadable from outside</div>
+        </div>
+        <div class="motif">
+          <svg viewBox="0 0 260 100" width="260" height="100" aria-label="waterline and ripple motif">
+            <line x1="20" y1="38" x2="240" y2="38" stroke="#3D4A5C" stroke-width="1"/>
+            <circle class="rip" cx="92" cy="38" r="10" fill="none" stroke="#E3B34C" stroke-width=".8"/>
+            <circle class="rip2" cx="168" cy="38" r="10" fill="none" stroke="#E3B34C" stroke-width=".8"/>
+            <circle cx="92" cy="38" r="2.4" fill="#E3B34C"/>
+            <circle cx="168" cy="38" r="2.4" fill="#E3B34C"/>
+            <text x="130" y="84" text-anchor="middle" font-family="Martel, serif" font-size="15" fill="#DDE3EA" letter-spacing="5">nimna</text>
+          </svg>
+        </div>
+        <div class="swatches">
+          <div class="sw" style="background:#0C1017"><span>#0C1017</span></div>
+          <div class="sw" style="background:#DDE3EA"><span>#DDE3EA</span></div>
+          <div class="sw" style="background:#E3B34C"><span>#E3B34C</span></div>
+          <div class="sw" style="background:#3D4A5C"><span>#3D4A5C</span></div>
+        </div>
+        <div class="sample">Nimna: low ground — where water gathers. What sinks is held; the surface tells you nothing. Two ripples meeting is a pairing.</div>
+        <div class="micro">“Said, then gone. Like a stone into deep water.”</div>
+        <div class="typeline">Martel (display) + Mukta (UI) — shared Devanagari heritage</div>
+      </div>
+    </div>
+
+    <!-- ─────────── C ─────────── -->
+    <div class="card c">
+      <div class="body">
+        <div>
+          <div class="tag accent">Direction C — recommended</div>
+          <div class="name">The Line</div>
+          <div class="adj">direct · taut · luminous · spare · honest</div>
+        </div>
+        <div class="motif">
+          <svg viewBox="0 0 260 100" width="260" height="100" aria-label="the line motif: offline, knocking, live">
+            <!-- offline: dotted -->
+            <line x1="40" y1="22" x2="220" y2="22" stroke="#5A5A5E" stroke-width="1.4" stroke-dasharray="2 7" stroke-linecap="round"/>
+            <circle cx="34" cy="22" r="2.6" fill="#5A5A5E"/><circle cx="226" cy="22" r="2.6" fill="#5A5A5E"/>
+            <!-- knocking: breathing -->
+            <line class="pulse" x1="40" y1="50" x2="220" y2="50" stroke="#F2A65A" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="34" cy="50" r="2.6" fill="#F2A65A"/><circle class="pulse" cx="226" cy="50" r="2.6" fill="#F2A65A"/>
+            <!-- live: solid -->
+            <line x1="40" y1="78" x2="220" y2="78" stroke="#F2A65A" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="34" cy="78" r="3" fill="#F2A65A"/><circle cx="226" cy="78" r="3" fill="#F2A65A"/>
+            <text x="14" y="25" font-size="7" fill="#5A5A5E" font-family="inherit">off</text>
+            <text x="8" y="53" font-size="7" fill="#5A5A5E" font-family="inherit">knock</text>
+            <text x="12" y="81" font-size="7" fill="#5A5A5E" font-family="inherit">live</text>
+          </svg>
+        </div>
+        <div class="swatches">
+          <div class="sw" style="background:#0B0B0C"><span>#0B0B0C</span></div>
+          <div class="sw" style="background:#E8E6E1"><span>#E8E6E1</span></div>
+          <div class="sw" style="background:#F2A65A"><span>#F2A65A</span></div>
+          <div class="sw" style="background:#5A5A5E"><span>#5A5A5E</span></div>
+        </div>
+        <div class="sample">One warm filament in a dark room. The line is the protocol: dotted when apart, breathing when knocking, lit when you're both here. Cut, when you say so.</div>
+        <div class="micro">“One line. Two people. Nothing else.”</div>
+        <div class="typeline">Schibsted Grotesk — one family, display to caption</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
