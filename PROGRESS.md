@@ -36,3 +36,10 @@
 - Assets: favicon set + og.png generated from brand; press kit (3 logo SVGs, 512px icon, 3 screen PNGs cropped from hi-fi mockups).
 - Verified: link check ALL OK / zero external resources (temp/check_links.py); responsive at true 390px & 360px via iframe test (fixed a real relay-diagram overflow found in testing); copy honesty self-check vs spec recorded in website/launch-checklist.md.
 - Launch blockers intentionally left as placeholders: store URLs, repo must go public, hello@nimna.app mailbox, Lighthouse run on the deployed URL.
+
+## 2026-07-04 — Paywall model corrected (USER)
+- USER clarification: there is NO free created line — creating any channel requires the one-time unlock; free users join and talk both ways, forever. Supersedes the 2026-07-03 "first line free / paywall at second create / free-slot counting" model (see DECISIONS.md 2026-07-04).
+- New voice string 9 headline: "Creating a line is the only thing that costs. Pay once for as many as you like."
+- Propagated: voice-and-microcopy.md string 9 · screens 09-paywall dark+light · wireframes F2.1/F4.1/F4.4/F9 (header, trigger, annotations, 3× headline) · wireframes README · website pricing cards + FAQ · press fact sheet.
+- NOT edited (user-authored prompt doc, per decision-log precedent): nimna-design-and-website-prompts.md still says "F9 Paywall: first initiated channel free" — flagged to USER to amend or leave.
+- Open item unchanged: paywall price (USER, pending).

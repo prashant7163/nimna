@@ -50,7 +50,7 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>One calm decision (TTL, default 24 h — configurable at generation, spec §3.1.2) and one action. Generating creates a fresh keypair and registers the hashed code at the relay.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>F4 “+” → Create a code. If this would be the user's second <em>initiated</em> channel and they haven't paid, F9 paywall intercepts before this screen (joining never counts).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F4 “+” → Create a code. If the unlock hasn't been purchased, F9 paywall intercepts before this screen — every creation is gated, including the first (joining is never gated).</span></div>
       <div class="r"><span class="k">Exit points</span><span>Create a code → F2.2. Back → F4.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>Device offline → “You're offline. A code needs the relay listening for it — try again when you're connected.” Nothing is generated without the relay; no phantom codes.</span></div>
     </div>

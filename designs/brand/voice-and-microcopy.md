@@ -50,7 +50,7 @@ Nimna speaks like someone who has nothing to prove and nothing to hide. Plain wo
 > `[Wipe now]` `[Keep]`
 
 **9 · Paywall**
-> Your first line is free. Pay once for as many as you like.
+> Creating a line is the only thing that costs. Pay once for as many as you like.
 > No subscription. No account. The receipt stays between you and the app store — we never learn who you are.
 
 **10 · Connection drops mid-session**

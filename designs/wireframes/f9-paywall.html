@@ -25,15 +25,15 @@
 </nav>
 
 <div class="flow-head">
-  <h1>F9 — Paywall (first initiated line free · one-time unlock · store-mediated restore)</h1>
-  <p>The gate exists only at the SECOND initiated channel; joining is always free. A calm full-screen page (USER decision) — price as fact, not nag. No account, no email, anywhere: purchase and restore are entirely store-mediated. Edge frame (dashed): restore on reinstall.</p>
+  <h1>F9 — Paywall (every created line gated until unlock · one-time payment · store-mediated restore)</h1>
+  <p>The gate exists at EVERY initiated channel until the one-time unlock is purchased — there is no free first line (USER decision 2026-07-04; supersedes the earlier first-line-free model). Joining is always free, in any quantity, with full two-way messaging. A calm full-screen page (USER decision) — price as fact, not nag. No account, no email, anywhere: purchase and restore are entirely store-mediated. Edge frame (dashed): restore on reinstall.</p>
 </div>
 
 <main class="strip">
 
   <!-- F9.1 -->
   <section class="cell">
-    <div class="frame-tag">F9.1 · Trigger — “+” with one initiated line</div>
+    <div class="frame-tag">F9.1 · Trigger — “Create a code” while not yet unlocked</div>
     <div class="frame">
       <div class="dimmed">
         <div class="listhead">
@@ -50,14 +50,14 @@
         <div class="grab"></div>
         <div class="btn">Create a code</div>
         <div class="btn">Enter a code</div>
-        <p class="meta center">[“Create a code”: the user already initiated Marlowe and hasn't unlocked → tapping it goes to F9.2 first. “Enter a code” is never gated — joining is always free]</p>
+        <p class="meta center">[“Create a code”: the user hasn't unlocked (Marlowe here is a joined line) → tapping it goes to F9.2 first — including for the very first created line. “Enter a code” is never gated — joining is always free]</p>
       </div>
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>Show where the gate lives — and where it doesn't. The check runs at intent (tapping Create), before any code or keypair exists, so nothing is half-made behind a payment.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>“+” on F4.1 when exactly one-or-more initiated channels exist and the unlock hasn't been purchased.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>“Create a code” from F4.1 “+” or the empty-state F4.4, whenever the unlock hasn't been purchased — including a brand-new install creating its first line.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Create a code → F9.2 paywall (unpaid) or straight to F2.1 (paid). Enter a code → F3.1, always, free. Swipe down → F4.1.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>The free allowance counts channels INITIATED, ever, not currently held — wiping Marlowe doesn't reset the free slot (otherwise wipe becomes a paywall-evasion loop; noted as product decision in README). Joined channels never count, in any quantity.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>There is no free-initiation allowance to count — the only billing state is unlocked-or-not, held by the store, so wiping channels can't interact with the paywall at all (product decision, noted in README). Joined channels are never gated, in any quantity.</span></div>
     </div>
   </section>
 
@@ -69,7 +69,7 @@
     <div class="frame">
       <div class="chathead"><span class="cap">✕</span><span></span></div>
       <div style="height:64px"></div>
-      <p class="h-lg">Your first line is free.<br>Pay once for as many as you like.</p>
+      <p class="h-lg">Creating a line is the only thing that costs.<br>Pay once for as many as you like.</p>
       <div style="height:12px"></div>
       <p class="bodytext">No subscription. No account. The receipt stays between you and the app store — we never learn who you are.</p>
       <div class="grow"></div>
@@ -95,7 +95,7 @@
     <div class="frame">
       <div class="dimmed">
         <div style="height:48px"></div>
-        <p class="h-lg">Your first line is free.<br>Pay once for as many as you like.</p>
+        <p class="h-lg">Creating a line is the only thing that costs.<br>Pay once for as many as you like.</p>
         <p class="bodytext">No subscription. No account.</p>
       </div>
       <div class="grow"></div>
@@ -146,7 +146,7 @@
     <div class="frame">
       <div class="chathead"><span class="cap">✕</span><span></span></div>
       <div style="height:64px"></div>
-      <p class="h-lg">Your first line is free.<br>Pay once for as many as you like.</p>
+      <p class="h-lg">Creating a line is the only thing that costs.<br>Pay once for as many as you like.</p>
       <div style="height:12px"></div>
       <p class="bodytext">No subscription. No account. The receipt stays between you and the app store — we never learn who you are.</p>
       <div style="height:24px"></div>

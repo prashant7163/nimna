@@ -21,14 +21,14 @@ Annotated low-fi wireframes for all nine flows. Open any `f*.html` in a browser;
 | `f6-receiving-knock.html` | F6 Receiving a knock (in-app banner · content-free push · knock screen) | 4 | **Knock already lapsed on open** ("knock back?"); push says only "New activity"; simultaneous knocks queue |
 | `f7-channel-settings.html` | F7 Channel settings (label · notification opt-in · receipts · per-channel wipe) | 3 | **Early release cancels wipe — nothing happens**; push-token honesty; honor-system receipts |
 | `f8-app-settings.html` | F8 App settings (app lock · panic wipe 2.5 s · relay info · licenses) | 4 | **Wipe canceled by release**; keys destroyed → past ciphertext undecryptable (spec §6); unlock survives wipe via store |
-| `f9-paywall.html` | F9 Paywall (second initiated line · one-time unlock · restore) | 5 | **IAP restore on reinstall** (store-mediated, no account/email anywhere); purchase fails/cancelled → calm return, no nagging; joining never gated |
+| `f9-paywall.html` | F9 Paywall (every created line until unlocked · one-time unlock · restore) | 5 | **IAP restore on reinstall** (store-mediated, no account/email anywhere); purchase fails/cancelled → calm return, no nagging; joining never gated |
 
 Total: 46 frames. The six edge cases the design-spec §4 mandates (code expired · peer never accepts · connection drops mid-session · knock TTL lapses · wrong code · IAP restore on reinstall) live in F2.7 · F5.1/F5.7 · F5.8 · F5.7/F6.4 · F3.6 · F9.5 respectively.
 
 ## Decisions taken at wireframe level (no protocol impact)
 
 - **Safety phrase has no skip.** Spec §3.1.5 says verification is "strongly encouraged, not enforced"; these wireframes always show the screen and offer only *They match / They don't match*. Adding a quiet skip is an open product question — flagged, not decided.
-- **Free allowance counts channels ever initiated,** not currently held — wiping the free channel must not reset the free slot (F9.1), or wipe becomes a paywall-evasion loop.
+- **No free initiation exists** — every created line requires the one-time unlock (F9.1); joining stays free forever, with full two-way messaging. The only billing state is store-held unlocked-or-not, so wipe can't become a paywall-evasion loop. *(USER decision 2026-07-04 — supersedes the earlier "first initiated line free / free slot counts ever-initiated" model.)*
 - **Disappearing-timer preset is sticky per channel** after being set, but rides each message individually (spec §5 `expiry` is per-message).
 - **Simultaneous knock banners queue** one at a time, oldest first (F6.1).
 - **PIN length** shown as 6 digits, accepts 4–8 (F8.2).
