@@ -29,10 +29,15 @@ git commit -s -m "nimna relay — initial public release"
 ```
 
 Either way, verify against a **fresh clone** of the branch, never the
-working tree:
+working tree. `--single-branch` is load-bearing: a default clone
+fetches every monorepo ref, so the §2 history scan would walk
+`origin/main` and self-match the documentation that quotes the scan
+patterns (this runbook, the architecture note) — a guaranteed false
+LEAK (observed at the S6 wrap verification). The public repo will
+contain only the split branch, so the verification clone must too:
 
 ```sh
-git clone --branch relay-public "$(pwd)" /tmp/relay-split-check
+git clone --branch relay-public --single-branch "$(pwd)" /tmp/relay-split-check
 cd /tmp/relay-split-check
 ```
 
