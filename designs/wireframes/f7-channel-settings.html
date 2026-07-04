@@ -25,8 +25,8 @@
 </nav>
 
 <div class="flow-head">
-  <h1>F7 — Channel settings (label · notifications · receipts · per-channel wipe)</h1>
-  <p>Everything here is per-channel and stored only on this phone (spec §6). Notifications are the one opt-IN — default off, and the caption says exactly what a push contains. Wipe is hold-to-wipe, 1.5 s, release cancels (USER decision).</p>
+  <h1>F7 — Channel settings (label · push toggle · receipts · per-channel wipe)</h1>
+  <p>Everything here is per-channel and stored only on this phone (spec §6). Push is the one opt-IN — per line, DEFAULT OFF, with string 18's honest trade as the always-visible caption: the caption IS the disclosure, never a one-time dialog. Wipe is hold-to-wipe, 1.5 s, release cancels (USER decision).</p>
 </div>
 
 <main class="strip">
@@ -45,7 +45,7 @@
       </div>
       <div class="setrow">
         <span class="txt"><span class="lbl">Notify me when they knock</span>
-        <span class="cap" style="display:block">A contentless nudge: “New activity”. Nothing else leaves your phones.</span></span>
+        <span class="cap" style="display:block">Off: nothing about this line ever touches Apple or Google.<br>On: a knock can wake this phone through their notification service, carrying two words — “New activity.” No line, no name, no message — and the relay forgets the address the moment it's used.</span></span>
         <span class="toggle"></span>
       </div>
       <div class="setrow">
@@ -68,10 +68,10 @@
       <p class="meta">[all three toggles default OFF; receipts/typing ride as encrypted CONTROL frames, indistinguishable from messages to the relay — spec §5]</p>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Four quiet facts and one exit. Every caption answers the privacy question in place, so no setting needs a help page. Notifications caption is the required string, verbatim.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Four quiet facts and one exit. Every caption answers the privacy question in place, so no setting needs a help page. The push caption is string 18, verbatim — the caption IS the disclosure, always visible; turning it on never spawns a one-time dialog (components: toggle).</span></div>
       <div class="r"><span class="k">Entry points</span><span>From F5 chat header (tap the label) or long-press row → Settings on F4.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Label → F4.3-style inline edit. Toggles apply instantly, locally. Wipe this line → F7.2 sheet. ‹ → back to chat.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>Enabling notifications registers a push token — the one piece of server-adjacent state the spec permits, named honestly in the caption (spec §3.2.2). Receipts/typing are honored by the peer's app, not enforced — same honor-system logic as disappearing messages.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Enabling push shares this phone's device-token with the peer inside the E2E channel — peer-held, never server-held; the relay sees a token only transiently inside a knock, uses it once, and discards it (spec §3.2.1). Opting out silences this line unilaterally and permanently (spec §4) — the receiver's ultimate control; off is the pure burner-line mode, zero third-party touch. Receipts/typing are honored by the peer's app, not enforced — same honor-system logic as disappearing messages.</span></div>
     </div>
   </section>
 

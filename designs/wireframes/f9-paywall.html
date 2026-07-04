@@ -25,15 +25,15 @@
 </nav>
 
 <div class="flow-head">
-  <h1>F9 — Paywall (every created line gated until unlock · one-time payment · store-mediated restore)</h1>
-  <p>The gate exists at EVERY initiated channel until the one-time unlock is purchased — there is no free first line (USER decision 2026-07-04; supersedes the earlier first-line-free model). Joining is always free, in any quantity, with full two-way messaging. A calm full-screen page (USER decision) — price as fact, not nag. No account, no email, anywhere: purchase and restore are entirely store-mediated. Edge frame (dashed): restore on reinstall.</p>
+  <h1>F9 — Paywall (yearly subscription · the permanence guarantee · store-mediated restore)</h1>
+  <p>Creation is gated by an active yearly subscription — unlimited lines while it runs (spec §10). THE PERMANENCE GUARANTEE rides at headline height, never in fine print: every line created while subscribed works forever; a lapse only pauses creating new ones; nothing is ever frozen or repossessed. Joining is free forever and never surfaces this screen. No price exists anywhere outside the stores — the CTA carries the literal <code>{STORE_PRICE}</code> placeholder, rendered at runtime by StoreKit / Play Billing. A calm full-screen page (USER decision) — no account, no email, anywhere. Edge frames (dashed): restore on reinstall · purchase cancelled · lapsed subscription.</p>
 </div>
 
 <main class="strip">
 
   <!-- F9.1 -->
   <section class="cell">
-    <div class="frame-tag">F9.1 · Trigger — “Create a code” while not yet unlocked</div>
+    <div class="frame-tag">F9.1 · Trigger — “Create a code” with no active subscription</div>
     <div class="frame">
       <div class="dimmed">
         <div class="listhead">
@@ -50,14 +50,14 @@
         <div class="grab"></div>
         <div class="btn">Create a code</div>
         <div class="btn">Enter a code</div>
-        <p class="meta center">[“Create a code”: the user hasn't unlocked (Marlowe here is a joined line) → tapping it goes to F9.2 first — including for the very first created line. “Enter a code” is never gated — joining is always free]</p>
+        <p class="meta center">[“Create a code”: no active subscription (Marlowe here is a joined line) → tapping it goes to F9.2 first — including for the very first created line. “Enter a code” is never gated — joining is always free]</p>
       </div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Show where the gate lives — and where it doesn't. The check runs at intent (tapping Create), before any code or keypair exists, so nothing is half-made behind a payment.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>“Create a code” from F4.1 “+” or the empty-state F4.4, whenever the unlock hasn't been purchased — including a brand-new install creating its first line.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Create a code → F9.2 paywall (unpaid) or straight to F2.1 (paid). Enter a code → F3.1, always, free. Swipe down → F4.1.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>There is no free-initiation allowance to count — the only billing state is unlocked-or-not, held by the store, so wiping channels can't interact with the paywall at all (product decision, noted in README). Joined channels are never gated, in any quantity.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Show where the gate lives — and where it doesn't. The entitlement check runs at intent (tapping Create), on this device only, before any code or keypair exists — the one and only place the subscription is ever consulted (spec §10).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>“Create a code” from F4.1 “+” or the empty-state F4.4, whenever no subscription is active — a brand-new install, or a lapsed one (F9.7).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Create a code → F9.2 paywall (no active subscription) or straight to F2.1 (subscribed). Enter a code → F3.1, always, free. Swipe down → F4.1.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>The only billing state is the store's: subscription active or not — no per-line counters, no free-initiation allowance, so wiping channels can't interact with the paywall at all (product decision, noted in README). Joined channels are never gated, in any quantity.</span></div>
     </div>
   </section>
 
@@ -68,22 +68,25 @@
     <div class="frame-tag">F9.2 · Paywall — calm full-screen</div>
     <div class="frame">
       <div class="chathead"><span class="cap">✕</span><span></span></div>
-      <div style="height:64px"></div>
-      <p class="h-lg">Creating a line is the only thing that costs.<br>Pay once for as many as you like.</p>
+      <div style="height:40px"></div>
+      <p class="h-lg">One of you buys the line.</p>
+      <p class="h" style="color:#555">The other never pays.</p>
       <div style="height:12px"></div>
-      <p class="bodytext">No subscription. No account. The receipt stays between you and the app store — we never learn who you are.</p>
+      <p class="bodytext">One yearly subscription, as many lines as you care to create. Every line you make is yours for good — if the subscription lapses you keep them all, working exactly as before. A lapse only pauses making new ones.</p>
+      <p class="bodytext">No account behind it. The receipt stays between you and the app store — we never learn who you are.</p>
+      <div style="height:8px"></div>
+      <p class="cap">Joining is free, forever. The person you invite never sees this screen.</p>
       <div class="grow"></div>
-      <div class="btn primary">Unlock — one payment</div>
-      <p class="meta center">[price rendered on the button from the store's localized product info, e.g. “Unlock — $11.99, once”]</p>
+      <div class="btn primary">{STORE_PRICE} — start</div>
+      <p class="meta center">[literal placeholder: the button renders the store's localized price string (StoreKit / Play Billing) for the user's storefront — no number is ever hardcoded in the app or published anywhere outside the stores, spec §10]</p>
       <div style="height:4px"></div>
-      <div class="btn ghost">Restore purchase</div>
-      <div class="btn ghost">Not now</div>
+      <div class="btn ghost">Restore</div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Voice string 9 verbatim, as a full-screen page (USER decision) — stillness instead of a springy sheet. One primary action; restore and leave are equally quiet.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Create a code from F9.1 while unpaid. Never from joining, never on launch, never on a timer.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Unlock → F9.3 store sheet. Restore purchase → F9.5 flow. Not now / ✕ → F4.1, and nothing follows the user around afterward.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>No urgency mechanics of any kind: no countdown, no “offer”, no badge on the list after declining. Price is the store's localized truth — the app never hardcodes or inflates-then-discounts it.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Voice string 9 verbatim, as a calm full-screen page (USER decision). The permanence guarantee sits at headline prominence, not in fine print — it is the model's decency, inherited from the architecture: channels are keypairs, and the relay has no accounts to flag as expired (spec §10).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Create a code from F9.1 with no active subscription — first purchase or after a lapse (F9.7). Never from joining, never on launch, never on a timer.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>{STORE_PRICE} — start → F9.3 store sheet. Restore → F9.5 flow. ✕ → F4.1, and nothing follows the user around afterward.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Honest limits (spec §10), stated in FAQ and never discovered at checkout: entitlements do not cross platforms — iOS ↔ Android is a new purchase (industry standard); Family Sharing is disabled (one initiator, one subscription); no trial creation — the receiving experience IS the free trial, and every channel traces to a real payment instrument (the abuse gate, §9/§10). No urgency mechanics of any kind: no countdown, no “offer”, no badge after declining.</span></div>
     </div>
   </section>
 
@@ -91,21 +94,22 @@
 
   <!-- F9.3 -->
   <section class="cell">
-    <div class="frame-tag">F9.3 · Platform IAP sheet</div>
+    <div class="frame-tag">F9.3 · Platform store sheet</div>
     <div class="frame">
       <div class="dimmed">
         <div style="height:48px"></div>
-        <p class="h-lg">Creating a line is the only thing that costs.<br>Pay once for as many as you like.</p>
-        <p class="bodytext">No subscription. No account.</p>
+        <p class="h-lg">One of you buys the line.</p>
+        <p class="h" style="color:#555">The other never pays.</p>
+        <p class="bodytext">One yearly subscription, as many lines as you care to create.</p>
       </div>
       <div class="grow"></div>
-      <div class="box" style="height:220px; border-radius:16px 16px 0 0; margin:0 -20px -20px">[App Store / Google Play purchase sheet — system UI placeholder. Face ID / fingerprint confirm, store account, store price. nimna draws none of this]</div>
+      <div class="box" style="height:220px; border-radius:16px 16px 0 0; margin:0 -20px -20px">[App Store / Google Play subscription sheet — system UI placeholder. Face ID / fingerprint confirm, store account, the localized yearly price. nimna draws none of this]</div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Hand the money moment entirely to the platform. nimna receives an entitlement, not an identity — the store knows the buyer; the app only learns “unlocked: yes”.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Unlock — one payment from F9.2.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Purchase succeeds → F9.4. Fails or user cancels → sheet closes, F9.2 remains exactly as it was — same copy, no error banner, no “are you sure?”. Retry or leave, both fine.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Purchase fails / cancelled → return calmly, no nagging</b> (required edge). Interrupted purchase (app killed mid-sheet) → store settles it; next paywall visit reflects the truth via receipt check. Family sharing / regional store quirks are the store's domain — the app trusts the entitlement, nothing else.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Hand the money moment entirely to the platform. nimna receives an entitlement, not an identity — the store knows the buyer; the app only learns “subscription: active”.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>{STORE_PRICE} — start from F9.2.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Purchase succeeds → F9.4. Fails or user cancels → F9.6 (edge): the paywall exactly as it was.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Interrupted purchase (app killed mid-sheet) → the store settles it; the next paywall visit reflects the truth via receipt check. Regional pricing is the store's tier system (spec §10) — the app never sees a number to mishandle.</span></div>
     </div>
   </section>
 
@@ -113,7 +117,7 @@
 
   <!-- F9.4 -->
   <section class="cell">
-    <div class="frame-tag">F9.4 · Unlocked</div>
+    <div class="frame-tag">F9.4 · Subscribed — straight on to creating</div>
     <div class="frame">
       <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
       <div style="height:24px"></div>
@@ -126,7 +130,7 @@
         <span class="cap">24 hours ▾</span>
       </div>
       <div class="grow"></div>
-      <div class="toast">You're unlocked.</div>
+      <div class="toast">Subscription started.</div>
       <div style="height:8px"></div>
       <div class="btn primary">Create a code</div>
     </div>
@@ -134,7 +138,7 @@
       <div class="r"><span class="k">Purpose</span><span>No celebration screen — the reward for paying is being exactly where you were going: F2.1, ready to create. One toast states the fact and leaves.</span></div>
       <div class="r"><span class="k">Entry points</span><span>Successful purchase from F9.3, or successful restore from F9.5.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Toast auto-dismisses (3 s). Flow continues as plain F2: Create a code → F2.2.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>The paywall never appears again on this store account — including after panic wipe or reinstall (restore path, F9.5). Entitlement check is local-first with store receipt as truth; airplane-mode after purchase still works.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>The paywall stays gone while the subscription is active — any number of new lines, no per-line checks. Entitlement is checked locally at creation time with the store receipt as truth (spec §10); airplane mode after purchase still creates. Wipe or reinstall → the subscription survives via store identity and F9.5 restores it; the lines themselves do not survive a wipe (keys are gone — spec §6.1).</span></div>
     </div>
   </section>
 
@@ -145,22 +149,89 @@
     <div class="frame-tag">F9.5 · EDGE — restore on reinstall</div>
     <div class="frame">
       <div class="chathead"><span class="cap">✕</span><span></span></div>
-      <div style="height:64px"></div>
-      <p class="h-lg">Creating a line is the only thing that costs.<br>Pay once for as many as you like.</p>
+      <div style="height:48px"></div>
+      <p class="h-lg">One of you buys the line.</p>
+      <p class="h" style="color:#555">The other never pays.</p>
       <div style="height:12px"></div>
-      <p class="bodytext">No subscription. No account. The receipt stays between you and the app store — we never learn who you are.</p>
+      <p class="bodytext">No account behind it. The receipt stays between you and the app store — we never learn who you are.</p>
       <div style="height:24px"></div>
-      <div class="btn ghost" style="border:1px solid #999">Restore purchase</div>
+      <div class="btn ghost" style="border:1px solid #999">Restore</div>
       <p class="cap center">Checking with the store…</p>
       <div class="grow"></div>
       <div class="toast">Purchase restored.</div>
-      <p class="meta center">[then straight on to F9.4's destination. If the store finds nothing: “The store has no purchase for this account.” — one line under the button, stays on this page, no drama]</p>
+      <p class="meta center">[then straight on to F9.4's destination. If the store finds nothing: “The store has no subscription for this account.” — one line under the button, stays on this page, no drama]</p>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Prove the no-account promise survives a reinstall: the store receipt is the only memory. Restore → platform receipt check → unlocked. No email, no login, no “enter the address you bought with” — those things don't exist here.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Restore purchase on F9.2 — typically after reinstall or panic wipe (F8.3), when the paywall reappears because local entitlement state was destroyed with everything else.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Receipt found → toast “Purchase restored.” → F9.4 (on to creating). Not found (different store account, never bought) → factual one-liner, page stays, Unlock remains available.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>IAP restore on reinstall</b> (required edge) is this frame. Restore is store-mediated end to end — annotate loudly: nimna cannot look the user up, by design; channels themselves are NOT restored (keys died with the wipe — spec §6; only the entitlement returns). Store unreachable → “Couldn't reach the store. Try again in a moment.”</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Prove the no-account promise survives a reinstall: the store receipt is the only memory anywhere. Restore → native StoreKit / Play Billing receipt check → active again. No email, no login, no “enter the address you bought with” — those things don't exist here. Restore reliability is a top-tier feature: it is the ONLY path to channel creation after reinstall (spec §10).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Restore on F9.2 — typically after reinstall or panic wipe (F8.3), when local entitlement state was destroyed with everything else.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Receipt found → toast “Purchase restored.” → F9.4 (on to creating). Not found (different store account, never bought) → factual one-liner, page stays, {STORE_PRICE} — start remains available.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Restore on reinstall</b> (required edge) is this frame. Restore is store-mediated end to end — nimna cannot look the user up, by design. Channels are NOT restored: keys died with the wipe (spec §6.1); only the subscription returns — re-pairing is out-of-band, one new code. Cross-platform: an iOS receipt is invisible to Play Billing and vice versa — switching platforms is a new purchase (spec §10). Store unreachable → “Couldn't reach the store. Try again in a moment.”</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F9.6 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F9.6 · EDGE — purchase cancelled, calm return</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">✕</span><span></span></div>
+      <div style="height:40px"></div>
+      <p class="h-lg">One of you buys the line.</p>
+      <p class="h" style="color:#555">The other never pays.</p>
+      <div style="height:12px"></div>
+      <p class="bodytext">One yearly subscription, as many lines as you care to create. Every line you make is yours for good — if the subscription lapses you keep them all, working exactly as before. A lapse only pauses making new ones.</p>
+      <div class="grow"></div>
+      <div class="btn primary">{STORE_PRICE} — start</div>
+      <div style="height:4px"></div>
+      <div class="btn ghost">Restore</div>
+      <p class="meta center">[the store sheet just closed without a purchase. This page is exactly as it was — same copy, no error banner, no “are you sure?”, no follow-up push or badge, ever. Retry or leave, both fine]</p>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Declining to pay must cost nothing, visually or socially (required edge: purchase fails/cancelled → calm return). The page holds still; the user decides.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Cancel or failure inside the system sheet (F9.3).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>{STORE_PRICE} — start → F9.3 again. Restore → F9.5. ✕ → F4.1; the list shows no badge, no reminder, and never nags.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Real payment failures (card declined) are the store's dialogs, not ours — by the time control returns, the app knows only “no entitlement”, which renders as this calm page. No retry counters, no manufactured urgency — structurally out of register (spec §10).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F9.7 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F9.7 · EDGE — lapsed subscription: everything keeps working</div>
+    <div class="frame">
+      <div class="listhead">
+        <span class="wordmark">nimna</span>
+        <span class="plus">+</span>
+      </div>
+      <div style="height:8px"></div>
+      <div class="chanrow">
+        <span class="txt"><span class="lbl">Marlowe</span><span class="cap" style="display:block">On the line</span></span>
+        <span class="mini"></span>
+      </div>
+      <div class="chanrow">
+        <span class="txt"><span class="lbl">Attic</span><span class="cap" style="display:block">Quiet</span></span>
+        <span class="mini dotted"></span>
+      </div>
+      <div class="chanrow">
+        <span class="txt"><span class="lbl">R.</span><span class="cap" style="display:block">Waiting: 2</span></span>
+        <span class="mini dotted"></span>
+      </div>
+      <p class="meta">[subscription lapsed — and this screen refuses to show it: no banner, no lock icon, no grey-out, no countdown. Every existing line works exactly as before, forever]</p>
+      <div class="grow"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="btn">Create a code</div>
+        <div class="btn">Enter a code</div>
+        <p class="meta center">[only “Create a code” now routes to F9.2; “Enter a code” stays free, as always. The lapse exists in exactly one place: the moment of creation intent]</p>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The permanence guarantee, in UI (spec §10): a lapse gates only the creation of NEW lines. Nothing is frozen, degraded, or repossessed — structurally guaranteed, because channels are keypairs, the relay has no accounts to flag as expired, and entitlement is checked only at creation time on the initiator's device.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>The yearly subscription lapses at the store; the app learns at the next local entitlement check. No push, no email, no in-app announcement marks the moment.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Rows → F5 chat, exactly as ever — knock, talk, media, wipe, all of it. “+” → Create a code → F9.2; Enter a code → F3.1, free. Resubscribing on F9.2 resumes creating; nothing needs restoring or thawing.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>The lapse must never leak into conversation surfaces: no “renew” toast, no changed captions on lines, no nagging anywhere. Every line created while subscribed remains permanent and fully functional forever — stated as firmly as zero-storage (spec §10). The business model inherits its decency from the architecture.</span></div>
     </div>
   </section>
 

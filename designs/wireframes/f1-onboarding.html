@@ -26,7 +26,7 @@
 
 <div class="flow-head">
   <h1>F1 — First-run onboarding</h1>
-  <p>Three screens, never more. What it is · how pairing works · what we cannot see. Voice-guide strings 1–3, verbatim. No permissions asked, no network touched — onboarding is pure reading.</p>
+  <p>Four screens, never more. What it is · how pairing works · what we cannot see · the screenshot terms (informed consent, spec §5.2). Voice-guide strings 1–3 and 11, verbatim. No permissions asked, no network touched — onboarding is pure reading.</p>
 </div>
 
 <main class="strip">
@@ -44,7 +44,7 @@
       <div class="glyph"><span class="dot"></span><span class="bar"></span><span class="dot"></span></div>
       <p class="meta center">[two-ends symbol, static]</p>
       <div class="grow"></div>
-      <div class="pips"><span class="pip on"></span><span class="pip"></span><span class="pip"></span></div>
+      <div class="pips"><span class="pip on"></span><span class="pip"></span><span class="pip"></span><span class="pip"></span></div>
       <div class="btn primary">Next</div>
       <div class="btn ghost">Skip</div>
     </div>
@@ -64,16 +64,16 @@
     <div class="frame">
       <div style="height:64px"></div>
       <p class="h-lg">Pair once with a code.</p>
-      <p class="bodytext">Pair once with a code you share however you like — in person, on a call, on paper.<br>After that, the code is gone for good. The line is yours.</p>
+      <p class="bodytext">Pair once with a Nimna code you share however you like — read aloud, on paper, or as the QR shown right beside it.<br>After that, the code is gone for good. The line is yours.</p>
       <div style="height:24px"></div>
-      <div class="box" style="height:140px">[diagram placeholder:<br>code KR7·FM2·XQ4 → two ends meet → a line remains, the code does not]</div>
+      <div class="box" style="height:140px">[diagram placeholder:<br>code KR7-FM2-XQ4 → two ends meet → a line remains, the code does not]</div>
       <div class="grow"></div>
-      <div class="pips"><span class="pip"></span><span class="pip on"></span><span class="pip"></span></div>
+      <div class="pips"><span class="pip"></span><span class="pip on"></span><span class="pip"></span><span class="pip"></span></div>
       <div class="btn primary">Next</div>
       <div class="btn ghost">Skip</div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Teach the one ritual the product has — the pairing code — as a codeword game, not a security procedure. Voice string 2, verbatim.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Teach the one ritual the product has — the pairing code (spec-speak; in UI it is only ever called the “Nimna code”, spec §2) — as a codeword game, not a security procedure. Voice string 2, verbatim.</span></div>
       <div class="r"><span class="k">Entry points</span><span>Next from F1.1.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Next → F1.3. Skip → F4.4. No back control; swiping back to F1.1 is allowed (platform gesture).</span></div>
       <div class="r"><span class="k">Edge cases</span><span>User has nobody to pair with yet → fine; nothing here requires a peer. The ritual is retaught in context by F2/F3 screens, so skipping costs nothing.</span></div>
@@ -92,14 +92,36 @@
       <div style="height:16px"></div>
       <p class="cap">The relay does see connection times, IP addresses, and message sizes — never content. Details live in Settings → Relay.</p>
       <div class="grow"></div>
-      <div class="pips"><span class="pip"></span><span class="pip"></span><span class="pip on"></span></div>
-      <div class="btn primary">Start</div>
+      <div class="pips"><span class="pip"></span><span class="pip"></span><span class="pip on"></span><span class="pip"></span></div>
+      <div class="btn primary">Next</div>
+      <div class="btn ghost">Skip</div>
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>State the architecture as fact, not promise (voice string 3, verbatim) — and volunteer the honest limit (relay metadata, spec §4) instead of hiding it. Honesty is the brand asset.</span></div>
       <div class="r"><span class="k">Entry points</span><span>Next from F1.2.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Start → F4.4 (empty channel list) — the single primary action; no Skip needed on the last screen.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Next → F1.4. Skip → F4.4.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>None interactive. Copy must never drift toward "no one can see anything" — the honesty checklist forbids it; the metadata caption is the guard.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F1.4 -->
+  <section class="cell">
+    <div class="frame-tag">F1.4 · The screenshot terms</div>
+    <div class="frame">
+      <div style="height:64px"></div>
+      <p class="h-lg">Nimna can't stop a screenshot. It will always tell the other person.</p>
+      <p class="bodytext">It only notices what happens inside the app — a second camera pointed at a screen is invisible to any software. Said up front, so you both know the terms.</p>
+      <div class="grow"></div>
+      <div class="pips"><span class="pip"></span><span class="pip"></span><span class="pip"></span><span class="pip on"></span></div>
+      <div class="btn primary">Start</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The consent moment (spec §5.2): screenshots are possible, and the other person is always told — agreed to before the first line exists, not discovered mid-conversation. Voice string 11, verbatim, honest limits included.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Next from F1.3.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Start → F4.4 (empty channel list) — the single primary action; no Skip on the last screen.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Honest limits, disclosed here and never walked back: detection fires only while content is on screen inside the app, and no software can detect a second camera. The policy is symmetric on both platforms — Android's stronger blocking (FLAG_SECURE) is deliberately unused, so the promise is identical everywhere (spec §5.2). The notice itself is honor-system, like expiry.</span></div>
     </div>
   </section>
 

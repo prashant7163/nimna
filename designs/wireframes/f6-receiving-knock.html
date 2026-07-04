@@ -91,9 +91,9 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>Show exactly how little a nimna push says, on the surface where other apps leak the most. “New activity” is the complete message — a contentless nudge.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Peer knocked while this phone's app was disconnected AND this channel had opted into notifications (spec §3.2.2 peer-offline branch). Default-off means most users never see this frame.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Tap → app opens → app-lock gate first if set (F4.2) → F6.3 if the knock still lives, F6.4 if it lapsed. Ignore → nothing anywhere changes.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>Multiple knocks / channels → still just one “New activity”; pushes never enumerate. Push arrives long after the knock died (OS delay) → F6.4's honest handling. Push token is the one piece of state that may persist server-side; the spec keeps push optional to protect the zero-persistence claim — mirrored in F7.1's caption.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Peer knocked while this phone's app was disconnected AND this channel had opted into push (per-channel opt-in, DEFAULT OFF — spec §3.2.2 peer-offline branch). Default-off means most users never see this frame; with push off, coordination is out-of-band — the pure burner-line mode, zero third-party touch.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Tap → app opens → app-lock gate first if set (F4.2) → F6.3 if the knock still lives, F6.4 if it lapsed. The whole tap → connect → knock-present path takes about a second (spec §3.3). Ignore → nothing anywhere changes.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Multiple knocks / channels → still just one “New activity”; pushes never enumerate. Push arrives long after the knock died (OS delay) → F6.4's honest handling. Token honesty (spec §3.2.1): the device-token rides inside the knock itself — peer-held, exchanged E2E-encrypted during pairing and refreshed in sessions; the relay uses it once for a single APNs/FCM call and immediately discards it. No token registry, no CRID→device mapping, nothing at rest — the relay is a stateless push forwarder, never a token registry.</span></div>
     </div>
   </section>
 
@@ -116,7 +116,7 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>A full-screen “incoming call” for the case where the app opens INTO a waiting knock — nothing to catch up on, just answer or don't. Never any message content: none exists anywhere until bridged.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>App opened (from the push, or by habit) while a live knock is registered for one of this phone's channels; shown after the app-lock gate (F4.2) if lock is on.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>App opened (from the push, or by habit) while a live knock is registered for one of this phone's channels; shown after the app-lock gate (F4.2) if lock is on. From the push tap, connect-to-knock-present is about a second (spec §3.3) — the reconnect path, not a held-open socket.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Pick up → F5.4 live session. Ignore → F4.1 channel list; the knock dies its natural death at the relay, unrecorded.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>Knock expires while this screen is up (user stared past 0:00) → screen swaps in place to F6.4's copy. Attribution note: the label is known here because the knock is live on the connection — contrast with F6.4.</span></div>
     </div>
@@ -142,7 +142,7 @@
       <div class="r"><span class="k">Purpose</span><span>Arriving seconds too late shouldn't feel like failure. One line of fact, one warm suggestion — knocking back just swaps the roles.</span></div>
       <div class="r"><span class="k">Entry points</span><span>A knock was seen (banner or knock screen) but expired before the user acted — e.g. phone picked up at 0:02, unlocked at −0:05.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Knock back → F5.2 (your own knock on that channel, fresh 60 s). Not now → F4.1.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Honesty note:</b> the named variant shown here requires the app to have SEEN the knock while it lived. From a cold open after expiry, the relay (stateless) has nothing to report and the push named no channel — so no screen appears at all, honestly: the app cannot know who knocked. This asymmetry is annotated in the README, not papered over. Knock back to a peer who already left → F5.2 runs its minute and lapses to F5.7; no loop.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Honesty note:</b> the named variant shown here requires the app to have SEEN the knock while it lived. From a cold open after expiry, the relay (stateless) has nothing to report and the push named no channel — so no screen appears at all, honestly: the app cannot know who knocked. This asymmetry is annotated in the README, not papered over. Knock back to a peer who already left → F5.2 runs its minute and lapses to F5.13; no loop.</span></div>
     </div>
   </section>
 

@@ -84,11 +84,20 @@ Deliverables:
 Completed: 2026-07-04
 
 ## Task U2 — Wireframes & Hi-Fi Screens Sync
-**Status:** pending
+**Status:** done (2026-07-04) — F2.4 drift resolved with USER-authored copy (see DECISIONS.md); F3 joiner side checked clean
 
-All C-items → F1 (C1/C3/C9 disclosures), F2/F3 (C5/C6), F5/F6/F7 (C2/C3/C4/C8), F9 (C1); regenerate only changed hi-fi screens; net-new screens: media viewer, blurred-media state, whisper dialog, knocked-waiting; annotations updated with C8 rate-limit edge cases.
+Deliverables:
+- [x] Wireframes 46 → 57 frames (subagent, reviewed + render-verified): F1 +screenshot-consent pane · F2 9 frames (share sheet, call-and-compare, silence doctrine) · F3 four join methods · F5 15 frames (+attach/whisper/media-send/blur/viewer/system-line/stale-knock) · F6/F7 push honesty + string 18 · F9 7 frames (subscription, {STORE_PRICE}, lapsed edge) · F4/F8 C1 sweeps · README synced (2026-07-04)
+- [x] Hi-fi: 02/03/05/09/10/11 + light variants regenerated; net-new 13-media-viewer, 14-sensitive-blur, 15-whisper-attach; 01 dots 3→4; all screenshot-verified at 390×844 (2026-07-04)
+- [x] Handoff synced: flutter-notes (media/sensitive/screenshot/paywall/push rows, FLAG_SECURE resolved, background reality), asset checklist, cheat sheet (2026-07-04)
 
 ## Task U3 — Website Sync
-**Status:** pending
+**Status:** done (2026-07-04)
 
-Applies C1, C2, C3, C4, C7, C9, C10, C11. Pricing section rebuilt (subscription + permanence guarantee — TASTE CHECKPOINT if structure/visual concept changes), features + media, honesty section extended, /security updated (on-device sensitive content, push token design, abuse posture, AGPL-3.0, code-vs-deployment honesty), FAQ extended (lost phone, Apple/Google visibility, no trial, self-hosting). Full copy re-verification against spec v0.1.1.
+Deliverables:
+- [x] CHECKPOINT — pricing section: two cards + permanence band + store badges (USER, 2026-07-04); built + render-verified desktop/mobile (2026-07-04)
+- [x] index: How-it-works (Nimna code, KR7-FM2-XQ4), relay sees-list + transient wake-token, 2 media facts, honesty (screenshot notice + push-trade card), FAQ (lost phone rewritten; +media, +Apple/Google, +no-trial, +self-host), footer AGPL-3.0 (2026-07-04)
+- [x] /security: v0.1.1 sections (code format, silence doctrine, background/rate limits, media, screenshots, sensitive-content, push forwarder-not-registry, device loss, abuse posture, AGPL + code-vs-deployment) (2026-07-04)
+- [x] /privacy (push rewrite, content-scanning row) + /press (facts rebuilt) (2026-07-04)
+- [x] Launch checklist: price item retired, copy-honesty section re-verified against v0.1.1 (2026-07-04)
+- [x] Link check ALL OK, zero external resources; stale-term sweep clean (2026-07-04)

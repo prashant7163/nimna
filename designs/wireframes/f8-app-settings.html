@@ -140,7 +140,7 @@
       <div class="r"><span class="k">Purpose</span><span>The panic action: fast under stress, impossible by accident. Voice string 8 verbatim — including the button pair, where the safe word is “Keep”, warm, never “Cancel”.</span></div>
       <div class="r"><span class="k">Entry points</span><span>F8.1 → Wipe everything.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Hold completes (2.5 s) → all keys + all history destroyed atomically → F4.4 empty list, indistinguishable from a fresh install. Keep / release early / swipe down → F8.1, untouched.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Release cancels — nothing happens</b>, ever partially. Destroying the keys makes any intercepted past ciphertext permanently undecryptable (spec §6 + forward secrecy, §7.3) — that's why wiping keys, not just messages, is the point. The paid unlock survives: it lives with the store account, not this phone (F9.5).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Release cancels — nothing happens</b>, ever partially. Destroying the keys makes any intercepted past ciphertext permanently undecryptable (spec §6 + forward secrecy, §7.3) — that's why wiping keys, not just messages, is the point. The subscription survives wipe and reinstall: it lives with the store identity (StoreKit / Play Billing), not this phone — F9.5 restores it.</span></div>
     </div>
   </section>
 

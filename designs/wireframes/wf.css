@@ -282,3 +282,24 @@ body {
 }
 
 hr.hairline { border: none; border-top: 1px solid #E3E3E3; }
+
+/* ---------- media bubbles (images & documents — spec §5.1, v0.1.1) ---------- */
+
+.bubble.media { padding: 0; overflow: hidden; width: 72%; }
+.mimg {
+  height: 150px; background: #DDD;
+  display: flex; align-items: center; justify-content: center;
+  color: #666; font-size: 12px; text-align: center; padding: 8px;
+}
+/* blurred sensitive placeholder (spec §5.3) — low-fi: grey noise, no real blur */
+.mimg.blurred {
+  background: repeating-linear-gradient(45deg, #E2E2E2 0 6px, #CDCDCD 6px 12px);
+  color: #444;
+}
+/* transfer progress: a thin line along the bubble's bottom edge — no percentages */
+.xfer { height: 4px; background: #EEE; position: relative; }
+.xfer .done { position: absolute; left: 0; top: 0; height: 100%; background: #111; }
+
+/* system line (screenshot notice — spec §5.2): bare centered caption in the
+   thread flow — an event, not speech; no bubble, no icon */
+.sysline { text-align: center; font-size: 11px; color: #888; padding: 12px 0; }

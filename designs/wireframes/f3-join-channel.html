@@ -26,14 +26,14 @@
 
 <div class="flow-head">
   <h1>F3 — Join a channel (code-holder side)</h1>
-  <p>Enter or scan the code → handshake → safety phrase → ready. Joining is always free (F9 never intercepts here). Edge frames (dashed): wrong code · expired code — see the honesty note on F3.7 about what the relay can and cannot distinguish.</p>
+  <p>Type, paste, scan, or upload the code (the four join methods, spec §3.1.3) → handshake → safety phrase → ready. Joining is always free (F9 never intercepts here). Edge frames (dashed): wrong code · expired code — see the honesty note on F3.7 about what the relay can and cannot distinguish.</p>
 </div>
 
 <main class="strip">
 
   <!-- F3.1 -->
   <section class="cell">
-    <div class="frame-tag">F3.1 · Enter code</div>
+    <div class="frame-tag">F3.1 · Enter code — four ways in</div>
     <div class="frame">
       <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
       <div style="height:24px"></div>
@@ -41,22 +41,27 @@
       <p class="cap">Codes come from the other person. Each one works once.</p>
       <div style="height:12px"></div>
       <div class="segs">
-        <span class="seg">K</span><span class="seg">R</span><span class="seg">7</span><span class="segdot">·</span>
-        <span class="seg">F</span><span class="seg">M</span><span class="seg">2</span><span class="segdot">·</span>
+        <span class="seg">K</span><span class="seg">R</span><span class="seg">7</span><span class="segdot">-</span>
+        <span class="seg">F</span><span class="seg">M</span><span class="seg">2</span><span class="segdot">-</span>
         <span class="seg">X</span><span class="seg active"></span><span class="seg"></span>
       </div>
-      <p class="meta center">[auto-advance per character; paste fills all 9; unambiguous alphabet — no 0/O, 1/I]</p>
+      <p class="meta center">[auto-advance per character; paste fills all 9 — with or without hyphens, case-insensitive, I→1 and O→0 normalized silently; unambiguous alphabet]</p>
+      <div class="btn-row">
+        <div class="btn ghost small">Paste</div>
+        <div class="btn ghost small">Scan</div>
+        <div class="btn ghost small">Upload</div>
+      </div>
+      <p class="meta center">[the four ways in, all on this one screen — spec §3.1.3: type it · paste it · scan the QR live · upload a QR image or PDF]</p>
       <div class="grow"></div>
       <div class="box" style="height:160px">[keyboard]</div>
       <div style="height:8px"></div>
       <div class="btn primary disabled">Join</div>
-      <div class="btn ghost">Scan instead</div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Take the code with the least friction possible: segmented field, grouped like it's spoken (KR7 · FM2 · XQ4). Join enables only when complete.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Take the code with the least friction possible: segmented field, grouped like it's spoken (KR7-FM2-XQ4), with the other three ways in as quiet affordances beneath it. Join enables only when complete.</span></div>
       <div class="r"><span class="k">Entry points</span><span>F4 “+” → Enter a code (incl. from the empty list, F4.4). Never gated by F9 — joining is always free.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Join → F3.3 handshake. Scan instead → F3.2. Back → F4.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Wrong code → F3.6.</b> <b>Expired code → F3.7</b> (and see its honesty note). Device offline → “You're offline. Joining needs a connection.” Nothing sent until Join.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Join → F3.3 handshake. Paste → fills all nine segments (accepts the code with or without hyphens), Join enables. Scan → F3.2 live camera. Upload → OS photo/file picker; a QR image or PDF decodes like a scan → F3.3. Back → F4.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Wrong code → F3.6.</b> <b>Expired code → F3.7</b> (and see its honesty note). Pasted text that isn't 9 Crockford characters → segments simply don't fill; no error until Join is attempted. Uploaded file with no readable QR → “No code in that file.” — one line, field untouched. Device offline → “You're offline. Joining needs a connection.” Nothing sent until Join.</span></div>
     </div>
   </section>
 
@@ -76,9 +81,9 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>The in-person path: scan the QR from F2.2. Same code, zero typing. The QR encodes only the code itself (spec §3.1.1).</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Scan instead from F3.1, or F4 “+” → Enter a code → Scan instead.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Scan from F3.1, or F4 “+” → Enter a code → Scan.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Successful detect → F3.3 handshake, automatically. Enter it instead → F3.1. Back → F4.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>Camera permission denied → drop to F3.1 with a plain note: “No camera access — type the code instead.” Unreadable/foreign QR → nothing happens; brackets just keep looking (no error state for a QR that isn't ours).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Camera permission denied → drop to F3.1 with a plain note: “No camera access — type the code instead.” (or take the Upload path — no camera needed). Unreadable/foreign QR → nothing happens; brackets just keep looking (no error state for a QR that isn't ours).</span></div>
     </div>
   </section>
 
@@ -101,7 +106,7 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>Bridge moment: relay matched both phones on the code's hash; key agreement runs beneath (spec §3.1.3–4). No crypto vocabulary in UI copy.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Join from F3.1, or QR detect from F3.2.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Join from F3.1 (typed or pasted), QR detect from F3.2, or a decoded upload.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Automatic → F3.4 safety phrase on completion.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>Connection drops mid-handshake → “That didn't finish. The code is spent — ask them to make a new one.” Partial state discarded on both sides; a half-made channel never exists. (Codes are single-use even on failure — safer than replayable codes.)</span></div>
     </div>
@@ -111,10 +116,10 @@
 
   <!-- F3.4 -->
   <section class="cell">
-    <div class="frame-tag">F3.4 · Safety phrase</div>
+    <div class="frame-tag">F3.4 · Safety phrase — the closing ritual</div>
     <div class="frame">
       <div style="height:56px"></div>
-      <p class="h">Check the line</p>
+      <p class="h">Call them and compare</p>
       <div style="height:16px"></div>
       <p class="code-big" style="font-size:22px">ember · canyon · plume</p>
       <div style="height:16px"></div>
@@ -125,9 +130,9 @@
       <div class="btn">They don't match</div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Same ritual, same words as the initiator's F2.5 — both phones derive the phrase from the same shared key material (spec §7.4), so a middleman produces two different phrases.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Same closing ritual, same words as the initiator's F2.6 — both phones derive the phrase from the same shared key material (spec §7.4), so a middleman produces two different phrases. Compared out-of-band, over the same trusted channel the code traveled.</span></div>
       <div class="r"><span class="k">Entry points</span><span>Automatic from F3.3.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>They match → F3.5. They don't match → mismatch screen (identical to F2.8): pairing discarded on both sides, make a new code.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>They match → F3.5. They don't match → mismatch screen (identical to F2.9): pairing discarded on both sides, make a new code. <b>No skip affordance</b> — confirmed USER decision (2026-07-04).</span></div>
       <div class="r"><span class="k">Edge cases</span><span>One side confirms, the other declines → decline wins; the confirming side is told plainly: “They said the words didn't match. This pairing was thrown away.” No half-verified channels.</span></div>
     </div>
   </section>
@@ -150,7 +155,7 @@
       <div class="btn primary">Done</div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>Mirror of F2.6: persist the channel locally, name it locally. Each side names its own end — there is no shared name, because there is no shared record anywhere.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Mirror of F2.7: persist the channel locally, name it locally. Each side names its own end — there is no shared name, because there is no shared record anywhere.</span></div>
       <div class="r"><span class="k">Entry points</span><span>They match from F3.4.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Done → F5 chat, line quiet. Empty label allowed → row shows “—”.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>Label collisions (two lines named the same) are the user's own business — labels are local text, nothing more. No uniqueness rule, no validation beyond length.</span></div>
@@ -168,8 +173,8 @@
       <p class="h">Enter a code</p>
       <div style="height:12px"></div>
       <div class="segs">
-        <span class="seg err">K</span><span class="seg err">R</span><span class="seg err">7</span><span class="segdot">·</span>
-        <span class="seg err">F</span><span class="seg err">M</span><span class="seg err">2</span><span class="segdot">·</span>
+        <span class="seg err">K</span><span class="seg err">R</span><span class="seg err">7</span><span class="segdot">-</span>
+        <span class="seg err">F</span><span class="seg err">M</span><span class="seg err">2</span><span class="segdot">-</span>
         <span class="seg err">X</span><span class="seg err">O</span><span class="seg err">4</span>
       </div>
       <p class="cap">That code didn't match anything. Codes expire — ask them to make a new one.</p>
@@ -181,9 +186,9 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>Fail without blame. The canonical error string covers both mistype and expiry honestly, because from this phone they are indistinguishable (see F3.7).</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Join from F3.1 (or a scanned QR) when the relay finds nobody on that code's hash.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Join from F3.1 (or a scanned/uploaded QR) when the relay finds nobody on that code's hash.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Clear → empty field, try again. Back → F4. No retry limit in UI; the relay throttles rendezvous lookups to stop brute-forcing (spec §4), which never triggers for a human correcting a typo.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>Code was right but the creator cancelled it → same state, same words; the string's “ask them” hands the pair back to each other. Repeated rapid failures → relay throttling may slow responses; UI stays calm, never mentions “security”.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Code was right but the creator cancelled it → same state, same words; the string's “ask them” hands the pair back to each other. Repeated rapid failures → relay throttling may slow responses; UI stays calm, never mentions “security”. No failed attempt ever notifies anyone, on either side (spec §3.1 silence doctrine).</span></div>
     </div>
   </section>
 
@@ -198,8 +203,8 @@
       <p class="h">Enter a code</p>
       <div style="height:12px"></div>
       <div class="segs">
-        <span class="seg dim">K</span><span class="seg dim">R</span><span class="seg dim">7</span><span class="segdot">·</span>
-        <span class="seg dim">F</span><span class="seg dim">M</span><span class="seg dim">2</span><span class="segdot">·</span>
+        <span class="seg dim">K</span><span class="seg dim">R</span><span class="seg dim">7</span><span class="segdot">-</span>
+        <span class="seg dim">F</span><span class="seg dim">M</span><span class="seg dim">2</span><span class="segdot">-</span>
         <span class="seg dim">X</span><span class="seg dim">Q</span><span class="seg dim">4</span>
       </div>
       <p class="cap">This code has expired. Ask them to make a new one.</p>

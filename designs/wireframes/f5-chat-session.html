@@ -25,8 +25,8 @@
 </nav>
 
 <div class="flow-head">
-  <h1>F5 — Chat session (offline → knock → live → hangup)</h1>
-  <p>The session line under the header is never absent — its state IS the screen's truth. Dotted = not on the line, solid = knocking/live, always with a text label. Edge frames (dashed): knock lapses · line drops mid-session. “Peer never accepts” is covered in F5.1/F5.7 annotations.</p>
+  <h1>F5 — Chat session (offline → knock → live → media → hangup)</h1>
+  <p>The session line under the header is never absent — its state IS the screen's truth. Dotted = not on the line, solid = knocking/live, always with a text label. New in v0.1.1: attachments — photos &amp; files (spec §5.1), the sensitive-content whisper and blur (§5.3), the screenshot system line (§5.2), and the stale-knock hint (§6.1). Edge frames (dashed): sensitive whisper at attach · blurred received media · knock lapses · stale knock · line drops mid-session. “Peer never accepts” is covered in F5.1/F5.13 annotations.</p>
 </div>
 
 <main class="strip">
@@ -48,6 +48,7 @@
       </div>
       <div class="grow"></div>
       <div class="composer">
+        <div class="icon">+</div>
         <div class="field">Write…</div>
         <div class="icon">◷</div>
         <div class="icon">↑</div>
@@ -55,8 +56,8 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>Make “no store-and-forward” feel like patience, not failure. Voice string 5 verbatim as the state copy; dashed bubbles under the WAITING overline are visibly not-sent (spec §3.4: local-only until bridged).</span></div>
-      <div class="r"><span class="k">Entry points</span><span>F4 row tap while channel is quiet · F2.6/F3.5 Done (fresh channel) · after hangup (F5.6).</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Send (↑) → message joins the outbox AND triggers a knock → F5.2 (spec §3.4). Knock button → F5.2 without writing. ◷ → F5.5 timer sheet. ‹ → F4.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>F4 row tap while channel is quiet · F2.7/F3.5 Done (fresh channel) · after hangup (F5.12).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Send (↑) → message joins the outbox AND triggers a knock → F5.2 (spec §3.4). Knock button → F5.2 without writing. + → F5.5 attach sheet (attachments wait in the outbox exactly like text). ◷ → F5.11 timer sheet. ‹ → F4.</span></div>
       <div class="r"><span class="k">Edge cases</span><span><b>Peer never accepts:</b> messages stay here indefinitely, calm — no retries, no badges, no “delivery failed”. Nothing has left this phone, and the copy already said so. Deleting a waiting message is a plain local delete (long-press → Delete).</span></div>
     </div>
   </section>
@@ -65,15 +66,16 @@
 
   <!-- F5.2 -->
   <section class="cell">
-    <div class="frame-tag">F5.2 · Knock sent</div>
+    <div class="frame-tag">F5.2 · Knock sent — patience, not hammering</div>
     <div class="frame">
       <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
       <div class="line"></div>
       <p class="line-lbl">Knocked — waiting… 0:47</p>
       <p class="meta">[line breathes while knocking (2.8 s loop) — annotated, not animated; counter runs down from 60 s, the relay-side knock TTL, spec §3.2]</p>
       <div style="height:8px"></div>
-      <p class="cap">Knocked. If they pick up in the next minute, the line opens.</p>
-      <div style="height:16px"></div>
+      <p class="cap">Knocked. If they pick up in the next minute, the line opens.<br>One knock is enough — it won't repeat on its own.</p>
+      <p class="meta">[NO knock affordance exists anywhere while the countdown runs — the header control is gone; the breathing line IS the feedback. “Knock again” appears only after lapse, as a ghost (F5.13)]</p>
+      <div style="height:8px"></div>
       <p class="micro">Waiting — on your phone only</p>
       <div class="msgs">
         <div class="bubble wait">Call me when you land.</div>
@@ -81,16 +83,17 @@
       </div>
       <div class="grow"></div>
       <div class="composer">
+        <div class="icon">+</div>
         <div class="field">Write…</div>
         <div class="icon">◷</div>
         <div class="icon">↑</div>
       </div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>The doorbell moment. Voice string 6 verbatim. One knock, one minute, no auto-retry — knocking twice is a human decision, not an app behavior.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>The doorbell moment. Voice string 6 verbatim, both sentences — the waiting state invites patience, never hammering. One knock, one minute, no auto-retry: knocking twice is a human decision, not an app behavior.</span></div>
       <div class="r"><span class="k">Entry points</span><span>Send or Knock from F5.1. If the peer was offline, the relay answered PEER_OFFLINE and (only if that channel opted in, F7.1) a content-free push went out.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Peer accepts → F5.3. TTL lapses → F5.7 (edge). ‹ → F4 (knock keeps running its minute in the background).</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>Writing more while knocking → joins the outbox, no extra knock (one live knock at a time). Own connection drops mid-knock → back to F5.1 with a plain note: “You went offline. Knock again when you're back.”</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Peer accepts → F5.3. TTL lapses → F5.13 (edge). ‹ → F4 (knock keeps running its minute in the background).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Impatient re-knocks can't happen (no control exists) and wouldn't help: the relay collapses duplicate knocks inside 10 s silently, and platform pushes are capped at 1/min · 6/hr · 20/day per line (spec §4) — limits the UI never surfaces as counters; it simply doesn't tempt them. The app NEVER auto-retries a knock. Writing more while knocking → joins the outbox, no extra knock (one live knock at a time). Own connection drops mid-knock → back to F5.1 with a plain note: “You went offline. Knock again when you're back.”</span></div>
     </div>
   </section>
 
@@ -115,6 +118,7 @@
       <p class="meta">[the waiting messages just transmitted themselves, in order — spec §3.4; dashed borders became solid, each earns its ✓ on the peer's encrypted ACK]</p>
       <div class="grow"></div>
       <div class="composer">
+        <div class="icon">+</div>
         <div class="field">Write…</div>
         <div class="icon">◷</div>
         <div class="icon">↑</div>
@@ -123,7 +127,7 @@
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>The payoff frame: the outbox drains by itself the instant the bridge exists. The user does nothing — patience is rewarded, not managed.</span></div>
       <div class="r"><span class="k">Entry points</span><span>Peer sends ACCEPT within the knock's minute (from their F6 banner or knock screen).</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Settles into F5.4 live session (same screen, moment passes). Hang up → F5.6.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Settles into F5.4 live session (same screen, moment passes). Hang up → F5.12.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>Bridge forms but a waiting message's ACK doesn't arrive (drop at the worst moment) → that message keeps its pending state and resends on the next bridge; the ✓ only ever means “decrypted and displayed on their phone” (spec §3.3).</span></div>
     </div>
   </section>
@@ -152,6 +156,7 @@
       <p class="meta">[✓ = delivered (peer ACK). No double-ticks. “Seen” appears under the last bubble only if this channel opted into read receipts, F7.1]</p>
       <div class="grow"></div>
       <div class="composer">
+        <div class="icon">+</div>
         <div class="field">Write…</div>
         <div class="icon">◷</div>
         <div class="icon">↑</div>
@@ -160,8 +165,8 @@
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>The live window — a text call. Messages flow phone-to-phone through the bridged relay, verbatim and unstored (spec §3.3). The solid line is the only status anyone needs.</span></div>
       <div class="r"><span class="k">Entry points</span><span>F5.3 settles here · accepting an incoming knock (F6) lands here directly.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Hang up → F5.6. ‹ → F4 with the session alive (backgrounding keeps the socket on a ~10 min decay, spec §3.3 — leaving the screen is not hanging up).</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Connection drops mid-session → F5.8 (edge).</b> Peer hangs up → line plays its cut, label reads “They hung up.”, composer stays (writing resumes the F5.1 waiting pattern).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Hang up → F5.12. + → F5.5 attach. ‹ → F4 with the session alive (leaving the screen is not hanging up). Backgrounding the app holds the socket for ~30 s on both platforms (spec §3.3); beyond that the socket closes, and the next knock rides a content-free push — tap → reconnect, about a second. No VoIP/background-audio workarounds, ever.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Connection drops mid-session → F5.15 (edge).</b> Peer hangs up → line plays its cut, label reads “They hung up.”, composer stays (writing resumes the F5.1 waiting pattern).</span></div>
     </div>
   </section>
 
@@ -169,7 +174,218 @@
 
   <!-- F5.5 -->
   <section class="cell">
-    <div class="frame-tag">F5.5 · Disappearing-message timer</div>
+    <div class="frame-tag">F5.5 · Attach — picker &amp; preview</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+        <div class="line"></div>
+        <p class="line-lbl">On the line</p>
+        <div style="height:8px"></div>
+        <div class="msgs">
+          <div class="bubble recv">Send the signed page?</div>
+        </div>
+      </div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <p class="h" style="font-size:17px">Attach</p>
+        <div class="btn-row">
+          <div class="btn">Photo</div>
+          <div class="btn">File</div>
+        </div>
+        <div class="box" style="height:100px">[preview — after choosing: the photo, or a document row with filename + size]</div>
+        <div class="setrow" style="border-bottom:none">
+          <span class="txt"><span class="lbl">Original quality</span>
+          <span class="cap" style="display:block">Sent smaller by default. Original quality is a toggle away.</span></span>
+          <span class="toggle"></span>
+        </div>
+        <p class="cap">Photos are cleaned before they're sealed — location, device, and time are stripped on your phone, before encryption.</p>
+        <div class="btn primary">Send</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The + in the composer opens this sheet: Photo · File (spec §5.1 — images and documents are first-class in v1). The two string-17 captions do the explaining in place: compression on by default with an original-quality toggle (default off), and metadata stripped on-device before encryption — the photographed contract shouldn't whisper where it was photographed.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>+ in the composer, any session state — attachments compose to the waiting outbox exactly like text when the peer is offline (spec §3.4).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Send → F5.7 (live transfer) — or the outbox, dashed and dimmed under the WAITING header (offline). Removing the attachment or swiping down → back to the chat, nothing sent. If the on-device check flags the image → the whisper card rises, F5.6.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Over 5 MB → refused calmly with string 17: “That's over 5 MB — the line carries documents, not archives. Try a smaller file.” The cap is client-side, and relay frame/rate limits bound it structurally (spec §4, §5.1). Metadata stripping has no off switch — there is no toggle to leak EXIF. The metadata caption surfaces under the preview the first time, then stays quiet.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.6 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F5.6 · EDGE — the sensitive-content whisper</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble recv">Send the signed page?</div>
+      </div>
+      <div class="grow"></div>
+      <div class="box" style="height:90px">[attach preview — the photo about to be sent]</div>
+      <div class="banner">
+        <span class="bodytext">This looks like sensitive content — send anyway?</span>
+        <div class="btn-row">
+          <div class="btn ghost small">Go back</div>
+          <div class="btn small">Send anyway</div>
+        </div>
+      </div>
+      <p class="meta">[NOT a modal — an inline card that rises above the attach preview (components: whisper card). The composer and preview stay live behind it; editing or removing the attachment dismisses it. Appears at most once per attachment. Never danger-styled — nothing is wrong]</p>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The wrong-channel-disaster check, whispered (string 14 verbatim, spec §5.3): the same on-device analysis that blurs received media runs at attach time and asks one soft, non-blocking question — protecting the sender, judging no one.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>The on-device check flags the image at attach time (from F5.5's preview). Everything runs locally; nothing is consulted.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Send anyway → F5.7, exactly as if never asked. Go back → preview stays, nothing sent. Removing the attachment dismisses the card.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Hard boundary (spec §5.3):</b> detection exists solely for this local question. Nothing is ever blocked, logged, reported, or transmitted because of it; the recipient is never told the sender was asked, and the sender is never told about recipient-side blurs. Even the safety feature has nowhere to phone home. Detection quality is the platform's (iOS SensitiveContentAnalysis; Android path TBD — spec §5.3); a miss simply means no whisper.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.7 -->
+  <section class="cell">
+    <div class="frame-tag">F5.7 · Sending media — the line carries it</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble recv">Send the signed page?</div>
+        <span class="bub-meta l">21:05</span>
+        <div class="bubble sent media">
+          <div class="mimg" style="opacity:.6">[photo — contract, page 3]</div>
+          <div class="xfer"><span class="done" style="width:55%"></span></div>
+        </div>
+      </div>
+      <p class="meta">[sending: image at reduced opacity; a thin progress line along the bubble's bottom edge fills left→right — the line motif carries the transfer. No percentage, no spinner: a live session moves 5 MB in seconds, so the line is reassurance, not a meter]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Attachments travel the same pipe as words: split into MEDIA_CHUNK frames with an encrypted manifest (chunk count, content hash), sent live, reassembled and verified on the peer's phone (spec §5.1). The relay never reassembles anything — to it, chunks are indistinguishable opaque frames.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Send from the attach preview (F5.5), or Send anyway past the whisper (F5.6).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Transfer completes → full opacity, ✓ on the peer's ACK, like any message. A timer set on ◷ rides the attachment identically to text — one timer, one rule (string 7 stage note, spec §5.1).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Line drops mid-transfer → the attachment holds pending like unacked text and resends on the next bridge (spec §3.4); no partial media is ever shown on either side (the manifest's content hash gates display). Peer offline at send → the thumbnail waits dimmed inside the dashed border, under the same WAITING — ON YOUR PHONE ONLY header.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.8 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F5.8 · Received media — and the blurred EDGE</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble recv media">
+          <div class="mimg">[photo — received]</div>
+        </div>
+        <span class="bub-meta l">21:06</span>
+        <div class="bubble recv media">
+          <div class="mimg blurred">Sensitive content — tap to view.</div>
+        </div>
+        <span class="bub-meta l">21:07</span>
+      </div>
+      <p class="meta">[second bubble is the EDGE: flagged by the on-device check — after decryption, before display (spec §5.3) — and rendered blurred with string 15 centered on the veil. Tap reveals in place (cross-fade), a purely local act; nothing is reported to anyone, including the sender]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Received media lands in Nimna's encrypted store only — never the system gallery, never cloud photo backups (spec §5.1, §6). Tap opens the viewer (F5.9). The blurred variant is the recipient-side half of §5.3: an on-device display decision, nothing more.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>MEDIA_CHUNKs reassemble, verify against the manifest hash, and ACK on this phone; the local check runs after decryption, before display (iOS SensitiveContentAnalysis; Android path TBD — spec §5.3).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Tap an unblurred image → F5.9 media viewer. Tap the blurred one → reveals in place, then behaves like any image.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Hard boundary, recipient side: the flag never leaves this phone — not to the sender, not to a server (there isn't one to tell). No “report” affordance exists, because reporting infrastructure is exactly what Nimna promises not to have (spec §5.3). Disappearing media counts down with the same timer chrome as text — one timer, one rule.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.9 -->
+  <section class="cell">
+    <div class="frame-tag">F5.9 · Media viewer — Export is the one door out</div>
+    <div class="frame" style="padding:0">
+      <div style="display:flex; justify-content:space-between; padding:14px 20px 0"><span class="cap">Marlowe · received 21:06</span><span class="cap">✕</span></div>
+      <div class="box" style="flex:1; border-radius:0; border-left:none; border-right:none; margin-top:12px">[full-bleed photo]</div>
+      <div style="display:flex; flex-direction:column; gap:8px; padding:12px 20px 20px">
+        <p class="cap center">Nothing you receive touches your photo roll. It stays inside Nimna until you choose to take it out.</p>
+        <div class="btn">Export</div>
+        <p class="meta center">[chrome fades after 2 s; tap restores. Export → confirm sheet, wording per components: “This copies it out of Nimna — into your phone's own storage.” A disappearing photo shows its countdown in the top bar, and the timer chrome stays visible even through export]</p>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Export is the single deliberate act that moves a file out of the encrypted store (spec §5.1: no auto-save to gallery, ever; media lives inside the app-lock perimeter and outside cloud photo backups). String 17's received-media line is the standing caption; the confirm sheet is the moment of consent.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Tap a media bubble (F5.8).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>✕ → back to the chat. Export → confirm sheet → OS save/share; the file now exists outside Nimna's perimeter, and the sheet said so plainly first.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Disappearing media: the sender's timer governs attachments identically to text (string 7 stage note, spec §5.1) — the countdown shows in the top bar. Export of disappearing media is allowed (honor-system honesty: a screenshot is still a screenshot) but the timer chrome never hides. Documents open the same viewer with a document surface; same single Export.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.10 -->
+  <section class="cell">
+    <div class="frame-tag">F5.10 · Screenshot notice — the system line</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble sent">Good flight?</div>
+        <span class="bub-meta">21:04 ✓</span>
+        <div class="bubble recv">Long. Tell you tonight.</div>
+        <span class="bub-meta l">21:05</span>
+      </div>
+      <p class="sysline">They took a screenshot.</p>
+      <div class="msgs">
+        <div class="bubble sent">Noted.</div>
+        <span class="bub-meta">21:06 ✓</span>
+      </div>
+      <p class="sysline">You took a screenshot. They've been told.</p>
+      <p class="meta">[both variants of string 12 shown for economy; in reality each renders at its own moment. A bare centered caption in the thread flow — an event, not speech: no bubble, no icon (components: system line). Rides a CONTROL frame, indistinguishable from a message to the relay]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Detect-and-notify made visible (spec §5.2): screenshots are possible, and the other person is always told — the promise from onboarding F1.4, kept in the thread. Symmetric on both platforms, in both directions.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>The OS screenshot event, fired while session content is on screen inside the app, emits an encrypted CONTROL screenshot-notice to the peer. Their notice renders here as “They took a screenshot.”; one's own act renders locally as “You took a screenshot. They've been told.”</span></div>
+      <div class="r"><span class="k">Exit points</span><span>None — system lines are history, not affordances.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Honor-system, like expiry: a modified client could suppress the notice — the trust-your-counterpart caveat of string 7 covers this too. Detection fires only in-app; a second camera is invisible (disclosed at F1.4). Android's FLAG_SECURE stays deliberately unused so the promise is identical on both platforms (spec §5.2). System lines are never used for errors.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.11 -->
+  <section class="cell">
+    <div class="frame-tag">F5.11 · Disappearing-message timer</div>
     <div class="frame">
       <div class="dimmed">
         <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
@@ -195,16 +411,16 @@
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>Sender-dictated, per-message expiry (spec §5 TEXT expiry field). Five calm presets (USER-locked set: Off / 1 min / 15 min / 1 hr / 24 hr after read). The honor-system disclaimer is voice string 7, verbatim, shown right where the timer is set — never buried in help.</span></div>
       <div class="r"><span class="k">Entry points</span><span>◷ in the composer, any session state (timers can be set on waiting messages too).</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Done → back to composer; ◷ shows the active preset (e.g. “15m”). The chosen value rides on each message and stays selected for this channel until changed.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>Timed bubble renders with timer glyph + remaining time; removal is a quiet fade + collapse, no shredding theatrics. Peer's app ignoring the expiry (modified client) → exactly why string 7 promises courtesy, not guarantee.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Done → back to composer; ◷ shows the active preset (e.g. “15m”). The chosen value rides on each message and stays selected for this channel until changed. The same timer governs photos and documents identically (string 7 stage note, spec §5.1).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Timed bubble renders with timer glyph + remaining time; removal is a quiet fade + collapse, no shredding theatrics — media included. Peer's app ignoring the expiry (modified client) → exactly why string 7 promises courtesy, not guarantee.</span></div>
     </div>
   </section>
 
   <div class="arrow">→</div>
 
-  <!-- F5.6 -->
+  <!-- F5.12 -->
   <section class="cell">
-    <div class="frame-tag">F5.6 · Hangup</div>
+    <div class="frame-tag">F5.12 · Hangup</div>
     <div class="frame">
       <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Knock</span></div>
       <div class="line dotted"></div>
@@ -221,6 +437,7 @@
       </div>
       <div class="grow"></div>
       <div class="composer">
+        <div class="icon">+</div>
         <div class="field">Write…</div>
         <div class="icon">◷</div>
         <div class="icon">↑</div>
@@ -230,22 +447,23 @@
       <div class="r"><span class="k">Purpose</span><span>End cleanly, keep everything local. HANGUP tears the bridge down and the relay forgets the CRID immediately (spec §3.3). History stays on the phone — kept by default, per user retention choice (spec §6).</span></div>
       <div class="r"><span class="k">Entry points</span><span>Hang up from F5.3/F5.4 — or the peer hung up (label then reads “They hung up.”).</span></div>
       <div class="r"><span class="k">Exit points</span><span>Knock → F5.2. Writing → F5.1's waiting pattern (send triggers a knock). ‹ → F4, row caption back to “Quiet”.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span>Hangup vs. backgrounding: leaving the app is NOT hanging up (socket decays ~10 min, spec §3.3); only this explicit action or a real disconnect ends the session. Undelivered messages at hangup instant → remain pending, resend next bridge.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>Hangup vs. backgrounding: leaving the app is NOT hanging up — the socket holds for the ~30 s background grace (spec §3.3), then closes; the session resumes via knock → content-free push → tap → reconnect, about a second. Only this explicit action or a real disconnect ends the session. Undelivered messages at hangup instant → remain pending, resend next bridge.</span></div>
     </div>
   </section>
 
   <div class="arrow">→</div>
 
-  <!-- F5.7 EDGE -->
+  <!-- F5.13 EDGE -->
   <section class="cell edge">
-    <div class="frame-tag">F5.7 · EDGE — knock TTL lapses</div>
+    <div class="frame-tag">F5.13 · EDGE — knock TTL lapses</div>
     <div class="frame">
       <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
       <div class="line dotted"></div>
       <p class="line-lbl">Not on the line</p>
       <div style="height:8px"></div>
       <p class="cap">They didn't pick up.</p>
-      <div class="btn small" style="align-self:flex-start">Knock again</div>
+      <div class="btn ghost small" style="align-self:flex-start">Knock again</div>
+      <p class="meta">[“Knock again” appears only now, after the lapse, as a quiet ghost — never during the countdown]</p>
       <div style="height:16px"></div>
       <p class="micro">Waiting — on your phone only</p>
       <div class="msgs">
@@ -254,6 +472,7 @@
       </div>
       <div class="grow"></div>
       <div class="composer">
+        <div class="icon">+</div>
         <div class="field">Write…</div>
         <div class="icon">◷</div>
         <div class="icon">↑</div>
@@ -262,16 +481,53 @@
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>The 60-second knock TTL (spec §3.2.3) expiring is ordinary, like an unanswered doorbell. One factual line, one optional action, no urgency styling.</span></div>
       <div class="r"><span class="k">Entry points</span><span>F5.2's counter reaches zero without an ACCEPT.</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Knock again → F5.2 (a fresh knock, fresh minute). ‹ → F4, caption “Waiting: 2”.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Peer never accepts, ever:</b> this loop can repeat forever without harm — messages stay in the local outbox, nothing accumulates server-side (there is no server-side), and the app never nags either party. The calm here is a feature, not neglect.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Knock again → F5.2 (a fresh knock, fresh minute — a deliberate human tap; the app never fires one for you). ‹ → F4, caption “Waiting: 2”.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Peer never accepts, ever:</b> this loop can repeat forever without harm — messages stay in the local outbox, nothing accumulates server-side (there is no server-side), and the app never nags either party. The calm here is a feature, not neglect. After an extended unanswered stretch, the local stale-knock hint may join this state — F5.14.</span></div>
     </div>
   </section>
 
   <div class="arrow">→</div>
 
-  <!-- F5.8 EDGE -->
+  <!-- F5.14 EDGE -->
   <section class="cell edge">
-    <div class="frame-tag">F5.8 · EDGE — line drops mid-session</div>
+    <div class="frame-tag">F5.14 · EDGE — stale knock, the local hint</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span></span></div>
+      <div class="line dotted"></div>
+      <p class="line-lbl">Not on the line</p>
+      <div style="height:8px"></div>
+      <p class="cap">They didn't pick up.</p>
+      <div class="btn ghost small" style="align-self:flex-start">Knock again</div>
+      <div style="height:12px"></div>
+      <p class="cap">No answer in a while. If they lost their phone, this line can't come back — you'd pair again with a new code.</p>
+      <p class="meta">[string 16, local-only: the app cannot know WHY there's no answer — busy, away, offline, and a lost device all look identical from here. This is a local guess after an extended unanswered stretch, never server knowledge; the relay remembers nothing (spec §6.1)]</p>
+      <div style="height:8px"></div>
+      <p class="micro">Waiting — on your phone only</p>
+      <div class="msgs">
+        <div class="bubble wait">Call me when you land.</div>
+        <div class="bubble wait">No rush — tonight is fine.</div>
+      </div>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The permitted UX sugar of the device-loss doctrine (spec §6.1). A channel IS its two private keys: a lost or wiped device means this line is cryptographically dead — permanently, by design, with no resurrection path. One local hint names that possibility gently, once it's plausible.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>An extended unanswered stretch across knocks and days (client-side heuristic; nothing is consulted — nothing could be).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Knock again → F5.2, as ever. Re-pairing happens where the first pairing did: out-of-band — a new code over the same relationship the old one traveled (F2/F3); it costs one message.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span>The hint must never be phrased as knowledge — the app cannot distinguish a lost phone from a busy week, and the copy hedges with “if” on purpose. No badge, no escalation, no “last seen” (that would be a presence promise). Waiting messages keep waiting; they die only with a local wipe of this channel.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.15 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F5.15 · EDGE — line drops mid-session</div>
     <div class="frame">
       <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
       <div class="line dotted"></div>
@@ -288,6 +544,7 @@
       <p class="meta">[the unacked message holds “pending” — never a scary red badge — and resends itself when the bridge is back]</p>
       <div class="grow"></div>
       <div class="composer">
+        <div class="icon">+</div>
         <div class="field">Write…</div>
         <div class="icon">◷</div>
         <div class="icon">↑</div>
