@@ -1,5 +1,7 @@
-# build artifact: `go build ./...` drops the relay binary here
+# build artifacts: `go build ./cmd/relay` / `go build ./cmd/testclient`
+# drop these binaries here
 /relay
+/testclient
 
 # push credentials are deployment configuration, never repository content
 # (spec §4) — guard the config slots from Session 4 on
