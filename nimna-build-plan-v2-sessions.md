@@ -11,7 +11,7 @@ Nimna/
 ├── application/
 │   ├── relay/      # Go relay (AGPL-3.0, open-sourced at Session 6)
 │   └── mobile/     # Flutter app (closed source)
-├── design/         # produced by the design loop
+├── designs/         # produced by the design loop
 ├── website/        # produced by the design loop
 ├── docs/           # spec + protocol test vectors
 ├── TASKS.md  PROGRESS.md  DECISIONS.md  CLAUDE.md
