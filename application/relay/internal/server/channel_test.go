@@ -268,12 +268,17 @@ func TestRow09OfflineKnockNoTokenTotalSilence(t *testing.T) {
 }
 
 // TestRow10OfflineKnockWithTokenExactlyOnePush: peer offline + token =
-// exactly ONE dispatch per knock; the knocker still hears nothing. A
-// second valid knock is processed independently at S4 — two knocks are two
-// pushes (the 1/10 s collapse is S5).
+// exactly ONE dispatch per knock; the knocker still hears nothing. Each
+// ACCEPTED knock is evaluated independently (row 11) — the S5 collapse
+// and push windows are shrunk to a nanosecond here so this test keeps
+// pinning the registry semantics; the windows have their own tests.
 func TestRow10OfflineKnockWithTokenExactlyOnePush(t *testing.T) {
 	sender := newCountingSender()
-	url, s := newRelayServe(t, Config{Push: sender})
+	url, s := newRelayServe(t, Config{
+		Push:            sender,
+		KnockInterval:   time.Nanosecond,
+		PushMinInterval: time.Nanosecond,
+	})
 	rid := cridBytes(5)
 
 	a := dial(t, url)
@@ -387,7 +392,10 @@ func TestRow17And18SessionDataSemantics(t *testing.T) {
 // the relay TEARDOWN to the OTHER member only; both stay registered, so a
 // re-knock without re-register still forwards.
 func TestRow20TeardownNotifiesOtherOnlyRegsSurvive(t *testing.T) {
-	url, s := newRelay(t)
+	// KnockInterval shrunk: the re-knock below follows the bridging
+	// knock inside the spec window, and the collapse is not this
+	// test's subject.
+	url, s := newRelayWith(t, Config{KnockInterval: time.Nanosecond})
 	rid := cridBytes(9)
 
 	a := dial(t, url)
@@ -413,7 +421,9 @@ func TestRow20TeardownNotifiesOtherOnlyRegsSurvive(t *testing.T) {
 // TestRow21DisconnectIsImplicitTeardown: a bridge member's death sends the
 // survivor the relay TEARDOWN; the survivor's registration survives.
 func TestRow21DisconnectIsImplicitTeardown(t *testing.T) {
-	url, s := newRelay(t)
+	// KnockInterval shrunk: B's post-disconnect knock follows the
+	// bridging knock inside the spec window (collapse not under test).
+	url, s := newRelayWith(t, Config{KnockInterval: time.Nanosecond})
 	rid := cridBytes(10)
 
 	a := dial(t, url)
@@ -533,7 +543,14 @@ func TestChannelPlaneEndToEnd(t *testing.T) {
 	sink := httptest.NewServer(rec.handler())
 	t.Cleanup(sink.Close)
 
-	url, s := newRelayServe(t, Config{Push: push.NewHTTPSink(sink.URL)})
+	// The S5 collapse/push windows are shrunk to a nanosecond: steps
+	// 2–4 knock the same CRID back-to-back, and this test pins the S4
+	// flow semantics — the windows have their own tests.
+	url, s := newRelayServe(t, Config{
+		Push:            push.NewHTTPSink(sink.URL),
+		KnockInterval:   time.Nanosecond,
+		PushMinInterval: time.Nanosecond,
+	})
 	topicRID := topicBytes(0x51)
 	rid := cridBytes(0x52)
 

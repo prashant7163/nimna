@@ -12,7 +12,9 @@ note §5):
   never-existed stay structurally indistinguishable (§3.1.6). Pure
   in-memory state machine behind one plain mutex, generic over a
   comparable endpoint handle; it returns peers and the server delivers —
-  it never touches the network.
+  it never touches the network. Introspection is identifier-free counts
+  only: `Len()` and `BridgedCount()` (the `topics` / `topic_bridges`
+  metrics gauges).
 - `registry_test.go` — every transition, membership-checked unwind,
   no-tombstone re-registration, and the 24 h cap driven by a fake clock
   (no sleeping tests).

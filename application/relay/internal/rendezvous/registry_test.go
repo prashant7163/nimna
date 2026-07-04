@@ -263,3 +263,22 @@ func TestIndependentTopics(t *testing.T) {
 		t.Fatal("topic 2 must still be waiting for its bridge")
 	}
 }
+
+// TestBridgedCount: the topic_bridges gauge feed counts bridged entries
+// only, tracking bridge birth and death.
+func TestBridgedCount(t *testing.T) {
+	r := newRegistry(newFakeClock())
+	r.Register(topic(1), "A")
+	if r.BridgedCount() != 0 {
+		t.Fatal("waiting entry counted as bridged")
+	}
+	r.Register(topic(1), "B")
+	r.Register(topic(2), "C")
+	if got := r.BridgedCount(); got != 1 {
+		t.Fatalf("BridgedCount: got %d, want 1 (one bridged, one waiting)", got)
+	}
+	r.Drop(topic(1), "A")
+	if got := r.BridgedCount(); got != 0 {
+		t.Fatalf("BridgedCount after drop: got %d, want 0", got)
+	}
+}

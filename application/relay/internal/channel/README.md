@@ -21,7 +21,9 @@ architecture note §§9–10):
   this package; no logs exist here. Same shape as `internal/rendezvous`:
   one plain mutex, generic over a comparable endpoint handle, returns
   endpoints — the server delivers outside the lock. `Len()` /
-  `PendingCount()` are the only introspection: identifier-free counts.
+  `PendingCount()` / `BridgedCount()` are the only introspection:
+  identifier-free counts (the `crid_entries` / `pending_knocks` /
+  `session_bridges` metrics gauges).
 - `registry_test.go` — every row of the note §10 edge-semantics table
   (tests named `TestRowNN…` for reviewer mapping), the exact 60 s boundary
   under a fake clock (alive at 60 s−1 and at now == deadline, dead the

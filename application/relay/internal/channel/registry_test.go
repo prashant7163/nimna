@@ -633,3 +633,23 @@ func TestIndependentCRIDs(t *testing.T) {
 		t.Fatal("crid 2 must be untouched by the crid 1 unwind")
 	}
 }
+
+// TestBridgedCount: the session_bridges gauge feed counts bridged entries
+// only — teardown clears it while registrations (and Len) survive.
+func TestBridgedCount(t *testing.T) {
+	r := newRegistry(newFakeClock())
+	bridge(t, r, crid(1))
+	r.Register(crid(2), "C")
+	if got := r.BridgedCount(); got != 1 {
+		t.Fatalf("BridgedCount: got %d, want 1", got)
+	}
+	if _, ok := r.Teardown(crid(1), "A"); !ok {
+		t.Fatal("teardown failed")
+	}
+	if got := r.BridgedCount(); got != 0 {
+		t.Fatalf("BridgedCount after teardown: got %d, want 0", got)
+	}
+	if got := r.Len(); got != 2 {
+		t.Fatalf("Len after teardown: got %d, want 2 (registrations survive)", got)
+	}
+}

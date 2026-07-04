@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,6 +16,7 @@ import (
 	"time"
 
 	"nimna.app/relay/internal/ident"
+	"nimna.app/relay/internal/metrics"
 	"nimna.app/relay/internal/wire"
 )
 
@@ -104,7 +108,7 @@ func runDispatcher(t *testing.T, d *Dispatcher) {
 // 10 s per-send deadline.
 func TestDispatcherDeliversExactlyOncePerEnqueue(t *testing.T) {
 	m := newMockSender(false)
-	d := NewDispatcher(m)
+	d := NewDispatcher(m, nil, nil)
 	runDispatcher(t, d)
 
 	d.Enqueue(wire.PlatformAPNs, token(0xA1, 32))
@@ -141,7 +145,7 @@ func TestDispatcherDeliversExactlyOncePerEnqueue(t *testing.T) {
 // and nothing is ever queued beyond the fixed cap.
 func TestDispatcherOverflowDropsSilently(t *testing.T) {
 	m := newMockSender(true)
-	d := NewDispatcher(m)
+	d := NewDispatcher(m, nil, nil)
 	runDispatcher(t, d)
 
 	// One job wedges the worker on the gate...
@@ -176,7 +180,7 @@ func TestDispatcherOverflowDropsSilently(t *testing.T) {
 
 // TestDispatcherStopsOnContextCancel: Run returns when its context ends.
 func TestDispatcherStopsOnContextCancel(t *testing.T) {
-	d := NewDispatcher(newMockSender(false))
+	d := NewDispatcher(newMockSender(false), nil, nil)
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
 	go func() {
@@ -188,6 +192,182 @@ func TestDispatcherStopsOnContextCancel(t *testing.T) {
 	case <-done:
 	case <-time.After(testTimeout):
 		t.Fatal("Run did not stop on context cancel")
+	}
+}
+
+// failingSender always fails with the configured error.
+type failingSender struct {
+	mu   sync.Mutex
+	err  error
+	sent chan struct{}
+}
+
+func (f *failingSender) Send(ctx context.Context, platform wire.Platform, token ident.DeviceToken) error {
+	f.mu.Lock()
+	err := f.err
+	f.mu.Unlock()
+	f.sent <- struct{}{}
+	return err
+}
+
+func (f *failingSender) setErr(err error) {
+	f.mu.Lock()
+	f.err = err
+	f.mu.Unlock()
+}
+
+// pushCount reads one pushes_total series through the public exposition
+// (the counters are deliberately unexported).
+func pushCount(m *metrics.Metrics, outcome string) string {
+	var buf bytes.Buffer
+	metrics.Write(&buf, m, metrics.Gauges{})
+	prefix := `nimna_relay_pushes_total{outcome="` + outcome + `"} `
+	for _, line := range strings.Split(buf.String(), "\n") {
+		if strings.HasPrefix(line, prefix) {
+			return strings.TrimPrefix(line, prefix)
+		}
+	}
+	return "missing"
+}
+
+// waitFor polls cond briefly — worker-side counting is asynchronous to
+// the test goroutine.
+func waitFor(t *testing.T, cond func() bool, msg string) {
+	t.Helper()
+	for i := 0; i < 200; i++ {
+		if cond() {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatal(msg)
+}
+
+// syncBuf is a goroutine-safe log capture target: the worker goroutine
+// writes while the test reads.
+type syncBuf struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *syncBuf) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *syncBuf) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
+
+func (b *syncBuf) Reset() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.buf.Reset()
+}
+
+// TestDispatcherCountsOutcomes: failed attempts are metered, and each
+// failure logs ONE fixed-field Warn line carrying platform and HTTP
+// status only — no token bytes, no error rendering (note §19).
+func TestDispatcherCountsOutcomes(t *testing.T) {
+	mtr := metrics.New()
+	logBuf := &syncBuf{}
+	logger := slog.New(slog.NewTextHandler(logBuf, nil))
+
+	fail := &failingSender{err: &StatusError{Code: 500}, sent: make(chan struct{}, 8)}
+	d := NewDispatcher(fail, mtr, logger)
+	runDispatcher(t, d)
+
+	d.Enqueue(wire.PlatformAPNs, token(0xC3, 32))
+	select {
+	case <-fail.sent:
+	case <-time.After(testTimeout):
+		t.Fatal("no send attempt")
+	}
+	waitFor(t, func() bool { return pushCount(mtr, "failed") == "1" },
+		"failed counter never reached 1")
+	waitFor(t, func() bool { return strings.Contains(logBuf.String(), "push transport failure") },
+		"failure log line never appeared")
+
+	out := logBuf.String()
+	if !strings.Contains(out, "push transport failure") ||
+		!strings.Contains(out, "platform=apns") || !strings.Contains(out, "status=500") {
+		t.Fatalf("failure log missing fixed fields: %q", out)
+	}
+	tokenHex := strings.Repeat("c3", 32)
+	if strings.Contains(strings.ToLower(out), tokenHex) {
+		t.Fatal("failure log leaks token bytes")
+	}
+	if strings.Contains(out, "transport status") {
+		t.Fatalf("failure log carries the error rendering, not fixed fields: %q", out)
+	}
+
+	// A non-status transport error (dial-failure class) logs status=0
+	// and never its own text.
+	logBuf.Reset()
+	fail.setErr(context.DeadlineExceeded)
+	d.Enqueue(wire.PlatformFCM, token(0x11, 4))
+	select {
+	case <-fail.sent:
+	case <-time.After(testTimeout):
+		t.Fatal("no second send attempt")
+	}
+	waitFor(t, func() bool { return pushCount(mtr, "failed") == "2" },
+		"failed counter never reached 2")
+	waitFor(t, func() bool { return strings.Contains(logBuf.String(), "platform=fcm") },
+		"second failure log line never appeared")
+	out = logBuf.String()
+	if !strings.Contains(out, "platform=fcm") || !strings.Contains(out, "status=0") {
+		t.Fatalf("non-status failure log missing fixed fields: %q", out)
+	}
+	if strings.Contains(out, "deadline exceeded") {
+		t.Fatalf("failure log leaks the error's own rendering: %q", out)
+	}
+}
+
+// TestDispatcherCountsSentAndDropped: a successful attempt counts sent;
+// queue overflow counts dropped at Enqueue time.
+func TestDispatcherCountsSentAndDropped(t *testing.T) {
+	mtr := metrics.New()
+	m := newMockSender(true)
+	d := NewDispatcher(m, mtr, nil)
+	runDispatcher(t, d)
+
+	d.Enqueue(wire.PlatformAPNs, token(0x01, 4)) // wedges the worker
+	// Wait until the worker holds the wedged job (queue drained) so the
+	// flood below deterministically fills all queueCap slots.
+	waitFor(t, func() bool { return len(d.queue) == 0 },
+		"worker never picked up the wedge job")
+	for i := 0; i < queueCap+3; i++ {
+		d.Enqueue(wire.PlatformAPNs, token(0x02, 4))
+	}
+	waitFor(t, func() bool { return pushCount(mtr, "dropped") == "3" },
+		"dropped counter never reached 3")
+	close(m.gate)
+	m.waitSends(t, 1+queueCap)
+	want := fmt.Sprintf("%d", 1+queueCap)
+	waitFor(t, func() bool { return pushCount(mtr, "sent") == want },
+		"sent counter never reached 1+queueCap")
+}
+
+// TestHTTPSinkStatusError: a non-2xx sink response surfaces as
+// *StatusError carrying the code and nothing else — the only push error
+// detail the operational log may ever carry.
+func TestHTTPSinkStatusError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(ts.Close)
+
+	err := NewHTTPSink(ts.URL).Send(context.Background(), wire.PlatformAPNs, token(0x01, 4))
+	var se *StatusError
+	if !errors.As(err, &se) || se.Code != 500 {
+		t.Fatalf("Send: got %v, want *StatusError{500}", err)
+	}
+	if s := se.Error(); strings.Contains(s, ts.URL) {
+		t.Fatal("StatusError must not carry the URL")
 	}
 }
 

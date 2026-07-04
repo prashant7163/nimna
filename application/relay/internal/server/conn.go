@@ -3,10 +3,13 @@ package server
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 
 	"nimna.app/relay/internal/ident"
+	"nimna.app/relay/internal/limits"
+	"nimna.app/relay/internal/metrics"
 	"nimna.app/relay/internal/rendezvous"
 	"nimna.app/relay/internal/wire"
 )
@@ -21,10 +24,24 @@ type conn struct {
 	srv *Server
 	ws  *websocket.Conn
 
-	// remote is held as an unloggable wrapper from the accept boundary
-	// on (logging doctrine). Session 5's per-IP limits key on it; it has
-	// no other purpose and no way back to the raw address.
+	// tc is the limit listener's tracked conn (nil on the Handler-only
+	// test path): its liveness clock ticks under this connection's
+	// reads, and its idle flag attributes idle-reap closes.
+	tc *limits.Conn
+
+	// remote is the canonicalized per-IP key, held as an unloggable
+	// wrapper from the accept boundary on (logging doctrine). The
+	// per-IP limits key on it; it has no other purpose and no way back
+	// to the raw address.
 	remote ident.RemoteAddr
+
+	// seq is the opaque process-local id for debug tracing (§19) —
+	// never an identifier, resets every process.
+	seq uint64
+
+	// bucket paces reads: one token per WebSocket message (§15/§16 —
+	// backpressure, never an error).
+	bucket *limits.Bucket
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -44,20 +61,56 @@ type conn struct {
 
 // readLoop reads, parses, and routes frames until the connection dies.
 // Every exit path is a silent teardown: malformed traffic, read errors,
-// and context cancellation all look identical from the outside.
+// pacing, and context cancellation all look identical from the outside.
+// A panic anywhere on the read path is scrubbed (§19: site + type only)
+// and unwinds the connection like any other read-side death.
 func (c *conn) readLoop() {
-	defer c.teardown()
+	defer func() {
+		if v := recover(); v != nil {
+			c.srv.scrubPanic(metrics.SiteRead, v)
+		}
+		// Backstop class; explicit teardown calls on the paths below
+		// won the sync.Once first where they ran.
+		c.teardown(metrics.CloseReadError)
+	}()
 	for {
-		data, ok := readFrame(c.ctx, c.ws)
-		if !ok {
+		// Frame-rate pacing (§16): wait for a token BEFORE reading the
+		// next message — zero outcome bytes; the sender experiences
+		// throughput, never an error.
+		if wait := c.bucket.Reserve(); wait > 0 {
+			c.srv.m.Trip(metrics.LimitFrameRate)
+			c.srv.trace("frame rate pacing", c, "wait", wait)
+			t := time.NewTimer(wait)
+			select {
+			case <-c.ctx.Done():
+				t.Stop()
+				c.teardown(metrics.CloseReadError)
+				return
+			case <-t.C:
+			}
+		}
+		data, res := readFrame(c.ctx, c.ws, c.srv.cfg.MaxFrame)
+		switch res {
+		case readOK:
+		case readOversize:
+			c.srv.m.Trip(metrics.LimitFrameSize)
+			c.teardown(metrics.CloseOversize)
+			return
+		case readNonBinary:
+			c.teardown(metrics.CloseStructural)
+			return
+		default: // readErrClosed: peer death, idle reap, or shutdown
+			c.teardown(metrics.CloseReadError)
 			return
 		}
 		f, err := wire.Parse(data)
 		if err != nil {
 			// Structurally malformed (short frame, bad version,
 			// unknown type): close, explain nothing.
+			c.teardown(metrics.CloseStructural)
 			return
 		}
+		c.srv.trace("frame", c, "type", uint8(f.Type))
 		c.route(f, data)
 	}
 }
@@ -74,15 +127,22 @@ func (c *conn) route(f wire.Frame, raw []byte) {
 }
 
 // writeLoop is the connection's single writer: it alone drains sendCh
-// into the socket. A write error tears the connection down.
+// into the socket. A write error tears the connection down; a panic is
+// scrubbed (§19) and does the same.
 func (c *conn) writeLoop() {
+	defer func() {
+		if v := recover(); v != nil {
+			c.srv.scrubPanic(metrics.SiteWrite, v)
+			c.teardown(metrics.CloseWriteError)
+		}
+	}()
 	for {
 		select {
 		case <-c.ctx.Done():
 			return
 		case frame := <-c.sendCh:
 			if err := c.ws.Write(c.ctx, websocket.MessageBinary, frame); err != nil {
-				c.teardown()
+				c.teardown(metrics.CloseWriteError)
 				return
 			}
 		}
@@ -100,7 +160,7 @@ func (c *conn) send(frame []byte) {
 	select {
 	case c.sendCh <- frame:
 	default:
-		c.teardown()
+		c.teardown(metrics.CloseSendOverflow)
 	}
 }
 
@@ -129,23 +189,67 @@ func (c *conn) addCRID(id ident.CRID) bool {
 	return c.ctx.Err() == nil
 }
 
+// atRegCap reports whether adding one more registration on the given
+// plane's set would exceed the per-conn/per-plane cap (§14, default 256).
+// An identifier already held is never capped: re-registration stays the
+// idempotent no-op it always was. The over-cap outcome is a silent drop —
+// registration has no ack, so the drop is byte-identical to acceptance
+// (§16).
+func (c *conn) topicAtCap(t ident.Topic) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, held := c.topics[t]; held {
+		return false
+	}
+	return len(c.topics) >= c.srv.cfg.MaxRegsPerConn
+}
+
+func (c *conn) cridAtCap(id ident.CRID) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, held := c.crids[id]; held {
+		return false
+	}
+	return len(c.crids) >= c.srv.cfg.MaxRegsPerConn
+}
+
 // teardown ends the connection exactly once, from whichever path gets
-// there first: read error, malformed frame, write error, delivery
-// overflow, or server shutdown. It unwinds BOTH planes' registrations:
-// a bridged topic dies whole with this end, and its survivor gets no
-// signal because §5.4 defines none for topics (clients detect via their
-// own handshake timeout, fail-closed per §3.1.6); on the CRID plane,
-// disconnection is an implicit TEARDOWN (§5.4) — a bridge survivor is
-// notified with the relay-built TEARDOWN frame, a pending knock from this
-// connection dies silently, and each CRID entry dies when its last
-// registration leaves. The socket closes with a bare CloseNow. Relay code
-// never sends a close frame carrying reason text or a
-// Nimna-state-dependent status; the only close frames with text are the
-// WebSocket library's own RFC 6455 transport-compliance closes (1002),
-// whose bytes are a fixed function of the sender's malformed transport
-// input and carry no Nimna identifier or state (architecture note §5.1).
-func (c *conn) teardown() {
+// there first: read error, malformed frame, oversize, write error,
+// delivery overflow, idle reap, or server shutdown. The class parameter
+// only attributes the close in the aggregate metrics — on the wire every
+// teardown is identical. It unwinds BOTH planes' registrations: a bridged
+// topic dies whole with this end, and its survivor gets no signal because
+// §5.4 defines none for topics (clients detect via their own handshake
+// timeout, fail-closed per §3.1.6); on the CRID plane, disconnection is
+// an implicit TEARDOWN (§5.4) — a bridge survivor is notified with the
+// relay-built TEARDOWN frame, a pending knock from this connection dies
+// silently, and each CRID entry dies when its last registration leaves.
+// The socket closes with a bare CloseNow. Relay code never sends a close
+// frame carrying reason text or a Nimna-state-dependent status; the only
+// close frames with text are the WebSocket library's own RFC 6455
+// transport-compliance closes (1002), whose bytes are a fixed function of
+// the sender's malformed transport input and carry no Nimna identifier or
+// state (architecture note §5.1).
+func (c *conn) teardown(class metrics.CloseClass) {
 	c.once.Do(func() {
+		// Metrics attribution refinements, invisible on the wire: a
+		// read error on a connection the liveness janitor flagged is an
+		// idle close; a read error whose conn context is ALREADY done
+		// is a shutdown close. The shutdown check is race-free: at this
+		// point c.cancel() has not yet run (it is called just below,
+		// inside this same once), so c.ctx.Err() is non-nil only when a
+		// parent was cancelled — and for a hijacked WebSocket conn the
+		// only parent is Serve's context, i.e. server shutdown.
+		if class == metrics.CloseReadError {
+			switch {
+			case c.tc != nil && c.tc.IdleClosed():
+				class = metrics.CloseIdle
+			case c.ctx.Err() != nil:
+				class = metrics.CloseShutdown
+			}
+		}
+		c.srv.m.Close(class)
+
 		c.cancel()
 
 		c.mu.Lock()
@@ -166,6 +270,7 @@ func (c *conn) teardown() {
 				// Implicit TEARDOWN to the bridge survivor (§3.3:
 				// the relay "notifies the peer"); freshly built,
 				// empty payload.
+				c.srv.m.TeardownImplicit()
 				survivor.send(wire.Encode(wire.Teardown, id.WireBytes(), nil))
 			}
 		}
@@ -176,11 +281,25 @@ func (c *conn) teardown() {
 
 // handleRegisterTopic implements REGISTER_TOPIC (0x01). Registration
 // always succeeds silently (spec §3.1.6) — there is no ack frame, so
-// waiting, bridging-the-peer, and being ignored are indistinguishable to
-// the sender. The relay routes on the 18-byte header alone (spec §5.4)
-// and never inspects the payload.
+// waiting, bridging-the-peer, being throttled, being capped, and being
+// ignored are all indistinguishable to the sender. The relay routes on
+// the 18-byte header alone (spec §5.4) and never inspects the payload.
+//
+// Two silent limits gate it (§16): the per-IP rendezvous window (counting
+// REGISTER_TOPIC frames only — the throttle impedes code brute-forcing)
+// and the per-conn registration cap.
 func handleRegisterTopic(c *conn, f wire.Frame, _ []byte) {
+	if !c.srv.rdvz.Allow(c.remote) {
+		c.srv.m.Trip(metrics.LimitRendezvous)
+		c.srv.trace("rendezvous throttled", c)
+		return
+	}
 	topic := ident.TopicFromWire(f.RoutingID)
+	if c.topicAtCap(topic) {
+		c.srv.m.Trip(metrics.LimitRegCap)
+		c.srv.trace("registration cap", c, "plane", "topic")
+		return
+	}
 	peer, outcome := c.srv.topics.Register(topic, c)
 	if outcome == rendezvous.Ignored {
 		return
@@ -209,6 +328,7 @@ func handleRegisterTopic(c *conn, f wire.Frame, _ []byte) {
 func handlePairData(c *conn, f wire.Frame, raw []byte) {
 	topic := ident.TopicFromWire(f.RoutingID)
 	if to, ok := c.srv.topics.Forward(topic, c); ok {
+		c.srv.m.Forwarded(metrics.PlanePair)
 		to.send(raw)
 	}
 }

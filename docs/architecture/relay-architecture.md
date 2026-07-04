@@ -1,11 +1,13 @@
 # Relay architecture note — Sessions 3–6
 
 **Author:** tech-architect · **Date:** 2026-07-04 (Session 3 intake;
-§§9–13 added 2026-07-04 15:45 +0200 at Session 4 intake) ·
+§§9–13 added 2026-07-04 15:45 +0200 at Session 4 intake; §§14–23 added
+2026-07-04 17:09 +0200 at Session 5 intake) ·
 **Binding for:** `application/relay/` implementation, Sessions 3–6.
 **Sources:** spec `docs/nimna-protocol-spec-v0.2.md` (§3.1.2, §3.1.6,
 §3.2, §3.2.1, §3.3, §3.3.1, §3.4, §4, §5.4–§5.7),
-`docs/crypto-evaluation.md` §10–§12, DECISIONS.md S2/S3 entries.
+`docs/crypto-evaluation.md` §10–§12, DECISIONS.md S2/S3/S4 entries, the
+work-loop LOGGING & OBSERVABILITY DOCTRINE.
 All decisions here are CODE decisions unless marked otherwise.
 
 ## 1. Dependencies (network-dep sign-off)
@@ -573,3 +575,399 @@ once every client connection closes, and that the mock saw exactly one
 call per eligible knock. **No network introspection surface exists** —
 nothing is added to the relay binary for this (S5's metrics endpoint
 will expose the same counts as aggregate gauges; nothing lands early).
+
+---
+
+# Session 5 addendum — hardening, rate limits & observability
+
+Added 2026-07-04 17:09 +0200 (Session 5 intake). §§1–13 stand unchanged
+and govern everything below. §12's one deferred choice (read/idle
+deadline mechanism) is resolved in §17; §1's deferred x/crypto CI
+assertion and §4's deferred log-scrub assertion land in §20. Nothing
+here touches the wire: **S5 adds no frame types and no response
+surfaces** — the byte-level §5.4 surface is exactly what S3/S4 shipped.
+
+## 14. S5 scope fence & config surface
+
+**S5 implements:** `internal/limits` (every spec §4 limit class as
+config with defaults), the liveness listener (§17), `internal/metrics`
++ the ops listener (§18), the operational-log/tracing/panic discipline
+(§19), both CI assertions (§20), `cmd/soak` (§21), and the shutdown
+delta (§22). **Not S5 (S6 per plan):** TLS, real APNs/FCM transports,
+`/healthz`, deploy, `config.example`.
+
+Config follows `cmd/relay`'s existing pattern exactly: a flag whose
+default is seeded from a `NIMNA_RELAY_*` env var; flag wins. Every
+value below is a CODE-pinned boring default; spec-named numbers are
+spec-verbatim. Durations use Go duration syntax.
+
+| Limit / knob | Flag · env (`NIMNA_RELAY_`) | Default | Rationale (one line) |
+|---|---|---|---|
+| Per-IP connection cap | `-max-conns-per-ip` · `MAX_CONNS_PER_IP` | 64 | Generous for CGNAT households sharing one v4 address; tiny against single-VPS capacity |
+| Per-conn frame rate | `-frame-rate` · `FRAME_RATE` | 50 /s | Sustained 50 frames/s is far beyond any legitimate 1:1 session, small against the CPU budget |
+| Per-conn frame burst | `-frame-burst` · `FRAME_BURST` | 100 | Burst covers a full 5 MB attachment (80 MEDIA_CHUNK frames) plus session chatter in one gulp |
+| Max frame size | `-max-frame` · `MAX_FRAME` | 131072 | Spec §4 default 128 KiB: a MEDIA_CHUNK (64 KiB plaintext + envelope + AEAD tag + 18-byte header) fits with room, while attachment ambitions stay bounded |
+| Rendezvous throttle (per IP) | `-rendezvous-per-min` · `RENDEZVOUS_PER_MIN` | 6 | Spec says "single-digit attempts per minute"; a joiner costs 2 registrations (today+yesterday probe), so 6 = three code entries a minute — typo-friendly, brute-force-hostile |
+| Registrations per conn, per plane | `-max-regs-per-conn` · `MAX_REGS_PER_CONN` | 256 | The §10-flagged candidate, now decided: hundreds of held lines per device is beyond the product's design; 256 keeps worst-case per-conn registry cost trivial |
+| Knock collapse window | `-knock-interval` · `KNOCK_INTERVAL` | 10s | Spec §4, verbatim |
+| Push min interval (per CRID) | `-push-min-interval` · `PUSH_MIN_INTERVAL` | 60s | Spec §4, verbatim |
+| Push per hour (per CRID) | `-push-per-hour` · `PUSH_PER_HOUR` | 6 | Spec §4, verbatim |
+| Push per day (per CRID) | `-push-per-day` · `PUSH_PER_DAY` | 20 | Spec §4, verbatim |
+| Push hour window | `-push-hour-window` · `PUSH_HOUR_WINDOW` | 1h | Acceleration knob for soak/CI runs (the closing sentence below, made concrete); production leaves the spec's hour |
+| Push day window | `-push-day-window` · `PUSH_DAY_WINDOW` | 24h | Acceleration knob for soak/CI runs (the closing sentence below, made concrete); production leaves the spec's day |
+| Idle deadline | `-idle-timeout` · `IDLE_TIMEOUT` | 90s | Three missed 30 s client ping intervals — §3.3's own missed-ping heuristic, relay-side |
+| Metrics listener | `-metrics-listen` · `METRICS_LISTEN` | 127.0.0.1:9441 | §18; empty string disables |
+| Debug tracing | `-debug-trace` · `DEBUG_TRACE` | off | §19; never in production |
+
+The spec marks the knock/push numbers "relay defaults, tunable config"
+— tests and the soak tool accelerate by shrinking the windows via
+config; the defaults stay spec. The per-CRID rate-table hard cap
+(65,536, §15) is a pinned constant, not a knob — the knob count stays
+small and the cap is a memory guard, unreachable in legitimate use.
+
+## 15. `internal/limits` — counters, windows, cardinality
+
+**Mechanism choices (simplest thing that honors spec wording):**
+
+- **Frame rate: hand-rolled token bucket** (~15 lines: `tokens =
+  min(burst, tokens + elapsed·rate)`; wait if < 1; spend 1). This is
+  rate arithmetic, not crypto — no `x/time/rate` dep for a fmt-sized
+  loop. Charged **one token per WebSocket message read, before parse**
+  — uniform and content-blind across both planes. Injectable clock,
+  like the registries.
+- **Rendezvous throttle: fixed 60 s window counter per IP**, counting
+  `REGISTER_TOPIC` frames only — the throttle exists to impede code
+  brute-forcing (spec §4); `REGISTER_CRID` is not a guessing surface
+  (128-bit identifiers) and is bounded by the frame-rate and
+  registration caps instead.
+- **Knock collapse: last-accepted-knock timestamp per CRID.** A knock
+  inside the window is dropped **before any state change** (§16);
+  drops do not refresh the timestamp — the window anchors on accepted
+  knocks, honoring "1 per 10 s".
+- **Push caps: min-interval timestamp + fixed hour/day window
+  counters per CRID.** Fixed windows over sliding: simplest reading of
+  "per 60s / per hour / per day", and the 60 s floor already bounds
+  any window-boundary burst.
+
+**Tables (all in `internal/limits`, all in-memory, all reset on
+restart):** `{ip-key → live-conn count}` (event-driven; entry deleted
+at zero), `{ip-key → rendezvous window}` (lazy expiry + janitor
+sweep), and **one** per-CRID rate table `{CRID → {lastKnock, lastPush,
+hourWin/hourCount, dayWin/dayCount}}`.
+
+**Per-IP key, canonicalized in `internal/ident`:** `RemoteAddrFrom`
+now canonicalizes at the accept boundary — port stripped; **IPv4 = the
+exact address; IPv6 = the /64 prefix** (stdlib `net/netip`) — because
+a single v6 host owns a /64, and exact-address v6 keying would be a
+free cap bypass. The doc-comment updates; the type keeps its redaction
+surfaces and gains no raw accessor: the canonical key is the only
+address form held anywhere, and it never round-trips to a dialable
+address.
+
+**Why the per-CRID rate state does NOT live on the channel entry:** a
+§10 entry exists iff its registration set is non-empty and dies with
+its last connection — a counter riding the entry resets on reconnect
+churn and structurally cannot honor a 20/day cap. The rate table is
+therefore its own map, keyed by `ident.CRID` (comparable, unloggable),
+holding counters and timestamps only — no connection references, no
+tokens, nothing about any user.
+
+**Cardinality stays bounded and stateless:** entries are evicted when
+idle longer than 24 h (the longest window), swept by a 60 s janitor
+tick; a hard cap of 65,536 entries (~4 MB worst case) backstops
+abuse. **At cap: fail-open on the forward, fail-closed on the push** —
+an untracked knock still forwards (harmless; bounded by frame-rate and
+per-IP caps) but a dispatch that cannot be counted is silently refused
+(filling the table must never mint pushes at the platform, the scarce
+external resource). Cap trips are metered (§18).
+
+**§4 inventory reading, pinned:** spec §4's own table list names "the
+rate/push counters below" as one of the in-memory tables. Every S5
+table above IS that named class — in-memory, user-anonymous, reset on
+restart, dies with the process. Nothing enters the at-rest inventory;
+its three-item reading (memory tables, TLS certs, push-credential
+config) is unchanged.
+
+## 16. Enforcement semantics — the silence adjudication
+
+The generating rule, extending §9's: **an S5 limit outcome may be
+observable (a refused accept, a close) only when it is a pure function
+of the offender's own transport behavior — its IP's live-connection
+count, its own frames' sizes and timing. Any limit keyed on state
+other principals can reach (the per-CRID knock/push windows, where
+another connection's knock opens the window) MUST be
+indistinguishable-silent**, because an observable outcome would let
+one end probe the other's activity. §5.1's sentence — every rate-limit
+outcome is byte-identical silence or bare `CloseNow` — is satisfied
+throughout; two rows below produce zero outcome bytes at all, the
+strongest form.
+
+| Limit | Outcome | Admissibility |
+|---|---|---|
+| Per-IP conn cap | **Refused at accept: immediate TCP close from the limit listener, zero bytes written** | Pre-Nimna, pre-HTTP; function of the connecting IP's own live-conn count only; see adjudication below |
+| Frame rate | **Backpressure**: the read loop waits for a token before reading the next message — no drop, no close, zero outcome bytes; the sender experiences throughput, never an error | Dropping data frames would break the per-message rekey chain invisibly for legitimate bursts; closing would kill a legitimate 5 MB media send; TCP backpressure shapes with zero state and zero surface |
+| Max frame size | Bare `CloseNow` (S3's existing structural close, now reading the configured bound) | Pure function of the received bytes; state-independent |
+| Rendezvous throttle | Silent drop of the registration | Registration has no ack (§3.1.6): a throttled `REGISTER_TOPIC` is byte-identical to an accepted one — the prober cannot even tell which probes counted |
+| Registration cap | Silent drop of the registration | Same ack-less identity; deliver-on-register simply does not fire for a dropped `REGISTER_CRID` |
+| Knock collapse | Silent drop **before any state change**: no forward, no push, no pending overwrite, no deadline refresh; any token discarded unused | Spec-verbatim "duplicates inside the window dropped silently — retries collapse, no error"; keyed on shared per-CRID state, so it must be silent |
+| Push caps (60 s / hr / day) | The knock is processed normally — pending set, forward logic untouched; **only the dispatch is suppressed**, silently | Spec caps "platform-push forwarding", not knocks; keyed on shared per-CRID state, so it must be silent |
+| Rate-table cap | Forward fail-open, push fail-closed (§15) | Both arms silent; the observable world is identical to the un-capped path minus the platform call |
+| Idle deadline | Bare `CloseNow` from the liveness janitor (§17) | Pure function of the connection's own inbound-byte timing |
+
+**Accept-time refusal, adjudicated:** it is **not** inside §5.1's
+transport carve-out — that class is library/stdlib-emitted, and this
+is relay code deciding. It is a separately-stated class with its own
+test: the refusal happens at the TCP accept boundary, **before** the
+WebSocket (and, at S6, TLS) layer exists, writes zero bytes, and
+depends on nothing but the transport-layer count of live connections
+from that IP key. An over-cap client experiences connection loss
+indistinguishable from network failure. HTTP 429 was considered and
+rejected: it spends HTTP parsing on exactly the traffic the cap exists
+to shed, and it adds a fingerprintable response surface where zero
+bytes is available. Residual observability accepted: a CGNAT neighbor
+can infer its shared IP's aggregate connection count — transport-layer
+information about its own address bucket, carrying zero Nimna-layer
+content.
+
+**Invariant sentence for code comments:** "An over-cap connect is
+closed at the TCP accept boundary with zero bytes written; the refusal
+is a pure function of the connecting IP key's own live-connection
+count and of no Nimna registry state — an over-cap client experiences
+only connection loss, byte-identical against an empty relay and a
+loaded one."
+
+**Covering test:** drive an IP to cap against an empty relay and
+against one holding registered topics, bridged pairs, and pending
+knocks; assert the over-cap connect sees a connection close with zero
+bytes received in both worlds, and that under-cap connects are
+unaffected.
+
+## 17. Liveness — §12's deferred choice, resolved
+
+**Decision: the transport-level wrapper.** `internal/limits` provides
+a `net.Listener` wrapper (the **limit listener**) that wraps the raw
+TCP listener and is the single home for all transport-boundary
+enforcement:
+
+- **Per-IP accounting:** increment on accept, decrement on close;
+  at-cap connections are closed immediately in accept with zero bytes
+  (§16).
+- **Liveness clock:** each wrapped conn bumps an atomic
+  last-inbound-byte timestamp in `Read`. **WS pings are inbound bytes,
+  so pings count as liveness structurally** — the §12 constraint is
+  satisfied without a ping callback the library doesn't offer.
+- **Liveness janitor:** a 30 s tick closes conns whose last inbound
+  activity is older than the idle deadline (default 90 s = three
+  missed 30 s ping intervals, mirroring §3.3's client-side heuristic).
+  The close surfaces as a read error in the WS loop → the normal
+  `sync.Once` teardown unwinds both planes' registrations. Reap lands
+  between 90 and 120 s.
+
+**Rejected: TCP keepalive + write-path failure alone.** OS keepalive
+only detects peers whose stack is dead or unreachable — a hung app on
+a live OS ACKs probes forever and would hold registrations until some
+write happens to fail; and keepalive timing is opaque and
+platform-dependent, so the reap bound would be unauditable. Stdlib TCP
+keepalive stays **enabled with Go defaults as an OS-level backstop**
+for the write path; the wrapper deadline is the enforced bound.
+
+**S6 ordering, pinned now:** raw TCP → limit listener → `tls.NewListener`
+→ HTTP. Over-cap abusers cost zero TLS handshakes, and the liveness
+clock counts ciphertext bytes — correct, since liveness is a
+transport-level property.
+
+**Accepted residue (slowloris):** a client trickling bytes forever
+stays "live" by this metric. It holds one bounded read buffer and one
+slot inside its IP's cap, with zero amplification; no per-frame read
+deadline is invented for it.
+
+## 18. `internal/metrics` — identifier-free aggregates
+
+**Shape:** a `Metrics` struct of `sync/atomic` counters incremented at
+event sites, plus a scrape-time collector that reads the registries'
+identifier-free counts and `runtime` stats. No background aggregation
+goroutine. The registries gain `BridgedCount()` (rendezvous and
+channel) beside the existing `Len()`/`PendingCount()` — same
+identifier-free class; the S4 integration test's counts and the
+metrics gauges are the same numbers.
+
+**Exposition: hand-rolled Prometheus text format** (version 0.0.4:
+`# TYPE` lines, `_total` counter suffix, gauges plain) — chosen over
+JSON because every ops agent scrapes it natively and it hand-writes as
+a ~30-line `fmt.Fprintf` loop; `prometheus/client_golang` is a
+dependency tree for that same loop and is not taken.
+
+**Where it listens: a separate ops listener**, default
+`127.0.0.1:9441` (`-metrics-listen`; empty disables), serving `GET
+/metrics`; everything else 404s. Chosen over a path on the main mux so
+the public port speaks exactly one thing — WebSocket upgrade or
+upgrade failure — keeping the minimal-surface claim auditable by port,
+and so metrics stay operator-eyes-only by default (aggregate counts
+still carry timing information; the operator already owns process
+memory, so localhost exposition adds nothing to the threat model).
+Plain HTTP, `ReadHeaderTimeout` set, no TLS (localhost; remote access
+is the operator's tunnel/firewall problem). **S6's `/healthz` lands on
+this same listener** — seam noted, nothing built early.
+
+**Inventory (pinned):** prefix `nimna_relay_`; label values are fixed
+compile-time enumerations only (`plane`, `limit`, `class`, `outcome`,
+`site`) — never free-form, so every series' cardinality is fixed at
+build time and **no identifier can ever be a label by construction**.
+
+- Gauges: `connections`, `topics`, `topic_bridges`, `crid_entries`,
+  `pending_knocks`, `session_bridges`, `rate_entries` (per-CRID rate
+  table size), `goroutines`, `heap_alloc_bytes`, `heap_sys_bytes`.
+- Counters: `connections_total`,
+  `frames_forwarded_total{plane="pair|session"}`,
+  `knocks_forwarded_total`,
+  `pushes_total{outcome="sent|failed|dropped|refused"}` (attempted =
+  the sum across outcomes, not a separate series),
+  `limit_trips_total{limit="conn_ip|frame_rate|frame_size|rendezvous|
+  reg_cap|knock_collapse|push_min|push_hour|push_day|rate_table_cap|
+  idle"}` (collapsed knocks are `knock_collapse` trips — no duplicate
+  series),
+  `closes_total{class="structural|oversize|idle|read_error|
+  write_error|send_overflow|shutdown"}`,
+  `teardowns_total{cause="explicit|implicit"}`,
+  `panics_total{site="read|write|janitor|push|http"}`.
+
+The developer may add series within these constraints (identifier-free,
+fixed enumerations, `nimna_relay_` prefix); nothing may be removed.
+
+## 19. Operational log, debug tracing, panic scrub
+
+**"Structured errors", interpretation pinned:** the build-plan phrase
+means **internal `slog` records with structured attrs — never a wire
+surface**. The wire has no error surface at all (silence doctrine);
+nothing in S5 changes that. The operational log's exhaustive scope:
+process lifecycle (start/stop, listen addresses), config summary at
+boot (limit values and listener addresses — never credentials, never
+paths' contents), TLS events (S6), panic recoveries (below), and push
+transport status — a fixed-field Warn line carrying **platform and
+HTTP status code only** (no token, no CRID; the S4 "errors discarded"
+note upgrades to: metrics always count, the log sees status codes
+only). Default level Info, text handler, stderr — as shipped.
+
+**Debug tracing:** `-debug-trace` raises the level to Debug and
+enables per-connection event tracing — conn open/close keyed by an
+opaque process-local sequence number, frame types routed, limit
+decisions. Identifiers pass through `ident` types everywhere, so even
+debug output is structurally identifier-free — but the flag is still
+documented **never-in-production** (flag help text + relay README),
+and both configs are visible in the open repo so the claim is
+auditable. The CI scrub (§20) asserts against production config, per
+the doctrine's letter.
+
+**Panic recover-and-scrub — placement:** a recover wrapper at the top
+of every long-lived goroutine the relay owns: per-conn read loop,
+per-conn writer, both registry janitors, the liveness janitor, the
+push worker, and the WS HTTP handler (net/http's own recovery prints
+via an ErrorLog we already discard, and hijacked WS goroutines are
+ours regardless). **"Scrub" means concretely:** the recovery logs a
+fixed line — component site and the panic value's Go type (`%T`) only
+— **never the value's rendering and never a stack trace at production
+level**. The `ident` types redact themselves, but a panic value or Go
+register-ABI stack arguments can carry raw bytes from *any* type; the
+scrub rule assumes nothing about what panicked. It increments
+`panics_total{site}`, then tears down the connection (conn-scoped
+sites) or restarts the loop (janitors, push worker). Debug config may
+additionally log the stack. `GOTRACEBACK` stays default: an escaped
+runtime-level crash should dump for the operator — the recover net
+exists precisely so identifier-bearing dumps never happen in steady
+state, and muting real crashes would trade auditability for nothing.
+
+## 20. CI assertions (relay workflow)
+
+**(1) Log-scrub — a Go test, `cmd/relay/logscrub_test.go`.** Chosen
+over a shell script: portable, race-managed process control, and it
+runs under the exact `go test ./...` step CI already executes — no new
+step to forget. Shape: build the real relay binary into `t.TempDir()`
+(`go build -o`), start it in **production config** (no debug flag;
+short limit windows via config to reach every limit path fast;
+`-push-sink` at a local test server that returns one 500 so the
+transport-status log line fires), capture **all** stdout+stderr; drive
+identifier-bearing traffic over real WebSockets — known-byte topics
+registered/bridged/`PAIR_DATA`'d, known-byte CRIDs
+registered/knocked-with-known-token/accepted/`SESSION_DATA`'d/torn
+down, malformed frames (close path), and every limit tripped (per-IP
+cap, frame rate, oversize, rendezvous throttle, reg cap, collapse,
+push caps, idle) — then SIGTERM for the shutdown lines. Assert over
+the entire output: **zero occurrences of every known identifier** in
+lower/upper hex, std/URL base64 (padded and raw), and raw-byte form;
+zero occurrences of the client IP and port; plus coarse sweeps (any
+≥ 32-char hex run; any dotted-quad other than the configured listen
+addresses). Not skipped under `-short` (seconds-fast; no Argon2 —
+the relay never derives).
+
+**(2) x/crypto-free import graph — an explicit named step in
+`.github/workflows/relay.yml`**, after build:
+`test "$(go list -deps ./cmd/relay | grep -c '^golang.org/x/crypto')" -eq 0`
+— the ANCHORED form pinned in S3 PROGRESS (an unanchored grep
+false-positives on Go's stdlib-vendored `vendor/golang.org/x/crypto`
+TLS paths, present in any HTTP binary). A visible workflow step, not a
+buried test, so the public repo shows the assertion on its face.
+
+## 21. Soak & abuse driver — `cmd/soak`
+
+**Location: a third main package, `cmd/soak`**, beside
+`relay`/`testclient`. Chosen over a shell script (a Go tool holds
+thousands of connections and controls churn deterministically) and
+over anything inside the relay: a separate binary leaves `cmd/relay`'s
+size and import graph untouched (`coder/websocket` + stdlib only — no
+x/crypto growth, no new deps). As a committed session deliverable it
+lives in the module under the same gofmt/vet/test CI, per repo
+conventions (`temp/` is for throwaway scripts; this is not one).
+
+**Drives:** connection churn (dial/register/drop cycles), full
+rendezvous flows (register → bridge → `PAIR_DATA` → drop), full
+channel flows (register → knock → accept → `SESSION_DATA` →
+`TEARDOWN`), offline knocks with tokens against a sink, and an
+`-abuse` mode that probes every limit: over-cap connects from
+localhost (expect zero-byte close), frame flood (expect pacing, not
+errors — measured throughput ceiling), oversize frame (expect close),
+rendezvous over-throttle (verified behaviorally — a probe pair
+registering past the window must NOT bridge — plus the
+`limit_trips_total` delta), duplicate knocks (expect exactly one
+`KNOCK_FWD`), push over-cap (expect the sink-count floor).
+
+**Measures:** samples the metrics endpoint (default every 30 s) for
+`heap_alloc_bytes`, `goroutines`, and all table gauges; prints the
+time series and a verdict. Flags: `-relay`, `-metrics`, `-duration`
+(default 30m), churn-rate knobs, `-abuse`, `-sample`.
+
+**Pinned flat-memory verdict:** after load stops plus a 2×-janitor
+drain interval, **all table gauges return to zero** (connections,
+topics, bridges both planes, CRID entries, pendings, rate entries),
+and heap shows no monotonic growth — median `heap_alloc_bytes` of the
+final quarter ≤ median of the second quarter × 1.10.
+
+**Honest evidence standard, pinned:** the S5 done-check runs an
+**accelerated soak in-session** — high churn, tens of minutes — and
+the tool takes arbitrary `-duration` for a true overnight run.
+PROGRESS.md reports exactly which was run; the deviation from
+"overnight" is reported, never hidden. QA's "abuse scripts bounce off
+every limit" = `cmd/soak -abuse` plus targeted testclient probes, with
+windows shortened via config (defaults stay spec).
+
+## 22. Graceful shutdown — the S5 delta
+
+S5 adds only: the ops listener shuts down alongside the main one; the
+liveness janitor and limits sweeps stop via the same context; a final
+lifecycle log line. **Explicitly NO drain semantics:** no waiting on
+live sessions, no flushing pending knocks or queued pushes — they are
+the dies-with-process class (§4), clients fail closed and re-knock,
+and a drain would be a queue by another name. The existing bounded
+shutdown (5 s) stands.
+
+## 23. Restated for S5 (non-negotiable)
+
+**Zero new dependencies:** limits, metrics, liveness, and soak are
+stdlib plus the existing `coder/websocket` pin — no Prometheus client,
+no `x/time/rate`, nothing. **Statelessness inventory unchanged:**
+every S5 table is spec §4's own named "rate/push counters" transient
+class — in-memory, user-anonymous, reset on restart. **Wire behavior
+untouched:** no new frame types, no new response surfaces; the only
+externally observable additions — zero-byte accept refusal, read
+pacing, idle closes — are adjudicated in §§16–17 and carry no
+Nimna-layer bytes. The metrics listener is operator-local and is not
+part of the public wire surface.

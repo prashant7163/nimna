@@ -18,6 +18,7 @@ package ident
 import (
 	"fmt"
 	"log/slog"
+	"net/netip"
 )
 
 // redact implements every rendering surface for a fixed tag.
@@ -69,15 +70,40 @@ func (c CRID) MarshalText() ([]byte, error)  { return []byte(cridTag), nil }
 func (c CRID) MarshalJSON() ([]byte, error)  { return []byte(`"` + cridTag + `"`), nil }
 func (c CRID) LogValue() slog.Value          { return slog.StringValue(cridTag) }
 
-// RemoteAddr is a connection's remote network address. IPs are unloggable
-// (spec §4 "necessarily sees" — never at rest, never in logs). Comparable;
-// S5's per-IP limits key on it without exposing the address. It has no raw
-// accessor: nothing in the relay needs the address back out.
+// RemoteAddr is a connection's CANONICALIZED remote address key. IPs are
+// unloggable (spec §4 "necessarily sees" — never at rest, never in logs).
+// Comparable; the per-IP limits key on it without exposing the address. It
+// has no raw accessor: the canonical key is the only address form held
+// anywhere in the relay, and it never round-trips to a dialable address.
 type RemoteAddr struct{ s string }
 
-// RemoteAddrFrom wraps a transport-layer address string (e.g.
-// http.Request.RemoteAddr) at the accept boundary.
-func RemoteAddrFrom(s string) RemoteAddr { return RemoteAddr{s: s} }
+// RemoteAddrFrom canonicalizes a transport-layer address string (e.g.
+// http.Request.RemoteAddr or a net.Addr's String()) at the accept boundary
+// (architecture note §15): the port is stripped; an IPv4 address (including
+// the IPv4-mapped ::ffff: form) keys as the exact address; an IPv6 address
+// keys as its /64 prefix — a single v6 host owns a /64, so exact-address v6
+// keying would be a free per-IP-cap bypass. An unparseable input (never a
+// real TCP peer) keys as its whole string, still unloggable.
+func RemoteAddrFrom(s string) RemoteAddr {
+	var addr netip.Addr
+	if ap, err := netip.ParseAddrPort(s); err == nil {
+		addr = ap.Addr()
+	} else if a, err := netip.ParseAddr(s); err == nil {
+		addr = a
+	} else {
+		return RemoteAddr{s: s}
+	}
+	addr = addr.Unmap().WithZone("")
+	if addr.Is4() {
+		return RemoteAddr{s: addr.String()}
+	}
+	prefix, err := addr.Prefix(64)
+	if err != nil {
+		// Unreachable for a zone-stripped address; key exactly.
+		return RemoteAddr{s: addr.String()}
+	}
+	return RemoteAddr{s: prefix.String()}
+}
 
 const addrTag = "addr[redacted]"
 

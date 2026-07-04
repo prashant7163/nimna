@@ -2,16 +2,22 @@ package server
 
 import (
 	"nimna.app/relay/internal/ident"
+	"nimna.app/relay/internal/limits"
+	"nimna.app/relay/internal/metrics"
 	"nimna.app/relay/internal/wire"
 )
 
-// Channel-plane handlers (spec §3.2, §3.3, §5.4; architecture note §§9–10).
+// Channel-plane handlers (spec §3.2, §3.3, §5.4; architecture note §§9–10,
+// with the §§15–16 limits woven in at Session 5).
 //
 // The silence rule that shapes every path here: a state-dependent
 // rejection is always a silent drop — a close that depended on registry
 // state would itself leak that state through an observable close. Only
 // state-independent structural malformation (a pure function of the
 // received bytes: the malformed KNOCK payload) ever closes the connection.
+// The S5 limits keyed on shared per-CRID state (knock collapse, push caps)
+// are for the same reason indistinguishable-silent (§16): an observable
+// outcome would let one end probe the other's activity.
 //
 // Relay-emitted frames (KNOCK_FWD, SESSION_BRIDGED, relay→client TEARDOWN)
 // are always freshly built with empty payloads — never a forwarded client
@@ -24,8 +30,18 @@ import (
 // the push is content-free, so a pushed-awake peer can only learn WHICH
 // CRID to accept from this delivery). The payload is ignored: the relay
 // routes on the 18-byte header alone (§5.4).
+//
+// The per-conn registration cap gates it silently (§16): deliver-on-
+// register simply does not fire for a dropped REGISTER_CRID. There is no
+// rendezvous-style throttle here: a CRID is not a guessing surface
+// (128-bit identifiers, §15).
 func handleRegisterCRID(c *conn, f wire.Frame, _ []byte) {
 	crid := ident.CRIDFromWire(f.RoutingID)
+	if c.cridAtCap(crid) {
+		c.srv.m.Trip(metrics.LimitRegCap)
+		c.srv.trace("registration cap", c, "plane", "crid")
+		return
+	}
 	deliver := c.srv.channels.Register(crid, c)
 	if !c.addCRID(crid) {
 		// Lost the race with this connection's own teardown: unwind the
@@ -39,11 +55,13 @@ func handleRegisterCRID(c *conn, f wire.Frame, _ []byte) {
 		// whichever runs second finds the conn already out of the
 		// registration set and is a no-op.
 		if survivor, notify := c.srv.channels.DropConn(crid, c); notify {
+			c.srv.m.TeardownImplicit()
 			survivor.send(wire.Encode(wire.Teardown, crid.WireBytes(), nil))
 		}
 		return
 	}
 	if deliver {
+		c.srv.m.KnockForwarded()
 		c.send(wire.Encode(wire.KnockFwd, crid.WireBytes(), nil))
 	}
 }
@@ -55,16 +73,32 @@ func handleRegisterCRID(c *conn, f wire.Frame, _ []byte) {
 // teardown's bare CloseNow, note §5.1). Everything state-dependent is a
 // silent drop.
 //
+// Limit order, deliberate (§16): the structural payload parse runs FIRST —
+// its close must stay a pure function of the received bytes, so it cannot
+// sit behind a state-keyed collapse check (a close that fired only outside
+// the collapse window would leak the window). Then the per-CRID collapse:
+// a knock inside the window is dropped silently BEFORE any state change —
+// no forward, no push, no pending overwrite, no deadline refresh; any
+// token is discarded unused. The collapse window anchors on knocks that
+// pass it (§15: drops do not refresh the timestamp), independent of the
+// registry validation that follows — knowing a CRID is the capability
+// either way, so a registry-rejected knock warming the window changes no
+// threat model. At the rate-table cap the knock proceeds untracked
+// (fail-open on the forward) and any push is refused (fail-closed).
+//
 // Push evaluation (§3.2 step 2): forward and push are mutually exclusive.
 // A non-empty forward set means the peer is online — KNOCK_FWD to every
 // registered connection except the knocker, and any token is discarded
-// unused. An empty forward set with a token means exactly ONE dispatch.
+// unused. An empty forward set with a token means at most ONE dispatch,
+// gated by the per-CRID push caps (60 s floor, hour, day — spec §4): the
+// caps limit platform-push forwarding, never knocks, so a capped knock
+// still sets its pending normally and only the dispatch is suppressed.
 // The knocker receives nothing back in any case: its visible surface is
 // ACCEPT or silence.
 func handleKnock(c *conn, f wire.Frame, _ []byte) {
 	kp, err := wire.ParseKnockPayload(f.Payload)
 	if err != nil {
-		c.teardown()
+		c.teardown(metrics.CloseStructural)
 		return
 	}
 	// The token is wrapped at the parse boundary and lives only on this
@@ -76,6 +110,17 @@ func handleKnock(c *conn, f wire.Frame, _ []byte) {
 	}
 
 	crid := ident.CRIDFromWire(f.RoutingID)
+	rateVerdict := c.srv.rates.Knock(crid)
+	switch rateVerdict {
+	case limits.KnockCollapsed:
+		c.srv.m.Trip(metrics.LimitKnockCollapse)
+		c.srv.trace("knock collapsed", c)
+		return
+	case limits.KnockUntracked:
+		c.srv.m.Trip(metrics.LimitRateTableCap)
+		c.srv.trace("rate table at cap", c)
+	}
+
 	fwd, ok := c.srv.channels.Knock(crid, c)
 	if !ok {
 		return
@@ -84,12 +129,36 @@ func handleKnock(c *conn, f wire.Frame, _ []byte) {
 		// Freshly built, empty payload: the token strip is structural.
 		frame := wire.Encode(wire.KnockFwd, crid.WireBytes(), nil)
 		for _, to := range fwd {
+			c.srv.m.KnockForwarded()
 			to.send(frame)
 		}
 		return
 	}
-	if kp.HasToken && c.srv.push != nil {
+	if !kp.HasToken || c.srv.push == nil {
+		return
+	}
+	if rateVerdict == limits.KnockUntracked {
+		// Fail-closed: a dispatch that cannot be counted is refused —
+		// filling the table must never mint pushes at the platform
+		// (§15). Already metered as the rate_table_cap trip above.
+		c.srv.m.Push(metrics.PushRefused)
+		return
+	}
+	switch c.srv.rates.Push(crid) {
+	case limits.PushAllowed:
 		c.srv.push.Enqueue(kp.Platform, token)
+	case limits.PushDeniedMin:
+		c.srv.m.Trip(metrics.LimitPushMin)
+		c.srv.m.Push(metrics.PushRefused)
+	case limits.PushDeniedHour:
+		c.srv.m.Trip(metrics.LimitPushHour)
+		c.srv.m.Push(metrics.PushRefused)
+	case limits.PushDeniedDay:
+		c.srv.m.Trip(metrics.LimitPushDay)
+		c.srv.m.Push(metrics.PushRefused)
+	default: // PushDeniedUntracked: raced the janitor/cap; fail closed.
+		c.srv.m.Trip(metrics.LimitRateTableCap)
+		c.srv.m.Push(metrics.PushRefused)
 	}
 }
 
@@ -119,6 +188,7 @@ func handleAccept(c *conn, f wire.Frame, _ []byte) {
 func handleTeardown(c *conn, f wire.Frame, _ []byte) {
 	crid := ident.CRIDFromWire(f.RoutingID)
 	if other, ok := c.srv.channels.Teardown(crid, c); ok {
+		c.srv.m.TeardownExplicit()
 		other.send(wire.Encode(wire.Teardown, crid.WireBytes(), nil))
 	}
 }
@@ -131,6 +201,7 @@ func handleTeardown(c *conn, f wire.Frame, _ []byte) {
 func handleSessionData(c *conn, f wire.Frame, raw []byte) {
 	crid := ident.CRIDFromWire(f.RoutingID)
 	if to, ok := c.srv.channels.Forward(crid, c); ok {
+		c.srv.m.Forwarded(metrics.PlaneSession)
 		to.send(raw)
 	}
 }

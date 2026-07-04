@@ -197,10 +197,24 @@ func (r *Registry[E]) RunJanitor(ctx context.Context) {
 	}
 }
 
-// Len reports the number of live topic entries (tests and, from S5,
-// aggregate metrics — a count carries no identifiers).
+// Len reports the number of live topic entries (tests and aggregate
+// metrics — a count carries no identifiers).
 func (r *Registry[E]) Len() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return len(r.topics)
+}
+
+// BridgedCount reports the number of bridged topic entries — the same
+// identifier-free class as Len (the topic_bridges gauge, note §18).
+func (r *Registry[E]) BridgedCount() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	n := 0
+	for _, e := range r.topics {
+		if e.bridged {
+			n++
+		}
+	}
+	return n
 }

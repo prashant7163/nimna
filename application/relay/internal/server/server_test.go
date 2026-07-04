@@ -142,8 +142,17 @@ func bridgedFrame(rid [16]byte) []byte {
 // newRelay starts a relay on an ephemeral httptest listener and returns
 // the ws URL plus the server for white-box registry polling.
 func newRelay(t *testing.T) (string, *Server) {
+	return newRelayWith(t, Config{})
+}
+
+// newRelayWith is newRelay with explicit config — tests exercising S3/S4
+// registry semantics under repeated knocks shrink the S5 windows
+// (KnockInterval etc.) so the limiter, which has its own tests, stays out
+// of their way. Handler-only: no limit listener, no janitors, no ops
+// listener (those run under Serve).
+func newRelayWith(t *testing.T, cfg Config) (string, *Server) {
 	t.Helper()
-	s := New(Config{}, nil)
+	s := New(cfg, nil)
 	ts := httptest.NewServer(s.Handler())
 	t.Cleanup(ts.Close)
 	return "ws" + strings.TrimPrefix(ts.URL, "http"), s

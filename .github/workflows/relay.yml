@@ -29,5 +29,11 @@ jobs:
         run: go vet ./...
       - name: build
         run: go build ./...
-      - name: test
+      - name: relay binary import graph is x/crypto-free (anchored; note §20)
+        # The relay never derives topics — protocol crypto must not enter
+        # its import graph. ANCHORED grep: an unanchored form would
+        # false-positive on Go's stdlib-vendored vendor/golang.org/x/crypto
+        # TLS paths, present in any HTTP binary.
+        run: test "$(go list -deps ./cmd/relay | grep -c '^golang.org/x/crypto$\|^golang.org/x/crypto/')" -eq 0
+      - name: test (includes the cmd/relay real-binary log-scrub assertion, note §20)
         run: go test ./...

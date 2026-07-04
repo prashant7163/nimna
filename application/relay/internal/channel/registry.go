@@ -321,9 +321,23 @@ func (r *Registry[E]) Len() int {
 	return len(r.entries)
 }
 
+// BridgedCount reports the number of bridged (live-session) entries — the
+// same identifier-free class as Len (the session_bridges gauge, note §18).
+func (r *Registry[E]) BridgedCount() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	n := 0
+	for _, e := range r.entries {
+		if e.bridged {
+			n++
+		}
+	}
+	return n
+}
+
 // PendingCount reports the number of held pending-knock slots, including
 // lapsed ones not yet lazily deleted or swept — an identifier-free count
-// (tests and, from S5, aggregate metrics).
+// (tests and aggregate metrics).
 func (r *Registry[E]) PendingCount() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()

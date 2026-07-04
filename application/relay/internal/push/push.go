@@ -19,7 +19,12 @@
 //
 // Push is best-effort by spec (§3.2.1: a stale token "silently fails"; the
 // fallback is out-of-band coordination): a full queue and a failed send
-// are both silent drops. S5's metrics count aggregate failures.
+// are both silent drops ON THE WIRE. Off the wire, metrics count every
+// outcome (sent/failed/dropped — the caps' refusals are counted by the
+// caller), and a failed send logs one fixed-field Warn line carrying
+// platform and HTTP status code ONLY — no token, no CRID, no error text
+// (note §19: error strings can embed URLs and response fragments; the
+// fixed fields cannot).
 //
 // Real APNs/FCM transports are Session 6 (deploy) work behind this same
 // Sender interface — stdlib-only, per the architecture note §11 pin. Until
@@ -31,12 +36,15 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"nimna.app/relay/internal/ident"
+	"nimna.app/relay/internal/metrics"
 	"nimna.app/relay/internal/wire"
 )
 
@@ -55,6 +63,27 @@ type Sender interface {
 	Send(ctx context.Context, platform wire.Platform, token ident.DeviceToken) error
 }
 
+// StatusError reports a transport-level HTTP status from a Sender — the
+// ONLY error detail the operational log ever carries for a push (note
+// §19). It deliberately holds no URL, token, header, or body fragment.
+type StatusError struct{ Code int }
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("push: transport status %d", e.Code)
+}
+
+// platformLabel renders the platform byte for the fixed-field log line —
+// a two-value compile-time enumeration, never wire bytes.
+func platformLabel(p wire.Platform) string {
+	switch p {
+	case wire.PlatformAPNs:
+		return "apns"
+	case wire.PlatformFCM:
+		return "fcm"
+	}
+	return "unknown"
+}
+
 // job is one queued dispatch: addressing only, no content by construction.
 type job struct {
 	platform wire.Platform
@@ -67,25 +96,39 @@ type job struct {
 type Dispatcher struct {
 	sender Sender
 	queue  chan job
+	m      *metrics.Metrics
+	log    *slog.Logger
 }
 
-// NewDispatcher wraps sender. Call Run to start the worker.
-func NewDispatcher(sender Sender) *Dispatcher {
-	return &Dispatcher{sender: sender, queue: make(chan job, queueCap)}
+// NewDispatcher wraps sender. Call Run to start the worker. m may be nil
+// (a no-op instrument); logger may be nil for silent operation (tests).
+func NewDispatcher(sender Sender, m *metrics.Metrics, logger *slog.Logger) *Dispatcher {
+	if logger == nil {
+		logger = slog.New(slog.DiscardHandler)
+	}
+	return &Dispatcher{
+		sender: sender,
+		queue:  make(chan job, queueCap),
+		m:      m,
+		log:    logger,
+	}
 }
 
 // Enqueue queues one dispatch without ever blocking. A full queue drops
-// the push silently — push is best-effort by spec, and the relay never
-// queues unboundedly.
+// the push silently on the wire — push is best-effort by spec, and the
+// relay never queues unboundedly; the drop is counted.
 func (d *Dispatcher) Enqueue(platform wire.Platform, token ident.DeviceToken) {
 	select {
 	case d.queue <- job{platform: platform, token: token}:
 	default:
+		d.m.Push(metrics.PushDropped)
 	}
 }
 
-// Run drains the queue with one worker until ctx is done. Send errors are
-// discarded at S4 (best-effort; S5's metrics count aggregate failures).
+// Run drains the queue with one worker until ctx is done. Every attempt
+// is counted (sent/failed); a failure additionally logs the fixed-field
+// Warn line — platform and HTTP status only (status 0 when the transport
+// produced no HTTP response), never the error's own rendering (note §19).
 // Jobs still queued at shutdown die with the process, like every other
 // in-memory table.
 func (d *Dispatcher) Run(ctx context.Context) {
@@ -95,8 +138,20 @@ func (d *Dispatcher) Run(ctx context.Context) {
 			return
 		case j := <-d.queue:
 			sctx, cancel := context.WithTimeout(ctx, sendTimeout)
-			_ = d.sender.Send(sctx, j.platform, j.token)
+			err := d.sender.Send(sctx, j.platform, j.token)
 			cancel()
+			if err == nil {
+				d.m.Push(metrics.PushSent)
+				continue
+			}
+			d.m.Push(metrics.PushFailed)
+			status := 0
+			var se *StatusError
+			if errors.As(err, &se) {
+				status = se.Code
+			}
+			d.log.Warn("push transport failure",
+				"platform", platformLabel(j.platform), "status", status)
 		}
 	}
 }
@@ -157,5 +212,13 @@ func (s *HTTPSink) Send(ctx context.Context, platform wire.Platform, token ident
 	}
 	// Drain a bounded amount so the connection can be reused.
 	_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
-	return resp.Body.Close()
+	if cerr := resp.Body.Close(); cerr != nil {
+		return cerr
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		// The status code is the ONLY detail surfaced: it feeds the
+		// fixed-field transport-status log line (note §19).
+		return &StatusError{Code: resp.StatusCode}
+	}
+	return nil
 }
