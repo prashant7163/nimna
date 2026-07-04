@@ -67,8 +67,9 @@ the connection lifecycle.
   topic loses its entire entry when either end dies; the survivor gets no
   topic-scoped signal because §5.4 defines none (TEARDOWN is CRID-scoped)
   — clients detect via their own handshake timeout, fail-closed per
-  §3.1.6. Close frames carry **no reason text, ever** (silence doctrine);
-  policy violations use `CloseNow()`.
+  §3.1.6. **Relay-authored** close frames carry no reason text and no
+  Nimna-state-dependent status code, ever (silence doctrine; transport
+  boundary precisely scoped in §5.1); policy violations use `CloseNow()`.
 
 ## 4. Unloggable identifiers — `internal/ident`, shipped in S3
 
@@ -123,6 +124,48 @@ router; TEARDOWN is CRID-plane and therefore wholly S4.
 - `PAIR_DATA` on a topic that is not bridged, or from a connection that is
   not one of its two members: silent drop.
 
+### 5.1 Silence doctrine at the transport boundary (S3 review finding B1)
+
+The silence doctrine is scoped to the **Nimna layer**, where it is
+absolute: no relay-authored close frame, on any path, ever carries reason
+text or a status code that depends on Nimna protocol state — every
+Nimna-level failure (malformed outer frame, unbridged `PAIR_DATA`,
+expired/used/never-existed topics, third registrants, and from S5 every
+rate-limit outcome) is byte-identical silence or a bare `CloseNow()`.
+
+**Bounded carve-out (accepted residue):** `coder/websocket` v1.8.15 itself
+emits RFC 6455 compliance closes (status 1002 + generic English text, e.g.
+on RSV bits set or an unknown opcode) from internal paths that fire before
+relay code runs, with no suppression hook. These are accepted **iff all
+of** the following hold, and only then: (a) emitted by the pinned
+transport library (or, at S6, stdlib TLS alerts — the same class of
+protocol-mandated transport signaling), never by relay code; (b) triggered
+strictly below the Nimna outer frame, by malformed WebSocket/TLS bytes
+unreachable from any conforming client; (c) the close bytes are a pure
+function of the sender's own offending transport bytes and the RFC —
+**independent of all relay state**, containing no identifier bytes and
+incapable of differentiating any Nimna protocol state. This carve-out can
+never be read to excuse a Nimna-level response surface: anything relay
+code decides (frame validity, registry state, limits) stays silent.
+Suppressing the library closes was considered and rejected — hand-framing
+WebSocket or filtering our own output stream trades an audited library's
+RFC-mandated behavior for hand-rolled plumbing, a worse posture.
+
+**Invariant sentence for code comments:** "Relay code never sends a close
+frame carrying reason text or a Nimna-state-dependent status; the only
+close frames with text are the WebSocket library's own RFC 6455
+transport-compliance closes (1002), whose bytes are a fixed function of
+the sender's malformed transport input and carry no Nimna identifier or
+state."
+
+**Covering test (raw TCP):** send RSV-set and unknown-opcode probes;
+assert status 1002 with the known generic library text and no identifier
+bytes; assert the close bytes are **byte-identical** against an empty
+relay and against one holding registered and bridged topics
+(state-independence — the property that makes this not a response
+surface). Keep the existing assertions that well-formed WebSocket messages
+carrying malformed Nimna frames produce a reasonless close.
+
 ## 6. CLI test client — `cmd/testclient`
 
 One binary, run twice (`--role create|join`, code as argument) for the
@@ -150,6 +193,7 @@ via repo-relative path) as conformance fixtures.
 
 Stateless (at-rest inventory: memory tables, TLS certs, push-credential
 config — nothing else, ever; more = USER decision). Wire behavior
-byte-for-byte per §5.4. No telemetry. Silence doctrine on every failure
-surface. Session-2-locked primitives only; the relay itself contains no
+byte-for-byte per §5.4. No telemetry. Silence doctrine on every
+Nimna-level failure surface, absolute (transport-layer boundary scoped in
+§5.1 only). Session-2-locked primitives only; the relay itself contains no
 protocol crypto at all.
