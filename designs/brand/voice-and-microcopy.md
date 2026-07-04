@@ -104,7 +104,8 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 - **Safety phrase is the closing ritual of pairing** (spec §3.1): "Call them and compare. Read these three words to each other. If they match, the line is yours alone." Two buttons only — *They match* / *They don't* — no skip affordance (USER 2026-07-04); the spec's "not enforced" is honored by the soft skip of tapping match.
 - **The Nimna code renders as `XXX-XXX-XXX` everywhere** — mono face, three groups of three, hyphens included wherever it appears as text (spec §4: the grouping is part of the format).
 - Buttons are verbs, one or two words: *Create a code · Enter a code · Knock · Pick up · Hang up · Wipe now · Keep · Send anyway · Go back.*
-- Errors state what happened and what to do, never blame: "That code didn't match anything. Codes expire — ask them to make a new one." (Expired and never-existed are indistinguishable by design; failed pairing attempts never surface notifications — spec §3.1 silence doctrine.)
+- Errors state what happened and what to do, never blame: "That code didn't match anything. Codes expire — ask them to make a new one." (Expired, used, and never-existed codes get this ONE response — indistinguishable by design so a prober can never confirm a code once existed; USER 2026-07-04, spec v0.2. No failed attempt ever notifies anyone — spec §3.1 silence doctrine.)
+- **Knock-lapse copy is exactly "No answer."** — never "they didn't pick up", "they're offline", or anything that attributes the silence. Offline vs saw-and-ignored stays indistinguishable to the knocker: the receiver's plausible deniability outranks the knocker's closure (USER 2026-07-04, spec v0.2).
 - **System lines** (screenshot notices, string 12) are bare centered captions in the thread — events, not speech; no bubble, no icon.
 - The wipe pair `[Wipe now] [Keep]` is deliberate: the safe choice is a warm word, not "Cancel" — calm, not bureaucratic.
 

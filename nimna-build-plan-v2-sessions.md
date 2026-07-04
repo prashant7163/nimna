@@ -46,9 +46,10 @@ Every folder carries a README.md describing its contents — maintained as conte
 - Stateless push forwarding per §3.2.1: offline peer + device-token in knock → one APNs/FCM call ("New activity", content-free) → token discarded. Credentials via config slots only (env/mounted files), never in repo.
 - **Done when:** CLI clients pair, disconnect, knock (with and without token), accept, chat, hang up — relay memory empty after; a mock push sink receives exactly one content-free call per eligible knock.
 
-### Session 5 — Hardening & rate limits
-- Spec §4 limits as config with defaults: per-IP connection caps, frame-rate caps, max frame size (must accommodate MEDIA_CHUNK), rendezvous throttling (single-digit/min/IP), knock 1/10s/CRID, push 1/min + 6/hr + 20/day per CRID (in-memory counters, reset on restart). Structured errors, graceful shutdown, zero-log production config vs debug config, soak-test script.
-- **Done when:** abuse scripts bounce off every limit; overnight soak shows flat memory.
+### Session 5 — Hardening, rate limits & observability
+- Spec §4 limits as config with defaults: per-IP connection caps, frame-rate caps, max frame size (must accommodate MEDIA_CHUNK), rendezvous throttling (single-digit/min/IP), knock 1/10s/CRID, push 1/min + 6/hr + 20/day per CRID (in-memory counters, reset on restart). Structured errors, graceful shutdown, soak-test script.
+- Observability per the work-loop doctrine: aggregate metrics endpoint (no identifiers in labels), sanitized operational log with **unloggable wrapper types** for CRIDs/IPs/device-tokens/code-hashes (redact on serialization, CI-asserted), debug-only tracing config, recover-and-scrub panic handlers.
+- **Done when:** abuse scripts bounce off every limit; overnight soak shows flat memory; CI log-scrub assertion passes; metrics answer "is the relay healthy" without touching a single identifier.
 
 ### Session 6 — Deploy & open-source release
 - Single-binary deploy + TLS to the VPS (relay.nimna.app), health endpoint, minimal ops runbook.
@@ -59,7 +60,8 @@ Every folder carries a README.md describing its contents — maintained as conte
 
 ### Session 7 — Skeleton & encrypted local storage
 - App scaffold, navigation shell, encrypted local DB (channel store, message store, media store per §6), platform keystore integration, cloud-backup exclusion flags verified on both platforms.
-- **Done when:** app boots, persists encrypted records across restart, data provably absent from device backups.
+- Local diagnostic log per the work-loop doctrine: encrypted, ring-buffered (~7 days), app-lock perimeter, wiped by panic wipe, events/error-codes only.
+- **Done when:** app boots, persists encrypted records across restart, data provably absent from device backups; diagnostic log demonstrably contains no content/keys/codes/tokens.
 
 ### Session 8 — Pairing: initiator side
 - Keypair + 9-char Crockford Base32 code generation, XXX-XXX-XXX display, simultaneous QR render, share sheet with the §3.1 one-liner ("Works once, expires in 24h — share it like a password"), rendezvous registration, waiting state, TTL expiry handling.
@@ -100,7 +102,8 @@ Every folder carries a README.md describing its contents — maintained as conte
 
 ### Session 16 — Polish & first-run
 - Onboarding (3 screens max, incl. screenshot-policy and permanence disclosures per design), empty/error states, app icon + name, dark mode, accessibility pass, microcopy sweep against the voice guide.
-- **Done when:** a stranger goes install → paired chat unaided.
+- "Share diagnostics" in settings: deliberate user export of the scrubbed local log — nothing ever auto-uploads; no third-party SDKs anywhere (verify the dependency tree).
+- **Done when:** a stranger goes install → paired chat unaided; dependency tree contains zero telemetry/analytics/crash SDKs.
 
 ### Session 17 — Subscription & paywall
 - Yearly auto-renewing subscription via StoreKit 2 / Play Billing, priced by regional store tiers — the app NEVER hardcodes a price; paywall renders the store-provided localized string ({STORE_PRICE} in designs). Creation gated on active entitlement, checked on-device only (accepted §10 limitation: no server-side receipt validation — the relay learns nothing). Receivers never see a paywall. Permanence guarantee honored structurally: lapse gates creation only, existing channels untouched. Restore as a first-class flow (reinstall + new-device-same-store-account tested). Family Sharing disabled.

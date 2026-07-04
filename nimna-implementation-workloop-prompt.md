@@ -140,6 +140,37 @@ QUALITY BARS (standing, all sessions):
 - Privacy invariants are test-enforced where possible: no plaintext in
   relay logs, no data in device backups, EXIF stripped, media absent
   from gallery, tokens never stored server-side.
+
+- LOGGING & OBSERVABILITY DOCTRINE (build it this way from Session 3 on):
+  * Relay production instrument is METRICS, not logs: in-memory
+    aggregate counters/gauges (connections, topics, bridges, knocks,
+    pushes attempted/failed, errors by type, throughput, memory) — no
+    CRIDs, IPs, device-tokens, or code hashes in any metric label.
+  * Relay operational log: process lifecycle, config, TLS, panics,
+    push TRANSPORT errors (status codes only). Enforce an
+    unloggable-types rule in code: CRIDs, IPs, device-tokens, and code
+    hashes are wrapper types that redact on serialization — the logger
+    structurally cannot emit them. Test-enforced: CI asserts no
+    identifier pattern ever appears in production-config log output.
+  * Verbose per-connection debug tracing exists only in debug config,
+    never enabled in production; both configs visible in the open repo
+    so the claim is auditable. Panic handlers recover-and-scrub.
+  * Device: local diagnostic log only — encrypted at rest, ring-buffered
+    (~7 days), inside the app-lock perimeter, destroyed by panic wipe;
+    events and error codes only, never content/keys/codes/tokens/peer
+    identifiers. "Share diagnostics" is a deliberate user export; nothing
+    ever auto-uploads.
+  * NO third-party crash/analytics/telemetry SDKs in the app, ever
+    (no Crashlytics, no Sentry, nothing that phones home). Adding one is
+    not a CODE decision at any point.
+
+- DEPENDENCY DISCIPLINE: minimal and boring. Every new dependency (Go
+  module or pub.dev package) is justified in the PR description, pinned,
+  and checked by code-reviewer for maintenance health and transitive
+  weight; crypto- or network-touching dependencies additionally need
+  tech-architect sign-off. Prefer stdlib. A privacy product's supply
+  chain is part of its threat model.
+
 - Real microcopy from the voice guide; never lorem ipsum.
 - Tests accompany protocol-touching code in the same session, not later.
 

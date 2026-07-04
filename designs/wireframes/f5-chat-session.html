@@ -461,9 +461,9 @@
       <div class="line dotted"></div>
       <p class="line-lbl">Not on the line</p>
       <div style="height:8px"></div>
-      <p class="cap">They didn't pick up.</p>
+      <p class="cap">No answer.</p>
       <div class="btn ghost small" style="align-self:flex-start">Knock again</div>
-      <p class="meta">[“Knock again” appears only now, after the lapse, as a quiet ghost — never during the countdown]</p>
+      <p class="meta">[“Knock again” appears only now, after the lapse, as a quiet ghost — never during the countdown. The lapse line is exactly “No answer.” — never “they didn't pick up”, “they're offline”, or anything that attributes the silence: offline vs saw-and-ignored is deliberately indistinguishable to the knocker (USER decision 2026-07-04; spec v0.2)]</p>
       <div style="height:16px"></div>
       <p class="micro">Waiting — on your phone only</p>
       <div class="msgs">
@@ -479,7 +479,7 @@
       </div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>The 60-second knock TTL (spec §3.2.3) expiring is ordinary, like an unanswered doorbell. One factual line, one optional action, no urgency styling.</span></div>
+      <div class="r"><span class="k">Purpose</span><span>The 60-second knock TTL (spec §3.2.3) expiring is ordinary, like an unanswered doorbell. One factual line, one optional action, no urgency styling. The line carries no attribution — the receiver's plausible deniability outranks the knocker's closure (USER 2026-07-04).</span></div>
       <div class="r"><span class="k">Entry points</span><span>F5.2's counter reaches zero without an ACCEPT.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Knock again → F5.2 (a fresh knock, fresh minute — a deliberate human tap; the app never fires one for you). ‹ → F4, caption “Waiting: 2”.</span></div>
       <div class="r"><span class="k">Edge cases</span><span><b>Peer never accepts, ever:</b> this loop can repeat forever without harm — messages stay in the local outbox, nothing accumulates server-side (there is no server-side), and the app never nags either party. The calm here is a feature, not neglect. After an extended unanswered stretch, the local stale-knock hint may join this state — F5.14.</span></div>

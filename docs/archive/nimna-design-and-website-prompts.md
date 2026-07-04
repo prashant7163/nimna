@@ -1,5 +1,13 @@
 # Nimna — Design & Website Prompts
 
+> **SUPERSEDED — provenance only (archived 2026-07-04, USER decision).**
+> This is the original Task 1–3 prompt set, written against protocol spec v0.1 and the
+> pre-subscription pricing model. It is deliberately NOT synced to later spec versions —
+> its value is historical. Governing sources today: `nimna-protocol-spec-v0.1.1.md`
+> (and successors) at the project root, plus the work-loop prompts. Known stale content
+> includes: "first initiated channel free" paywall, one-time-unlock language, and the
+> pre-v0.1.1 code-format assumptions.
+
 Two prompts, meant to run as separate Claude Code sessions (or with any design-capable agent). Prompt 1's outputs feed Prompt 2, so run them in order.
 
 ---

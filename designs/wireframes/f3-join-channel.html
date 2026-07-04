@@ -196,28 +196,28 @@
 
   <!-- F3.7 EDGE -->
   <section class="cell edge">
-    <div class="frame-tag">F3.7 · EDGE — expired code</div>
+    <div class="frame-tag">F3.7 · EDGE — expired code (renders identically to F3.6, by decision)</div>
     <div class="frame">
       <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
       <div style="height:24px"></div>
       <p class="h">Enter a code</p>
       <div style="height:12px"></div>
       <div class="segs">
-        <span class="seg dim">K</span><span class="seg dim">R</span><span class="seg dim">7</span><span class="segdot">-</span>
-        <span class="seg dim">F</span><span class="seg dim">M</span><span class="seg dim">2</span><span class="segdot">-</span>
-        <span class="seg dim">X</span><span class="seg dim">Q</span><span class="seg dim">4</span>
+        <span class="seg err">K</span><span class="seg err">R</span><span class="seg err">7</span><span class="segdot">-</span>
+        <span class="seg err">F</span><span class="seg err">M</span><span class="seg err">2</span><span class="segdot">-</span>
+        <span class="seg err">X</span><span class="seg err">Q</span><span class="seg err">4</span>
       </div>
-      <p class="cap">This code has expired. Ask them to make a new one.</p>
+      <p class="cap">That code didn't match anything. Codes expire — ask them to make a new one.</p>
       <div class="grow"></div>
       <div class="box" style="height:160px">[keyboard]</div>
       <div style="height:8px"></div>
       <div class="btn ghost">Clear</div>
     </div>
     <div class="anno">
-      <div class="r"><span class="k">Purpose</span><span>The dimmed “expired” rendering from the design system, shown when expiry is knowable on this phone.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>Only when the app can know locally that the code is stale — e.g. re-submitting a code already tried this session, or a scanned QR that carries an expiry hint alongside the code (the latter needs a small spec addition — flagged in the README, not silently assumed).</span></div>
+      <div class="r"><span class="k">Purpose</span><span>Documents a deliberate non-state: expired, already-used, and never-existed codes all produce this ONE generic response — the same rendering and copy as F3.6, on purpose (USER decision 2026-07-04, for spec v0.2).</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Joining with a code that is expired, spent, or was never real — indistinguishable by design, on the wire and on the screen.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Clear → empty field. Back → F4.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Honesty note:</b> the relay is stateless and sees only code hashes — it cannot tell “expired” from “never existed” (spec §4). In the general case the wrong-code state (F3.6) appears instead, and its copy already says “codes expire”. This frame is the special case, not the default.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Why no distinct “expired” state:</b> differing responses would let a prober confirm a code once existed — this extends the §3.1 silence doctrine. The earlier idea of a QR-carried expiry hint (a distinct local “expired” rendering) is withdrawn with this decision. The generic copy already tells the honest user what to do: ask for a fresh code.</span></div>
     </div>
   </section>
 
