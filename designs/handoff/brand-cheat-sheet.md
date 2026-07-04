@@ -19,6 +19,7 @@ Schibsted Grotesk 400/500/600 only. Chat body 17/25. Codes & safety phrase ALWAY
 
 ## Voice
 Phone-call register: *line, knock, pick up, hang up, wipe.* Facts, not vows. Say limits plainly (screenshots, IPs/timing visible to relay). Never: military-grade, unhackable, anonymous, spy anything. Buttons are verbs. The safe choice is a warm word ("Keep").
+The code is the **"Nimna code"** in UI (never "pairing code"), always mono, always `XXX-XXX-XXX`. Pricing copy: yearly subscription + the permanence guarantee, stated together, never a number ({STORE_PRICE} renders from the store).
 
 ## Motion
 Breathing, not bouncing. 120/200/320ms, ease (0.4,0,0.2,1). Knock breath 2800ms. No springs, no overshoot, nothing autoplays but the line. Reduced-motion: freeze solid.
@@ -27,4 +28,4 @@ Breathing, not bouncing. 120/200/320ms, ease (0.4,0,0.2,1). Knock breath 2800ms.
 No locks/shields/keys/fingerprints/masks/matrix/neon-green/binary rain. App lock = keypad-dots glyph. QR stays on white in both themes. Wipe is serious, not scary: ember red, hold-to-wipe (1.5s/2.5s), release cancels.
 
 ## Honesty checklist (copy)
-Relay sees IPs, timing, sizes — never deny it. Disappearing = honor system — always say so. Account-less ≠ anonymous. No backup, by design — wipe is forever.
+Relay sees IPs, timing, sizes — never deny it. Disappearing = honor system — always say so. Account-less ≠ anonymous. No backup, by design — wipe is forever. Screenshots: can't stop, always tell — detect-and-notify, itself honor-system. Sensitive-content checks never leave the phone. Lines die with the device; only the subscription restores (store identity). Push is opt-in, content-free, token-less at the relay.

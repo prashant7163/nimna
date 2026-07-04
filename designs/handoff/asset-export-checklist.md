@@ -16,10 +16,11 @@
 - [ ] Subset for website (woff2, latin) — Task 3
 
 ## Screens → store listings
-- [ ] Screenshot the 12 hi-fi HTML screens at 390×844 @3x (headless Chrome, window 438×900, crop `.screen`)
+- [ ] Screenshot the 15 hi-fi HTML screens at 390×844 @3x (headless Chrome, window 438×900, crop `.screen`)
 - [ ] Store sets: 6.7" (1290×2796) and 6.1" iOS; Play phone + 7" sets — re-shoot from HTML at scaled windows, don't upscale
+- [ ] Store listing copy: NO price number anywhere (spec §10) — the store surfaces its own localized price
 
 ## Design-system artifacts
-- [ ] tokens.json ↔ `NimnaTokens` dart file sync check (versioned, v1.0.0)
+- [ ] tokens.json ↔ `NimnaTokens` dart file sync check (versioned, v1.1.0 — code/media blocks + mediaVeil added for spec v0.1.1)
 - [ ] Icon sprite → per-icon SVGs if flutter_svg route chosen
 - [ ] Contrast re-verification after ANY palette change: `python3 temp/contrast_final.py` must print ALL PASS

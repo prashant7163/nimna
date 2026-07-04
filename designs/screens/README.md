@@ -13,12 +13,16 @@ HTML/CSS mockups, one file per screen, mobile viewport **390×844**, pixel value
 | 07 | Disappearing composer (timer sheet + honor-system copy) | F5 | [07-disappearing-composer.html](07-disappearing-composer.html) | — |
 | 08 | Panic wipe confirm (hold-to-wipe) | F8 | [08-panic-wipe-confirm.html](08-panic-wipe-confirm.html) | — |
 | 09 | Paywall | F9 | [09-paywall.html](09-paywall.html) | [✓](09-paywall.light.html) |
-| 10 | Enter their code (segmented entry) | F3 | [10-enter-code.html](10-enter-code.html) | — |
-| 11 | Chat waiting (offline outbox + knock countdown) | F5 | [11-chat-waiting.html](11-chat-waiting.html) | — |
+| 10 | Enter their code (9-seg XXX-XXX-XXX + paste/scan/upload) | F3 | [10-enter-code.html](10-enter-code.html) | — |
+| 11 | Chat waiting (offline outbox + knocked-waiting patience state) | F5 | [11-chat-waiting.html](11-chat-waiting.html) | — |
 | 12 | App lock (zero-leak) | F12/F8 | [12-app-lock.html](12-app-lock.html) | — |
+| 13 | Media viewer (export as the deliberate act) — v0.1.1 | F5 | [13-media-viewer.html](13-media-viewer.html) | — |
+| 14 | Sensitive media, blurred (on-device check) — v0.1.1 | F5 | [14-sensitive-blur.html](14-sensitive-blur.html) | — |
+| 15 | Attach whisper (sensitive-content check at attach) — v0.1.1 | F5 | [15-whisper-attach.html](15-whisper-attach.html) | — |
 
 Notes
-- The 9 spec-mandated screens are 01–09; 10–12 are the free-choice picks (decision record). Light variants: 02, 04, 05, 09.
-- **Open item:** paywall price is deliberately unspecified ("Unlock — one payment") — pricing is a USER decision, pending.
+- Synced to protocol spec v0.1.1 (2026-07-04): media in chat + system screenshot line (05), subscription paywall with permanence guarantee (09), 9-char hyphenated Nimna code (02, 10), four join methods (10), "call them and compare" framing (03), knock patience caption (11), onboarding grows to 4 panes (01 dots), net-new 13–15.
+- The 9 spec-mandated screens are 01–09; 10–15 are free-choice + v0.1.1 additions. Light variants: 02, 04, 05, 09 (sed-regenerated from dark; see git history).
+- **No price appears anywhere by doctrine (spec §10):** the paywall CTA renders the literal `{STORE_PRICE}` placeholder — at build it becomes the store's localized price string (StoreKit / Play Billing). Never hardcode a number.
 - The knock/reconnect line animations run live in-browser (`@keyframes breathe`); `prefers-reduced-motion` freezes them solid.
-- QR in 02 is a deterministic mock pattern, not a scannable code.
+- QR in 02 is a deterministic mock pattern, not a scannable code. Media "photos" in 05/13/14/15 are CSS-gradient mocks — no image assets.

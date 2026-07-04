@@ -25,7 +25,7 @@ States: default · **focused** (stroke `textSecondary` — not amber; focus is n
 ## Code-entry field
 
 For the Nimna code (spec §4, fixed permanently: **9 characters, Crockford Base32, displayed and entered as `XXX-XXX-XXX`** — the grouping is part of the format).
-Nine segmented boxes 32×52 in three groups of three, radius `rSmall`, `codeInline` mono type; group gap 12 with a 6×2 hairline dash centered in each gap (the hyphen, drawn not typed). Auto-advance across groups; paste fills all (accepts with or without hyphens, case-insensitive, Crockford aliases I→1, O→0 normalized silently).
+Nine segmented boxes 30×52 in three groups of three (segment gap 5, group gap 8), radius `rSmall`, `codeInline` mono type; an 8×2 dash centered in each group gap (the hyphen, drawn not typed). Total row 348 px — fits the 350 px content width at 390 with nothing shrunk. Auto-advance across groups; paste fills all (accepts with or without hyphens, case-insensitive, Crockford aliases I→1, O→0 normalized silently).
 **Four ways in** (spec §3.1 join methods — the join screen offers all four): type it · paste it · scan the QR live · upload a QR image or PDF.
 States: empty (hairline) · filling (active segment stroke `textSecondary`) · **complete** (all strokes `textSecondary`, Join enables) · **error/wrong code** (segments stroke `danger`, gentle 2 px horizontal shake ×1 — the one permitted shake in the product, `durStandard`; message: "That code didn't match anything. Codes expire — ask them to make a new one." Expired and never-existed are indistinguishable by design, and no failed attempt ever notifies anyone — spec §3.1 silence doctrine).
 
