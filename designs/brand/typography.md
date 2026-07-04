@@ -6,7 +6,7 @@
 
 Weights used: **400** (Regular), **500** (Medium), **600** (SemiBold). Nothing heavier — bold shouting is off-brand.
 
-**Code companion — Spline Sans Mono.** SIL OFL; Google Fonts; `GoogleFonts.splineSansMono`. Used *only* for machine-shaped strings: the pairing code, the safety phrase, relay address in settings. A humanist mono (not a terminal font) — it disambiguates characters (the spec's "unambiguous alphabet") without importing hacker aesthetics. Weight 500 only.
+**Code companion — Spline Sans Mono.** SIL OFL; Google Fonts; `GoogleFonts.splineSansMono`. Used *only* for machine-shaped strings: the Nimna code, the safety phrase, relay address in settings. A humanist mono (not a terminal font) — it disambiguates characters (the spec's "unambiguous alphabet") without importing hacker aesthetics. Weight 500 only.
 
 **Fallback stacks (web/handoff):**
 `"Schibsted Grotesk", -apple-system, "Segoe UI", Roboto, sans-serif` · `"Spline Sans Mono", ui-monospace, "SF Mono", monospace`
@@ -25,7 +25,7 @@ Sizes in logical px (Flutter dp/sp; 1:1 with CSS px in the mockups). Line height
 | `label` | 15 / 20 | 500 | +0.1 | Buttons, tabs, list-row actions |
 | `caption` | 13 / 18 | 400 | +0.1 | Timestamps, hints, helper text |
 | `micro` | 11 / 15 | 500 | +0.6, uppercase | Overlines: "WAITING", "LIVE", section labels |
-| `codeDisplay` | 28 / 36 (mono) | 500 | +6 | The pairing code, shown big |
+| `codeDisplay` | 28 / 36 (mono) | 500 | +6 | The Nimna code, shown big — always grouped `XXX-XXX-XXX` (spec §4) |
 | `codeInline` | 17 / 24 (mono) | 500 | +2 | Code entry field, safety phrase words |
 
 ## Rules
@@ -34,7 +34,7 @@ Sizes in logical px (Flutter dp/sp; 1:1 with CSS px in the mockups). Line height
 2. **Hierarchy by spacing and color, not size jumps.** Adjacent styles differ subtly; the quietness is the luxury. Never skip from `caption` to `display` on one surface.
 3. **No italics.** Emphasis is `textPrimary` vs `textSecondary`, or 500 vs 400.
 4. **No all-caps except `micro`** — and `micro` is a whisper (status overlines), not a shout.
-5. **Numbers in codes are always mono.** Never render a pairing code or safety phrase in the UI face; the mono shift signals "this is exact — read it carefully."
+5. **Numbers in codes are always mono.** Never render a Nimna code or safety phrase in the UI face; the mono shift signals "this is exact — read it carefully."
 6. **Minimum text size 11px**; `micro` never carries essential standalone meaning (always paired with a visual state).
 7. **Dynamic type:** all styles scale with platform text-size settings; the line motif and layout must tolerate up to 1.3× without truncating chat text (chat may wrap freely; codes may scroll horizontally, never shrink).
 

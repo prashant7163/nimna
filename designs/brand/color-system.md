@@ -37,6 +37,7 @@ Direction: **C — The Line.** Dark mode is the hero mode; light mode is a full 
 | `bubbleReceived` | `#1D1D20` | Received bubble — neutral |
 | `bubbleWaiting` | transparent + dashed `lineIdle` border | Composed-while-offline (spec §3.4) |
 | `scrim` | `#000000` @ 60% | Behind sheets/modals |
+| `mediaVeil` | `#0B0B0C` @ 70% | Over blurred sensitive media (spec §5.3) — added v0.1.1; verified by mechanism (blur σ24 + veil under `textPrimary` caption), not by ratio, since it sits over arbitrary imagery |
 
 ## Light mode
 
@@ -66,6 +67,7 @@ Light mode swaps "a lit filament in a dark room" for "amber ink on warm paper." 
 | `bubbleReceived` | `#FFFFFF` + hairline | Neutral |
 | `bubbleWaiting` | transparent + dashed `lineIdle` border | Outbox |
 | `scrim` | `#000000` @ 35% | Behind sheets |
+| `mediaVeil` | `#F7F5F2` @ 70% | Over blurred sensitive media (spec §5.3) — added v0.1.1; same mechanism note as dark |
 
 ## The line — state language (both modes)
 

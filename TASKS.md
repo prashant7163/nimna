@@ -71,15 +71,17 @@ Source of truth: `nimna-protocol-spec-v0.1.1.md` + the C1–C11 changelog in the
 Rule: work strictly from the changelog; uncovered drift → log in PROGRESS.md ("drift found") and ask, never fix silently.
 
 ## Task U1 — Design System & Microcopy Sync
-**Status:** in-progress (2026-07-04)
+**Status:** done (2026-07-04)
 
 Applies C1, C3, C5, C6 (+ all C-item canonical strings).
 
 Deliverables:
-- [ ] Voice & microcopy guide: string 9 rebuilt (subscription + permanence guarantee), screenshot-policy string (C3), "Nimna code" naming sweep (C5), share-sheet briefing line, new-string additions → `/designs/brand/voice-and-microcopy.md`
-- [ ] Tokens: media bubble / blurred-state / whisper-dialog / code-entry 3-3-3 grouping additions as needed → `/designs/system/tokens.json`
-- [ ] Components: code-entry fixed to 9-char XXX-XXX-XXX (C6), media bubble + transfer progress (C2 strings), blurred sensitive-media state (C4), whisper dialog (C4), screenshot system-line (C3), knock-waiting patience state notes (C8) → `/designs/system/components.md`
-- [ ] Brand cheat sheet / color-system / typography touched only where C-item strings or code format appear
+- [x] Voice & microcopy guide: strings now 18 — string 9 rebuilt (subscription + permanence, {STORE_PRICE}, no numbers), 11–18 added (screenshot disclosure/notice, share briefing, whisper, blur, stale knock, media, push trade), "Nimna code" naming locked, honesty checklist grown to 10 nevers → `/designs/brand/voice-and-microcopy.md` (2026-07-04)
+- [x] Tokens v1.1.0: `code` block (9-char, 3-3-3, Crockford), `media` block (5 MB cap, progress line, blurSigma), `mediaVeil` dark+light → `/designs/system/tokens.json` (2026-07-04)
+- [x] Components: code entry fixed to XXX-XXX-XXX + four join methods + silence doctrine; QR+code simultaneous display; media bubbles (5 states); whisper card; media viewer; screenshot system line; push toggle; knock patience (C8 limits, no counters) → `/designs/system/components.md` (2026-07-04)
+- [x] Icons 22→24 (`i-doc`, `i-image`, render-verified); color-system + typography + READMEs synced; handoff cheat sheet verified clean (2026-07-04)
+
+Completed: 2026-07-04
 
 ## Task U2 — Wireframes & Hi-Fi Screens Sync
 **Status:** pending

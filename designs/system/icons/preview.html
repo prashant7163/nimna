@@ -19,7 +19,7 @@
 <h1>nimna icons — 24px grid · 1.75 stroke · currentColor</h1>
 <div class="grid" id="grid"></div>
 <script>
-const icons = ["plus","keypad","qr","scan","copy","share","sliders","chevron-right","arrow-left","close","check","timer-fade","bell","bell-off","line-cut","hang-up","knock","pencil","info","restore","eye-off","external"];
+const icons = ["plus","keypad","qr","scan","copy","share","sliders","chevron-right","arrow-left","close","check","timer-fade","bell","bell-off","line-cut","hang-up","knock","pencil","info","restore","eye-off","external","doc","image"];
 const amberOnes = new Set(["knock","timer-fade"]);
 fetch("icons.svg").then(r => r.text()).then(txt => {
   const doc = new DOMParser().parseFromString(txt, "image/svg+xml");
