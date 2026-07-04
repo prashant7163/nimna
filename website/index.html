@@ -79,8 +79,8 @@
       <div class="step">
         <span class="n">01</span>
         <h3>Share a code</h3>
-        <p>One of you makes a short code and hands it to the other however you like — in person, on a call, on paper. It works once, then it's gone for good.</p>
-        <div class="art"><span class="mono" style="color:var(--text3);letter-spacing:3px">KR7·FM2·XQ</span></div>
+        <p>One of you makes a Nimna code — shown as words and as a QR, share either, however you like: in person, on a call, on paper. It works once, expires in 24 hours, then it's gone for good.</p>
+        <div class="art"><span class="mono" style="color:var(--text3);letter-spacing:3px">KR7-FM2-XQ4</span></div>
       </div>
       <div class="step">
         <span class="n">02</span>
@@ -138,6 +138,7 @@
           <li>Connection times</li>
           <li>Ciphertext sizes and timing</li>
           <li>An opaque routing ID per channel</li>
+          <li>With push on: a wake-up address for one moment, used once, then discarded</li>
         </ul>
       </div>
       <div class="seecol never">
@@ -188,6 +189,14 @@
         <h3>Content-free notifications</h3>
         <p>Off by default. If you opt in, a nudge says "New activity" — no name, no line, no content, ever.</p>
       </div>
+      <div class="fact">
+        <h3>Photos that don't whisper</h3>
+        <p>Location, device, and time are stripped from photos on your phone, before encryption. The photographed contract shouldn't say where it was photographed.</p>
+      </div>
+      <div class="fact">
+        <h3>Files, phone to phone</h3>
+        <p>Photos and documents up to 5 MB travel the live line like everything else. What you receive stays inside nimna — never your gallery, never a cloud roll. Taking it out is a deliberate act.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -209,7 +218,7 @@
       </div>
       <div class="threat">
         <h3>The other person</h3>
-        <p>Nimna protects the line, not the human at the far end. They can screenshot, photograph, or retell anything you send. No app can fix trust.</p>
+        <p>Nimna protects the line, not the human at the far end. Nimna can't stop a screenshot — it will always tell the other person one was taken, and that's the whole protection: notice, not prevention. It only notices inside the app; a second camera pointed at a screen is invisible to any software. And anything you send can simply be retold. No app can fix trust.</p>
       </div>
       <div class="threat">
         <h3>A seized, unlocked phone</h3>
@@ -218,6 +227,10 @@
       <div class="threat">
         <h3>Pairing over a hostile channel</h3>
         <p>If someone intercepts your code before your friend uses it, they could pair in their place. That's why codes die in 24 hours, work once, and why both apps show a safety phrase to read aloud after pairing.</p>
+      </div>
+      <div class="threat">
+        <h3>The push trade, if you opt in</h3>
+        <p>Push is off by default, per line. Turn it on and a knock can wake your phone through Apple's or Google's push service — carrying only "New activity." They learn a contentless delivery happened to your device; the relay momentarily links your line to a wake-up address, uses it once, and forgets it. Keeps no list. That transient linkage is the full price of push — leave it off and no third party ever touches the line.</p>
       </div>
       <div class="threat">
         <h3>What we can't hand over</h3>
@@ -231,18 +244,33 @@
 <section aria-labelledby="price-h">
   <div class="wrap">
     <p class="kicker">Pricing</p>
-    <h2 id="price-h">Pay once. Or never.</h2>
+    <h2 id="price-h">One of you buys the line. The other never pays.</h2>
     <div class="price">
       <div class="pcard">
         <p class="for">Joining</p>
         <p class="amt">Free, forever</p>
-        <p>Someone hands you a code, you're in. Joining a line never costs anything — and you talk both ways on it, forever.</p>
+        <p>Someone hands you a code, you're in. Joining a line never costs anything, never asks for anything, and never shows a paywall — and you talk both ways on it, forever.</p>
       </div>
       <div class="pcard">
         <p class="for">Creating lines</p>
-        <p class="amt">One payment</p>
-        <p>Creating a line is the only thing that costs. A single purchase through the app store unlocks as many as you like. No subscription. No account. The receipt stays between you and the store — we never learn who you are.</p>
+        <p class="amt">One subscription a year</p>
+        <p>Creating lines is the only thing that costs: one yearly subscription, as many lines as you care to create. Your app store shows the price in your currency. No account. The receipt stays between you and the store — we never learn who you are.</p>
       </div>
+    </div>
+    <div class="permband">
+      <h3>Every line you create is yours for good.</h3>
+      <p>If the subscription lapses, every line you've made keeps working — forever, exactly as before. A lapse only pauses creating new ones. Nothing is ever frozen, degraded, or repossessed — and not because we promise to be nice: the relay has no accounts to flag as expired. Lines are keypairs on your two phones; the guarantee is structural.</p>
+    </div>
+    <div class="price-stores">
+      <div class="stores">
+        <a class="storebtn" href="#" aria-label="Download on the App Store (coming soon)">
+          <span><small>Download on the</small>App Store</span>
+        </a>
+        <a class="storebtn" href="#" aria-label="Get it on Google Play (coming soon)">
+          <span><small>Get it on</small>Google Play</span>
+        </a>
+      </div>
+      <p class="pricenote">The stores are the only place a price appears — it's set per region, in your currency, and we'd rather show you the real number there than a converted one here.</p>
     </div>
   </div>
 </section>
@@ -275,11 +303,11 @@
       </details>
       <details>
         <summary>What if I lose my phone?</summary>
-        <div class="a"><p>Your messages lived only on that phone, encrypted at rest behind its lock and excluded from cloud backups. Losing it means they're gone — for you and for anyone who finds it. Pair fresh from a new phone with a new code. There is deliberately no restore.</p></div>
+        <div class="a"><p>Your lines die with it — cryptographically, permanently, by design. A line is its two keys; the keys lived only on that phone, encrypted behind its lock and excluded from cloud backups. Whoever finds the phone gets nothing, and so do we — any way to resurrect your lines would be a stored identity that outlives the keys, which is exactly the thing nimna refuses to keep. This is the zero-storage promise keeping itself honest.</p><p>Getting back costs one message: you already know each other outside nimna — that's how the code traveled the first time — so you pair again with a new code. Your subscription is the one thing that survives, restored through your app-store account on the new phone.</p></div>
       </details>
       <details>
         <summary>Do disappearing messages really disappear?</summary>
-        <div class="a"><p>Both apps delete them on the schedule the sender set. But we won't pretend a timer beats physics: a screenshot is still a screenshot. The app says exactly this where you set the timer. Treat it as a courtesy between two people who trust each other, not a guarantee against one who doesn't.</p></div>
+        <div class="a"><p>Both apps delete them on the schedule the sender set — photos and documents included, same timer, same rule. But we won't pretend a timer beats physics: a screenshot is still a screenshot. What nimna adds is notice — take a screenshot and the other person is always told. The app says all of this where you set the timer. Treat it as a courtesy between two people who trust each other, not a guarantee against one who doesn't.</p></div>
       </details>
       <details>
         <summary>Is this legal?</summary>
@@ -287,7 +315,23 @@
       </details>
       <details>
         <summary>What does it cost?</summary>
-        <div class="a"><p>Joining is free forever, and a joined line talks both ways. Creating a line takes the one-time unlock — a single app-store payment for as many lines as you like. No subscription, no tiers, no account.</p></div>
+        <div class="a"><p>Joining is free forever, and a joined line talks both ways. Creating lines takes a yearly subscription — one subscription, as many lines as you like, priced by your app store in your currency (the store is the only place the number appears). And every line you create is permanent: if the subscription lapses, everything you've made keeps working — a lapse only pauses creating new ones.</p></div>
+      </details>
+      <details>
+        <summary>Can I send photos and files?</summary>
+        <div class="a"><p>Yes — photos and documents up to 5 MB, first-class, over the same live line. Photos are compressed by default (original quality is a toggle) and scrubbed of location, device, and time on your phone, before encryption. What you receive lives inside nimna's encrypted store — never your gallery, never a cloud photo roll — until you deliberately export it. The sender's disappearing timer applies to media exactly as to text.</p></div>
+      </details>
+      <details>
+        <summary>What do Apple and Google see?</summary>
+        <div class="a"><p>If you leave push off: nothing, ever — the line touches no third party. If you opt in on a line, their push services deliver the two words "New activity" to your phone when someone knocks — no sender, no line name, no content. They learn a contentless delivery happened, nothing more. The relay uses your wake-up address once per knock and immediately forgets it; there is no token list anywhere. That trade is why push is off by default.</p></div>
+      </details>
+      <details>
+        <summary>Why can't I try creating a line before paying?</summary>
+        <div class="a"><p>Deliberately. Receiving is the free trial — join a line someone made and you get the entire product, forever, for nothing. Keeping creation paid-only also means every line in existence traces back to a real, store-verified payment — one of the structural reasons nimna is a poor tool for strangers and spam: no discovery, strictly two people, and a paid creator behind every line.</p></div>
+      </details>
+      <details>
+        <summary>Can I run my own relay?</summary>
+        <div class="a"><p>The relay is open source under AGPL-3.0 and the protocol spec is published alongside it, so nothing stops you technically — and the AGPL means anyone operating a modified relay as a service must publish their changes. v1 of the app speaks to the hosted relay; bring-your-own-relay is planned. One honest detail: push credentials are deployment configuration, never part of the code — a self-hosted relay brings its own Apple/Google credentials or runs push-less.</p></div>
       </details>
     </div>
   </div>
@@ -309,6 +353,7 @@
       </nav>
     </div>
     <p class="etym"><span class="dev" lang="sa">निम्न</span> · <span class="mono">nimna</span> — Sanskrit: low, deep, beneath notice. The low ground, where water gathers and settles. Everything about this product is kept low: no accounts, no storage, no noise.</p>
+    <p class="nocookies">The relay is open source under AGPL-3.0, with the protocol spec published alongside — <a href="https://github.com/prashant7163/nimna" rel="noopener">read both</a>. The app is closed; every promise that matters lives in the open part.</p>
     <p class="nocookies">This site practices what the product preaches: it sets no cookies, runs no analytics, and loads nothing from third parties.</p>
   </div>
 </footer>

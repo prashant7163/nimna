@@ -32,24 +32,39 @@
 <main class="page">
   <div class="wrap">
     <h1>Security model</h1>
-    <p class="updated">Written for technical readers. No marketing tone past this line. Protocol spec: <a href="https://github.com/prashant7163/nimna" rel="noopener">v0.1 draft in the repo</a>.</p>
+    <p class="updated">Written for technical readers. No marketing tone past this line. Protocol spec: <a href="https://github.com/prashant7163/nimna" rel="noopener">v0.1.1 draft in the repo</a>.</p>
 
     <h2>Summary</h2>
     <p>Nimna is a synchronous, end-to-end encrypted, account-less 1:1 messaging protocol. A stateless WebSocket relay bridges two live device connections and forwards opaque frames. There is no store-and-forward: if both peers are not connected, nothing is transmitted and nothing is queued server-side. All persistent state lives on the two devices, encrypted at rest.</p>
 
     <h2>Pairing</h2>
     <ol>
-      <li>Device A generates a fresh channel keypair and a short single-use pairing code <span class="mono">C</span> (unambiguous alphabet, default TTL 24 h, configurable shorter). A registers on the relay under the rendezvous topic <span class="mono">H(C)</span> — the relay sees only the hash, never the code.</li>
+      <li>Device A generates a fresh channel keypair and a single-use pairing code <span class="mono">C</span> — format fixed permanently: 9 characters, Crockford Base32, displayed and entered as <span class="mono">XXX-XXX-XXX</span> (~45 bits; combined with per-IP rendezvous throttling and the TTL, brute-forcing an active code is not a realistic attack, and a lucky hit still faces the safety phrase). Default TTL 24 h, configurable shorter. A registers on the relay under the rendezvous topic <span class="mono">H(C)</span> — the relay sees only the hash, never the code. The code and its QR encoding display simultaneously, independently shareable.</li>
       <li>The code travels out-of-band (in person, a call, paper — your choice, your threat model).</li>
-      <li>Device B generates its own fresh keypair and registers on <span class="mono">H(C)</span>. The relay bridges the two connections; the devices perform an authenticated key agreement through it.</li>
+      <li>Device B generates its own fresh keypair and registers on <span class="mono">H(C)</span> — having supplied the code by typing, pasting, scanning the QR live, or uploading a QR image/PDF. The relay bridges the two connections (first come wins; the topic then closes); the devices perform an authenticated key agreement through it.</li>
       <li>Both devices derive a short <strong>safety phrase</strong> from the agreed key material and display it. You read it to each other over a channel you trust. A mismatch means a man-in-the-middle joined with your code — you discard and re-pair. Verification is strongly encouraged, not enforced.</li>
       <li>Both devices derive an opaque channel routing ID (CRID) from the shared key material, persist the channel locally, and discard the code permanently. Codes are single-use; the rendezvous topic dies when both sides disconnect.</li>
     </ol>
-    <div class="callout"><p><strong>Known pairing risk, stated plainly:</strong> a third party who intercepts the code before your peer uses it can pair with the initiator in their place. Mitigations: code TTL, single use, and the safety-phrase check. If your code-sharing channel is hostile, verify the phrase before saying anything that matters.</p></div>
+    <div class="callout"><p><strong>Known pairing risk, stated plainly:</strong> a third party who intercepts the code before your peer uses it can pair with the initiator in their place. Mitigations: code TTL, single use, and the safety-phrase check. If your code-sharing channel is hostile, verify the phrase before saying anything that matters. Failed or stale pairing attempts surface no notifications to anyone — a finalized channel's topic no longer exists at the relay, late attempts receive silence, and there is nothing actionable to report.</p></div>
 
     <h2>Sessions</h2>
     <p>Either side may <strong>knock</strong> on a paired channel. The relay forwards the knock if the peer holds a live connection, or returns <span class="mono">PEER_OFFLINE</span>; knocks expire after roughly 60 seconds. On accept, the relay bridges the two connections in memory and forwards frames verbatim. Frames are <span class="mono">[CRID][opaque ciphertext]</span> — typing indicators, acknowledgments, and hangups are encrypted control frames indistinguishable from messages at the relay. Either side disconnecting or hanging up tears down the bridge; the relay forgets the CRID immediately.</p>
     <p>Messages composed while the peer is offline are stored only on the sender's device, marked waiting, and transmitted in order at the next bridge. To the network this is indistinguishable from live typing.</p>
+    <p>Platform honesty about connectivity: after backgrounding, the socket is held ~30 seconds on both platforms (matching the iOS background grace; Android kept symmetric by policy), then closes — no VoIP or background-audio workarounds. Longer gaps are bridged by knock → content-free push → tap → reconnect, which resumes in about a second. The relay rate-limits knock forwarding (1 per channel per 10 s, duplicates dropped silently) and push forwarding (1/min, 6/hr, 20/day per channel, counters in-memory and user-anonymous); the client never auto-retries a knock — each knock is a deliberate tap.</p>
+
+    <h2>Media</h2>
+    <ul>
+      <li>Images and documents (PDF/files) are first-class, capped at 5 MB per attachment, client-enforced and bounded by relay frame limits.</li>
+      <li>Attachments travel as chunked <span class="mono">MEDIA_CHUNK</span> frames with an encrypted manifest (chunk count, content hash); the receiver reassembles and verifies. The relay never reassembles anything — chunks are indistinguishable opaque frames.</li>
+      <li>EXIF/location/device/timestamp metadata is stripped from images on the sender's device, <em>before</em> encryption.</li>
+      <li>Received media lives exclusively in the app's encrypted store — never the system gallery, outside cloud photo backups; export is a deliberate user act. The sender's expiry instruction applies to media identically.</li>
+    </ul>
+
+    <h2>Screenshots — detect and notify</h2>
+    <p>Nimna cannot prevent screenshots and does not pretend to. Policy, symmetric on both platforms: screenshots are possible, and the other person is always told — a screenshot emits an encrypted CONTROL notice to the peer, disclosed upfront in onboarding. Android's FLAG_SECURE blocking is deliberately not used, so the promise is identical everywhere. Honest limits: detection fires only while content is on screen inside the app; a second camera photographing the screen is undetectable; and the notice itself is honor-system, like expiry — a modified client could suppress it.</p>
+
+    <h2>Sensitive-content handling — on-device only, never moderation</h2>
+    <p>Incoming images are checked on-device, after decryption, before display (iOS: SensitiveContentAnalysis; the Android mechanism is an engineering decision — bundled on-device model, or iOS-only at launch). Flagged media renders blurred behind a tap-to-view warning. The same check runs sender-side at attach time as a soft, non-blocking prompt. Hard boundary: detection exists solely for local display decisions — nothing is ever blocked, logged, reported, or transmitted as a result, and neither side learns of the other's flags. Even our safety features can't phone home — they have nowhere to call.</p>
 
     <h2>Cryptography</h2>
     <p>The v0.1 spec fixes <em>requirements</em>; the concrete, audited primitives are being finalized for v0.2 and will be published in the spec with test vectors before launch. We commit to boring, widely reviewed constructions — no novel cryptography, ever. The requirements the chosen scheme must satisfy:</p>
@@ -76,8 +91,15 @@
     <ul>
       <li>A network observer learns that your device talked to the nimna relay, and when.</li>
       <li>A global or relay-position observer could attempt traffic correlation between two endpoints (who talks to whom, when). v1 does not defend against this; we document it instead of hand-waving. Federation and transport overlays are future work.</li>
-      <li>Push, if opted in, involves Apple/Google push infrastructure delivering a fixed contentless string; the push token is the only piece of state that may outlive a connection, and push is default-off.</li>
+      <li>Push, per-channel opt-in and default-off, is designed so the relay is a stateless push <em>forwarder</em>, never a token <em>registry</em>: device-tokens are exchanged peer-to-peer inside the E2E channel (refreshed via encrypted CONTROL frames) and held only by the peers. A knock carries the peer's token; if the peer is offline, the relay makes one APNs/FCM call delivering the fixed contentless string "New activity" and immediately discards the token. No token table exists anywhere server-side.</li>
+      <li>The full price of push, stated plainly: at knock time the relay transiently observes "wake token Y for CRID X" — an in-memory, unlogged, momentary linkage of a channel to a device — and Apple/Google learn that their infrastructure delivered a contentless push from nimna's credentials to that device at that time. They never see channel, counterpart, or content. This is why push is opt-in.</li>
     </ul>
+
+    <h2>Device loss &amp; reinstall</h2>
+    <p>A channel <em>is</em> its two private keys. Lose the device or delete the app and every channel on it is cryptographically dead — permanently, with no resurrection path, by design. Any recovery mechanism would require durable identity that outlives the keys — precisely what nimna refuses to hold — and would be indistinguishable, from the relay's side, from a thief or a hijacked store account. Doctrine: device lost → channels dead → re-pair out-of-band (every pair has an out-of-band relationship; the code traveled it once). The only thing that survives reinstall is the subscription, restored via platform store identity.</p>
+
+    <h2>Structural abuse posture</h2>
+    <p>Three structural facts, relevant to store review and to anyone assessing misuse potential: pairing requires a pre-existing out-of-band relationship — there is no discovery, no directory, no way for strangers to find each other; channels are strictly 1:1 — no groups, no broadcast, no distribution networks; and every channel in existence was initiated under a paid subscription tied to a store-verified payment instrument. The residual case — two consenting bad actors — exists in every end-to-end encrypted system, including Signal and WhatsApp; no messenger design prevents it, and nimna does not claim to.</p>
 
     <h2>Threat model at a glance</h2>
     <table>
@@ -88,12 +110,15 @@
         <tr><td>Pairing-time MITM</td><td>Detected by safety-phrase mismatch; bounded by code TTL + single use</td></tr>
         <tr><td>Peer's device seized</td><td>Out of protocol scope; bounded by their app lock, timers, wipe</td></tr>
         <tr><td>Your device seized</td><td>App lock, encrypted-at-rest storage, no cloud copies, panic wipe</td></tr>
+        <tr><td>Counterpart captures content</td><td>Screenshot: detect-and-notify, honor-system, disclosed upfront. Second camera: undetectable; disclosed honestly. Trust in your counterpart is part of the model</td></tr>
         <tr><td>Traffic correlation (IP/timing)</td><td>Acknowledged v1 limitation, documented above</td></tr>
       </tbody>
     </table>
 
     <h2>Verify, don't trust</h2>
-    <p>The relay is open source with a reproducible-deployment story (best-effort in v1) so third parties can compare the deployed relay with the repo: <a href="https://github.com/prashant7163/nimna" rel="noopener">github.com/prashant7163/nimna</a>. Issues and security reports: <a href="mailto:hello@nimna.app">hello@nimna.app</a>.</p>
+    <p>The relay is open source under <strong>AGPL-3.0</strong> — the Signal-server/SimpleX precedent: anyone operating a modified relay as a service must publish their modifications, protecting what "a nimna relay" means. The protocol spec is published openly alongside; the app itself is closed — deliberately, and honestly labeled as such: every promise that matters (no storage, no accounts, no logs, content-free push) is a property of the open part.</p>
+    <p>One code-versus-deployment honesty note: push credentials (APNs/FCM) are deployment configuration, never repository content — the repo ships config slots, not values. What auditors verify in the open code is push <em>behavior</em>: the fixed contentless string, the token used once and discarded. The credentials only determine whose developer account sends. Self-hosted relays supply their own credentials or run push-less.</p>
+    <p>A reproducible-deployment story (best-effort in v1) lets third parties compare the deployed relay with the repo: <a href="https://github.com/prashant7163/nimna" rel="noopener">github.com/prashant7163/nimna</a>. Issues and security reports: <a href="mailto:hello@nimna.app">hello@nimna.app</a>.</p>
   </div>
 </main>
 

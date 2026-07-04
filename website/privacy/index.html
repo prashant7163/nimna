@@ -45,7 +45,8 @@
         <tr><td>Message history or backups on our side</td><td>None — the relay has no database and no disk storage</td></tr>
         <tr><td>Contact lists, address book, or social graph</td><td>None — never requested, never accessed</td></tr>
         <tr><td>Analytics, advertising identifiers, or tracking</td><td>None — in the app or on this site</td></tr>
-        <tr><td>Payment identity</td><td>None — purchases are processed by Apple or Google; we receive an anonymous entitlement, not your identity</td></tr>
+        <tr><td>Payment identity</td><td>None — the subscription is processed by Apple or Google; we receive an anonymous entitlement, not your identity</td></tr>
+        <tr><td>Content scanning</td><td>None — sensitive-content checks (blurring) run on your device for your own display decisions and never leave it; nothing is blocked, logged, or reported</td></tr>
       </tbody>
     </table>
 
@@ -59,7 +60,7 @@
     <p>This is held for the lifetime of your live connection, is never written to disk, and is never logged in production. The relay's <a href="https://github.com/prashant7163/nimna" rel="noopener">source code is public</a>, so this claim can be checked rather than believed.</p>
 
     <h2>Notifications, if you turn them on</h2>
-    <p>Push notifications are off by default. If you opt in, your device's push token is used to deliver a single fixed phrase — "New activity" — with no sender, no channel, and no content. Delivery uses Apple's and Google's push services, which see only that same contentless phrase.</p>
+    <p>Push notifications are off by default, per line. If you opt in, your device's push token is held by <em>the person you paired with</em> — inside your encrypted line, not on any server. When they knock while you're offline, the relay uses that token once to deliver a single fixed phrase — "New activity," with no sender, no channel, no content — and immediately discards it. The relay keeps no list of tokens. Apple's and Google's push services see only that same contentless phrase and the fact of its delivery.</p>
 
     <h2>This website</h2>
     <p>nimna.app sets no cookies, runs no analytics, and loads nothing from third parties. Our host may keep standard access logs for security and abuse prevention (IP address, requested page, time); we add nothing to that.</p>
