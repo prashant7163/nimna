@@ -1,0 +1,335 @@
+{
+  "_purpose": "Deterministic KK session-handshake transcripts (S1/S2) and transport frames in both directions with per-frame keys before and after the per-message rekey, exact nonces, and inner-envelope plaintexts.",
+  "_spec": "nimna-protocol-spec-v0.2.md §3.3.1, §5.4–§5.6",
+  "protocol_name": "Noise_KK_25519_ChaChaPoly_SHA256",
+  "notes": [
+    "The knocker is the Noise initiator (spec §3.3.1). Either side of the channel may knock; the two transcripts show both.",
+    "Prologue is zero-length. Pre-messages are the two static public keys, initiator's first, per Noise pre-message rules.",
+    "KK is not a psk pattern: 'e' tokens MixHash only (no MixKey of the ephemeral public key).",
+    "chaining_key_initial is the 32-byte protocol name itself (Noise_KK_25519_ChaChaPoly_SHA256 is exactly HASHLEN bytes, used as h without hashing).",
+    "Split: first key k_ir = initiator->responder (direction constant 0x00000000), second k_ri = responder->initiator (0x00000001).",
+    "ad for every transport frame is the 18-byte outer header 01 ‖ 21 ‖ CRID (SESSION_DATA).",
+    "Counters are per direction, starting at 0, strict increment; receivers enforce exact sequence and treat any deviation, AEAD failure, or malformed frame as a protocol error that kills the session (spec §3.3.1)."
+  ],
+  "transport_nonce_layout": "12 bytes: direction (4, big-endian: 0x00000000 initiator->responder, 0x00000001 responder->initiator) ‖ counter (8, big-endian, from 0)",
+  "rekey": {
+    "function": "k = first 32 bytes of ChaCha20-Poly1305-Encrypt(k, nonce = 0x00000000ffffffffffffffff, ad = empty, plaintext = 32 zero bytes) — Noise REKEY, spec §11.3",
+    "applied": "after every message: on encrypt (sender side) and on successful decrypt (receiver side); the old key is zeroized immediately"
+  },
+  "forbidden_counter": {
+    "value": "0xffffffffffffffff",
+    "rule": "Counter 2^64-1 is forbidden (reserved): its nonce would collide with the rekey nonce. A frame carrying it is a protocol error (spec §3.3.1); unreachable in practice under §4 frame-rate limits."
+  },
+  "transcripts": [
+    {
+      "name": "knocker-is-joiner",
+      "channel_ref": "statics from pairing-handshake.json transcript \"tokens-present\"; the joiner device (B) knocks",
+      "crid": "3135feb1af5964ffa1ae0f169effaf92",
+      "initiator": {
+        "device": "B (joiner at pairing)",
+        "noise_role": "initiator (knocker)",
+        "static_priv": "4e79d6c407cfb9ab0d85b05be093e3757a612203f8b595a37892db1214a8971f",
+        "static_pub": "b8b2701b516b5acaecf6b2cdef0d9ef9b2e6be21acd6436af67b80e35ce4ac3b",
+        "ephemeral_priv": "3d753903b367111041601456a999d4b5a22b6ea0140ca8e72dbcb144325c67ad",
+        "ephemeral_pub": "3c09c6364bea47dc6bdf7498fde10a51a103f8a9b5847f3efd9c28710c8d6f3d"
+      },
+      "responder": {
+        "device": "A (creator at pairing)",
+        "noise_role": "responder (accepter)",
+        "static_priv": "f13d8b791ec34452b9318dd9057b18f03fd68e901989abec86bb73bdaaaf2ab3",
+        "static_pub": "a93d03a281458d52901ce010c34d85df60d19a78ed556f7ff921a55a38a7d676",
+        "ephemeral_priv": "85f4db6e32c88c5d890194f4bf2ba74ee52e2a7daa84929d879bf86e6d0b02e1",
+        "ephemeral_pub": "449ae4cc9355b9fefaab6d47aa6fae21294e5042c66114599f3063b2c5ece342"
+      },
+      "pre_messages": [
+        "initiator static public key (first, per Noise pre-message rules): b8b2701b516b5acaecf6b2cdef0d9ef9b2e6be21acd6436af67b80e35ce4ac3b",
+        "responder static public key: a93d03a281458d52901ce010c34d85df60d19a78ed556f7ff921a55a38a7d676"
+      ],
+      "prologue": "",
+      "chaining_key_initial": "4e6f6973655f4b4b5f32353531395f436861436861506f6c795f534841323536",
+      "handshake_hash_after_pre_messages": "2ab74568b58a5a48ead4c348f5576c559e6539f052277e881f9e3b3b4fbd078d",
+      "messages": [
+        {
+          "name": "S1",
+          "direction": "knocker->accepter",
+          "noise_tokens": "e, es, ss",
+          "ephemeral_pub": "3c09c6364bea47dc6bdf7498fde10a51a103f8a9b5847f3efd9c28710c8d6f3d",
+          "tag_over_empty_payload": "307e02238cdbc8d5b189246905018982",
+          "session_data_payload": "3c09c6364bea47dc6bdf7498fde10a51a103f8a9b5847f3efd9c28710c8d6f3d307e02238cdbc8d5b189246905018982",
+          "size": 48,
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf923c09c6364bea47dc6bdf7498fde10a51a103f8a9b5847f3efd9c28710c8d6f3d307e02238cdbc8d5b189246905018982",
+          "chaining_key_after": "f5c6650f7a919be3e872d6a455cb153d2fb939a92ee78c37705ebde1e99a9e92",
+          "handshake_hash_after": "5407b9b9a49d3145d72026b21e9427ade7fef80758a86744b78b16d48404af85"
+        },
+        {
+          "name": "S2",
+          "direction": "accepter->knocker",
+          "noise_tokens": "e, ee, se",
+          "ephemeral_pub": "449ae4cc9355b9fefaab6d47aa6fae21294e5042c66114599f3063b2c5ece342",
+          "tag_over_empty_payload": "ef5b1290decf80383a9c92da9ee7f9fd",
+          "session_data_payload": "449ae4cc9355b9fefaab6d47aa6fae21294e5042c66114599f3063b2c5ece342ef5b1290decf80383a9c92da9ee7f9fd",
+          "size": 48,
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf92449ae4cc9355b9fefaab6d47aa6fae21294e5042c66114599f3063b2c5ece342ef5b1290decf80383a9c92da9ee7f9fd",
+          "chaining_key_after": "b54b528de46242413680e3ed90733c0a3f246d6f8ca44deff49c9c3b59ca599c",
+          "handshake_hash_after": "d5ce27d6199906aaa1214a6f6b5d73b103f1f921d973ebf5ca74c937dfe4d077"
+        }
+      ],
+      "handshake_hash_final": "d5ce27d6199906aaa1214a6f6b5d73b103f1f921d973ebf5ca74c937dfe4d077",
+      "split": {
+        "k_ir": "f4fb72b235b4e274f67c46a42fb58cd02849b24f3aa4aa3f41d62df0684087e8",
+        "k_ir_note": "initiator(knocker)->responder(accepter); direction constant 0x00000000",
+        "k_ri": "351d02c22c4f9dca25bdf36f776fb630767a5bd98f91261147afc9160cb18f14",
+        "k_ri_note": "responder(accepter)->initiator(knocker); direction constant 0x00000001"
+      },
+      "transport_frames": [
+        {
+          "seq": 1,
+          "direction": "initiator->responder",
+          "direction_constant": "0x00000000",
+          "counter": 0,
+          "nonce": "000000000000000000000000",
+          "key_before": "f4fb72b235b4e274f67c46a42fb58cd02849b24f3aa4aa3f41d62df0684087e8",
+          "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x01 (TEXT)",
+            "flags": "0x00",
+            "msg_id": "a3fe63928854403e30c0a7342aa600ee",
+            "timestamp_ms": 1783166401000,
+            "body": "74657374206d657373616765206f6e65",
+            "text": "test message one",
+            "note": "TEXT without expiry; body is the raw UTF-8 bytes",
+            "encoded": "010100a3fe63928854403e30c0a7342aa600ee0000019f2cfff9e874657374206d657373616765206f6e65"
+          },
+          "session_data_payload": "f4a6d7f15e8a3a9392dd0add698648ab1e4844823faf188d4dd8f5af8190d60fa5bbc7ff36d1fe2439e6dabf91db3ee53bea6dd489fddb15ca9b02",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf92f4a6d7f15e8a3a9392dd0add698648ab1e4844823faf188d4dd8f5af8190d60fa5bbc7ff36d1fe2439e6dabf91db3ee53bea6dd489fddb15ca9b02",
+          "key_after_rekey": "83d8473797b5aac99b0e426b881240621b4879c56181348a9894c65402f98d09"
+        },
+        {
+          "seq": 2,
+          "direction": "initiator->responder",
+          "direction_constant": "0x00000000",
+          "counter": 1,
+          "nonce": "000000000000000000000001",
+          "key_before": "83d8473797b5aac99b0e426b881240621b4879c56181348a9894c65402f98d09",
+          "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x01 (TEXT)",
+            "flags": "0x01",
+            "msg_id": "9ddc55936e0133d8050a04bb07df4cc9",
+            "timestamp_ms": 1783166402000,
+            "expiry_s": 30,
+            "body": "646973617070656172696e67206d65737361676520e2809420636166c3a920e2989520c3bcc3b1c3ae",
+            "text": "disappearing message — café ☕ üñî",
+            "note": "TEXT with expiry (flags bit 0; expiry_s inserted at offset 27, body shifts to 31); multi-byte UTF-8",
+            "encoded": "0101019ddc55936e0133d8050a04bb07df4cc90000019f2cfffdd00000001e646973617070656172696e67206d65737361676520e2809420636166c3a920e2989520c3bcc3b1c3ae"
+          },
+          "session_data_payload": "2fcc769c0a07c251c071b3916f0a2161c2c73331e255af9a3c53c7abc786958fbe108dbe9ea997ff6784e2e261de2e1bb2acccabea832130f9f17f96a4d7fcb731d7c1de58d8d9df33c6ff715dcc2c4f5518b6ff95470bd7",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf922fcc769c0a07c251c071b3916f0a2161c2c73331e255af9a3c53c7abc786958fbe108dbe9ea997ff6784e2e261de2e1bb2acccabea832130f9f17f96a4d7fcb731d7c1de58d8d9df33c6ff715dcc2c4f5518b6ff95470bd7",
+          "key_after_rekey": "fae6e1a0f4b43d4bb04f0894c77730a24157b3302c1fb6ed4405a666fcb10f0e"
+        },
+        {
+          "seq": 3,
+          "direction": "responder->initiator",
+          "direction_constant": "0x00000001",
+          "counter": 0,
+          "nonce": "000000010000000000000000",
+          "key_before": "351d02c22c4f9dca25bdf36f776fb630767a5bd98f91261147afc9160cb18f14",
+          "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x02 (ACK)",
+            "flags": "0x00",
+            "msg_id": "621bf9a33cca3314ec158a4b8484e6dc",
+            "timestamp_ms": 1783166403000,
+            "body": "a3fe63928854403e30c0a7342aa600ee",
+            "acked_msg_id": "a3fe63928854403e30c0a7342aa600ee",
+            "note": "ACK of the first TEXT (acked_msg_id = its msg_id)",
+            "encoded": "010200621bf9a33cca3314ec158a4b8484e6dc0000019f2d0001b8a3fe63928854403e30c0a7342aa600ee"
+          },
+          "session_data_payload": "09242649d52b9bdf725807f20c43c5742403c1237a769c2a97798a2a8b033ae84cca26d05b11f04c80a41f020195e85d1c835ea2db923b69bffaf6",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf9209242649d52b9bdf725807f20c43c5742403c1237a769c2a97798a2a8b033ae84cca26d05b11f04c80a41f020195e85d1c835ea2db923b69bffaf6",
+          "key_after_rekey": "50024d4afca10cf18991705dd0f0a94f97ff58d91dde3a6b96fb0bdef19240e8"
+        },
+        {
+          "seq": 4,
+          "direction": "responder->initiator",
+          "direction_constant": "0x00000001",
+          "counter": 1,
+          "nonce": "000000010000000000000001",
+          "key_before": "50024d4afca10cf18991705dd0f0a94f97ff58d91dde3a6b96fb0bdef19240e8",
+          "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x03 (CONTROL)",
+            "flags": "0x00",
+            "msg_id": "989a1d1809dd732ac21725e6d6164ff1",
+            "timestamp_ms": 1783166404000,
+            "body": "03",
+            "control_type": "0x03 (screenshot notice, empty payload)",
+            "note": "CONTROL screenshot notice (spec §5.2)",
+            "encoded": "010300989a1d1809dd732ac21725e6d6164ff10000019f2d0005a003"
+          },
+          "session_data_payload": "fa69b8854576295c21d6ceb5c1e3b76d0ea11ff7f9fd7887f7262e3c6c5123d2023d194f5b6cda403ba4689f",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf92fa69b8854576295c21d6ceb5c1e3b76d0ea11ff7f9fd7887f7262e3c6c5123d2023d194f5b6cda403ba4689f",
+          "key_after_rekey": "2d9e6edc1e6e8bb3c4e4a66dbaecdca5c64d706a5a1f84c85d063f13a62aa44e"
+        },
+        {
+          "seq": 5,
+          "direction": "initiator->responder",
+          "direction_constant": "0x00000000",
+          "counter": 2,
+          "nonce": "000000000000000000000002",
+          "key_before": "fae6e1a0f4b43d4bb04f0894c77730a24157b3302c1fb6ed4405a666fcb10f0e",
+          "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x04 (HANGUP)",
+            "flags": "0x00",
+            "msg_id": "0907924b8f975da17d5bdb8fc74e1828",
+            "timestamp_ms": 1783166405000,
+            "body": "",
+            "note": "HANGUP: authenticated end-of-session, body empty; relay-plane TEARDOWN follows outside the encrypted channel",
+            "encoded": "0104000907924b8f975da17d5bdb8fc74e18280000019f2d000988"
+          },
+          "session_data_payload": "9138446ee467b25c51b8c0b779240fbb42562acd2608aa38c9eafa983c97cc836a540b94b5f1ebf4294ea0",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf929138446ee467b25c51b8c0b779240fbb42562acd2608aa38c9eafa983c97cc836a540b94b5f1ebf4294ea0",
+          "key_after_rekey": "46309441ed0bb963df05360fff3830261622a4ea052dc6ab1302fdc3f3397dea"
+        }
+      ]
+    },
+    {
+      "name": "knocker-is-creator",
+      "channel_ref": "statics from pairing-handshake.json transcript \"tokens-absent\"; the creator device (A) knocks",
+      "crid": "79027dde3a9df83dacefba3b536da0ea",
+      "initiator": {
+        "device": "A (creator at pairing)",
+        "noise_role": "initiator (knocker)",
+        "static_priv": "311411c9defda105018f479b9a24d7dfebe1e7da365c912e90f47ca4ccc2da6b",
+        "static_pub": "1a62026f705d633134480a56c5040f5bac8ffb76e0f65a992b8e162fb0f3ee15",
+        "ephemeral_priv": "99b60e9bc99b7486007805516996e36a5b455e4becb2947b6ce74f6f881ff073",
+        "ephemeral_pub": "38fc9e0d3e1a6506c5022d5803a81894360466464ec25362914822b70c7ec664"
+      },
+      "responder": {
+        "device": "B (joiner at pairing)",
+        "noise_role": "responder (accepter)",
+        "static_priv": "bf64f968babfb977a78f282ce824f7367bd7ccb8e3f8633d6d2e9006819d7685",
+        "static_pub": "d756389c9eb01feb917f2afa66dc8ccde472a0ae87ef00de7961ea7ed1a53035",
+        "ephemeral_priv": "8bf662a940f418c4137f2281d39fc5daacf4a5ca8d83cbc9f2cde52f74f67974",
+        "ephemeral_pub": "1d0a8a539b266d11903a74b5ebbffd6021717706fef76399e8a926107c4a150f"
+      },
+      "pre_messages": [
+        "initiator static public key (first, per Noise pre-message rules): 1a62026f705d633134480a56c5040f5bac8ffb76e0f65a992b8e162fb0f3ee15",
+        "responder static public key: d756389c9eb01feb917f2afa66dc8ccde472a0ae87ef00de7961ea7ed1a53035"
+      ],
+      "prologue": "",
+      "chaining_key_initial": "4e6f6973655f4b4b5f32353531395f436861436861506f6c795f534841323536",
+      "handshake_hash_after_pre_messages": "e79cc654f166b4a9ee22a99d6f60e79e3aa018974a3b796fbc6675a61863d295",
+      "messages": [
+        {
+          "name": "S1",
+          "direction": "knocker->accepter",
+          "noise_tokens": "e, es, ss",
+          "ephemeral_pub": "38fc9e0d3e1a6506c5022d5803a81894360466464ec25362914822b70c7ec664",
+          "tag_over_empty_payload": "252e0e1d208bc674efdcb5358e87fe32",
+          "session_data_payload": "38fc9e0d3e1a6506c5022d5803a81894360466464ec25362914822b70c7ec664252e0e1d208bc674efdcb5358e87fe32",
+          "size": 48,
+          "outer_frame": "012179027dde3a9df83dacefba3b536da0ea38fc9e0d3e1a6506c5022d5803a81894360466464ec25362914822b70c7ec664252e0e1d208bc674efdcb5358e87fe32",
+          "chaining_key_after": "cb054c42ffdefffeca825b15e1271732686fe9a948d9166fed517db1a155d50e",
+          "handshake_hash_after": "9996b2fc7cd36c22c0fa516b63d3aabb8a25b8eda28cd90a3b79ec02eefd5cb8"
+        },
+        {
+          "name": "S2",
+          "direction": "accepter->knocker",
+          "noise_tokens": "e, ee, se",
+          "ephemeral_pub": "1d0a8a539b266d11903a74b5ebbffd6021717706fef76399e8a926107c4a150f",
+          "tag_over_empty_payload": "d93453e350c81eb29a54bfd5ddc226a4",
+          "session_data_payload": "1d0a8a539b266d11903a74b5ebbffd6021717706fef76399e8a926107c4a150fd93453e350c81eb29a54bfd5ddc226a4",
+          "size": 48,
+          "outer_frame": "012179027dde3a9df83dacefba3b536da0ea1d0a8a539b266d11903a74b5ebbffd6021717706fef76399e8a926107c4a150fd93453e350c81eb29a54bfd5ddc226a4",
+          "chaining_key_after": "074460c76fce359a6e2d566571f1220c2e428b9826b1cbb5f270493c660631d4",
+          "handshake_hash_after": "29e70e1c35c1192e0ebeff84d1f41ff8b4f163f9509e722f36ccdbec91c9fb85"
+        }
+      ],
+      "handshake_hash_final": "29e70e1c35c1192e0ebeff84d1f41ff8b4f163f9509e722f36ccdbec91c9fb85",
+      "split": {
+        "k_ir": "da96078892dac397c6f3da6bb5c5019ea3b41040b880dc6b4585ba057f84ba34",
+        "k_ir_note": "initiator(knocker)->responder(accepter); direction constant 0x00000000",
+        "k_ri": "4de5d11152df7a992cfee53a9c854d9b8cabdf698c67a50ed3061f07fe16fd0e",
+        "k_ri_note": "responder(accepter)->initiator(knocker); direction constant 0x00000001"
+      },
+      "transport_frames": [
+        {
+          "seq": 1,
+          "direction": "initiator->responder",
+          "direction_constant": "0x00000000",
+          "counter": 0,
+          "nonce": "000000000000000000000000",
+          "key_before": "da96078892dac397c6f3da6bb5c5019ea3b41040b880dc6b4585ba057f84ba34",
+          "ad_outer_header": "012179027dde3a9df83dacefba3b536da0ea",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x03 (CONTROL)",
+            "flags": "0x00",
+            "msg_id": "ff6227b5ff211eaa9f5b8c9cb0cbccbf",
+            "timestamp_ms": 1783166411000,
+            "body": "04010200296e696d6e612d746573747665632d66636d2d726567697374726174696f6e2d746f6b656e2d30303032",
+            "control_type": "0x04 (device-token refresh; token_payload present form, FCM)",
+            "note": "CONTROL token refresh (spec §3.2.1, §5.5, §5.7)",
+            "encoded": "010300ff6227b5ff211eaa9f5b8c9cb0cbccbf0000019f2d0020f804010200296e696d6e612d746573747665632d66636d2d726567697374726174696f6e2d746f6b656e2d30303032"
+          },
+          "session_data_payload": "df0c9798e5f3045e37b918ed2ec85ae4baeec64530fd549d4662c43be44748abe20107acc1d824dbb8054c6c95a7272b83a25e4e8b2e6c32b051eccec2adef361538f127ad676ef6eb0bd2021b5159e0996f15a3367fe36e9e",
+          "outer_frame": "012179027dde3a9df83dacefba3b536da0eadf0c9798e5f3045e37b918ed2ec85ae4baeec64530fd549d4662c43be44748abe20107acc1d824dbb8054c6c95a7272b83a25e4e8b2e6c32b051eccec2adef361538f127ad676ef6eb0bd2021b5159e0996f15a3367fe36e9e",
+          "key_after_rekey": "ded446d5c5ea85f480554d80b9519b02947d157d50850ef2ec4f2b0b25940ea0"
+        },
+        {
+          "seq": 2,
+          "direction": "responder->initiator",
+          "direction_constant": "0x00000001",
+          "counter": 0,
+          "nonce": "000000010000000000000000",
+          "key_before": "4de5d11152df7a992cfee53a9c854d9b8cabdf698c67a50ed3061f07fe16fd0e",
+          "ad_outer_header": "012179027dde3a9df83dacefba3b536da0ea",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x03 (CONTROL)",
+            "flags": "0x00",
+            "msg_id": "f7479c37ce70dd247dc20cc52180372c",
+            "timestamp_ms": 1783166412000,
+            "body": "0400",
+            "control_type": "0x04 (device-token refresh; absent form 0x00 = revoke)",
+            "note": "CONTROL token revoke: push opt-out propagates unilaterally (spec §3.2.1)",
+            "encoded": "010300f7479c37ce70dd247dc20cc52180372c0000019f2d0024e00400"
+          },
+          "session_data_payload": "287bdd668c22d2d15c01ea8df8e477630acde1aba2bdfeba3d099c1fa13eefd882b4a9cbb20af9a13bc622ccad",
+          "outer_frame": "012179027dde3a9df83dacefba3b536da0ea287bdd668c22d2d15c01ea8df8e477630acde1aba2bdfeba3d099c1fa13eefd882b4a9cbb20af9a13bc622ccad",
+          "key_after_rekey": "f8f601f3802d62d013926c3f1a8918c7db038c94847578b7d90aa0624423a422"
+        },
+        {
+          "seq": 3,
+          "direction": "initiator->responder",
+          "direction_constant": "0x00000000",
+          "counter": 1,
+          "nonce": "000000000000000000000001",
+          "key_before": "ded446d5c5ea85f480554d80b9519b02947d157d50850ef2ec4f2b0b25940ea0",
+          "ad_outer_header": "012179027dde3a9df83dacefba3b536da0ea",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x03 (CONTROL)",
+            "flags": "0x00",
+            "msg_id": "0b4bd7d3fa3768c338f9269b0c644ad1",
+            "timestamp_ms": 1783166413000,
+            "body": "01",
+            "control_type": "0x01 (typing, empty payload)",
+            "note": "CONTROL typing indicator",
+            "encoded": "0103000b4bd7d3fa3768c338f9269b0c644ad10000019f2d0028c801"
+          },
+          "session_data_payload": "f5701b891462df6541565f910a25e895c4839c5a7f4b0cbc198f5ad2feaf49fe90f95c6a0231d8544e4ade53",
+          "outer_frame": "012179027dde3a9df83dacefba3b536da0eaf5701b891462df6541565f910a25e895c4839c5a7f4b0cbc198f5ad2feaf49fe90f95c6a0231d8544e4ade53",
+          "key_after_rekey": "74158fa570ac3b3c3716e8b5867e76302a4b863a7ef99348ffbf7051c68259ee"
+        }
+      ]
+    }
+  ]
+}

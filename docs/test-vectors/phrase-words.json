@@ -1,0 +1,141 @@
+{
+  "_purpose": "Safety-phrase mapping: 8 HKDF output bytes → uint64 (big-endian) → three base-1296 digits, most-significant first → wordlist indices → words. End-to-end derivations from key material live in pairing-handshake.json.",
+  "_spec": "nimna-protocol-spec-v0.2.md §3.1.4",
+  "wordlist": {
+    "file": "wordlist-en-v1.txt",
+    "sha256": "7aa57a4d3ecf6581729992bad9575bacdebf7c28378af2aec6a50f11aec326f5",
+    "size": 1296,
+    "source": "EFF short wordlist 2.0 (dice indices stripped); one global wordlist, rendered identically in all locales"
+  },
+  "mapping": "n = uint64 big-endian from the 8 bytes; word0 = (n ÷ 1296²) mod 1296, word1 = (n ÷ 1296) mod 1296, word2 = n mod 1296; rendered lowercase in derivation order",
+  "cases": [
+    {
+      "name": "all-zero",
+      "hkdf_output": "0000000000000000",
+      "n": "0",
+      "indices": [
+        0,
+        0,
+        0
+      ],
+      "words": [
+        "aardvark",
+        "aardvark",
+        "aardvark"
+      ],
+      "note": "n = 0 → indices [0,0,0] → wordlist[0] three times."
+    },
+    {
+      "name": "n-1",
+      "hkdf_output": "0000000000000001",
+      "n": "1",
+      "indices": [
+        0,
+        0,
+        1
+      ],
+      "words": [
+        "aardvark",
+        "aardvark",
+        "abandoned"
+      ],
+      "note": "Least-significant digit only."
+    },
+    {
+      "name": "n-1295",
+      "hkdf_output": "000000000000050f",
+      "n": "1295",
+      "indices": [
+        0,
+        0,
+        1295
+      ],
+      "words": [
+        "aardvark",
+        "aardvark",
+        "zucchini"
+      ],
+      "note": "Last index of the least-significant digit."
+    },
+    {
+      "name": "n-1296",
+      "hkdf_output": "0000000000000510",
+      "n": "1296",
+      "indices": [
+        0,
+        1,
+        0
+      ],
+      "words": [
+        "aardvark",
+        "abandoned",
+        "aardvark"
+      ],
+      "note": "Carries into the middle digit."
+    },
+    {
+      "name": "max-in-range",
+      "hkdf_output": "0000000081bf0fff",
+      "n": "2176782335",
+      "indices": [
+        1295,
+        1295,
+        1295
+      ],
+      "words": [
+        "zucchini",
+        "zucchini",
+        "zucchini"
+      ],
+      "note": "n = 1296^3 - 1 → [1295,1295,1295] → the last word three times."
+    },
+    {
+      "name": "wraps-word0",
+      "hkdf_output": "0000000081bf1000",
+      "n": "2176782336",
+      "indices": [
+        0,
+        0,
+        0
+      ],
+      "words": [
+        "aardvark",
+        "aardvark",
+        "aardvark"
+      ],
+      "note": "n = 1296^3: word0 = (n ÷ 1296²) mod 1296 = 0 — the modulo on the most-significant digit matters because n is a full uint64."
+    },
+    {
+      "name": "max-uint64",
+      "hkdf_output": "ffffffffffffffff",
+      "n": "18446744073709551615",
+      "indices": [
+        220,
+        1024,
+        1023
+      ],
+      "words": [
+        "copier",
+        "sesame",
+        "serpent"
+      ],
+      "note": "n = 2^64 - 1, the largest 8-byte value; exercises the modulo path on all three digits."
+    },
+    {
+      "name": "arbitrary",
+      "hkdf_output": "6549a006d8c46667",
+      "n": "7298540622397597287",
+      "indices": [
+        736,
+        1259,
+        183
+      ],
+      "words": [
+        "maximum",
+        "wishbone",
+        "caucasian"
+      ],
+      "note": "An arbitrary fixed value (first 8 bytes of SHA-256(\"nimna/test-vectors/v1/phrase/arbitrary-1\"))."
+    }
+  ]
+}

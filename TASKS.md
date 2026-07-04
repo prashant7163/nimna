@@ -106,12 +106,12 @@ Deliverables:
 
 # IMPLEMENTATION LOOP — Build Plan v2 (opened 2026-07-04)
 
-Plan: `nimna-build-plan-v2-sessions.md` · Rules: `nimna-implementation-workloop-prompt.md` · Spec: `docs/nimna-protocol-spec-v0.1.1.md` (v0.2 supersedes at S2).
+Plan: `nimna-build-plan-v2-sessions.md` · Rules: `nimna-implementation-workloop-prompt.md` · Spec: `docs/nimna-protocol-spec-v0.2.md` (locked at S2, 2026-07-04; v0.1.1 kept as history).
 One session = one sitting = one done-check; code-reviewer + senior-qa sign-off required before done. Statuses: pending / in-progress / blocked-on-user / done.
 
 ## Phase 0 — Foundations
 - **Session 1 — Scaffolding & conventions: done** (2026-07-04) — skeletons (Go relay + Flutter app, all checks clean) · agent fleet ×6 · CI ×2 · CLAUDE.md · spec copied to docs/ · reviewer blockers fixed · QA done-check PASS · i18n scope addition (USER) logged & propagated
-- Session 2 — Crypto selection & spec v0.2: pending · USER checkpoint: crypto choices presented before locking
+- **Session 2 — Crypto selection & spec v0.2: done** (2026-07-04) — USER checkpoint held, all four choices locked as recommended (X25519/ChaCha20-Poly1305/SHA-256+HKDF/Argon2id · Noise XXpsk2-from-spec + commitment + code-psk, fail-closed · KK + per-message rekey · 3-word global EFF wordlist) · 45-bit check HOLDS (Argon2id date-salted topics required) · spec v0.2 committed, supersedes v0.1.1 · docs/test-vectors: 5 JSON suites + pinned wordlist + committed Go generator (third-party Noise 64/64, RFC vectors, byte-identical regeneration) + CI drift guard · reviewer REOPEN→PASS · QA done-check PASS · flagged: PEER_OFFLINE wire removal (USER veto window), screen-03 wordlist design-sync
 ## Phase 1 — Relay (Go)
 - Session 3 — Connections & rendezvous: pending
 - Session 4 — Channels, knock, sessions, push forwarding: pending

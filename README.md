@@ -5,8 +5,8 @@ end-to-end-encrypted 1:1 messaging: a stateless relay routes ciphertext
 between two live devices and never stores anything — no accounts, no
 history sync, no server-side anything.
 
-**Protocol:** [`docs/nimna-protocol-spec-v0.1.1.md`](docs/nimna-protocol-spec-v0.1.1.md)
-(single source of truth). **Build plan:**
+**Protocol:** [`docs/nimna-protocol-spec-v0.2.md`](docs/nimna-protocol-spec-v0.2.md)
+(single source of truth; v0.1.1 remains as history). **Build plan:**
 [`nimna-build-plan-v2-sessions.md`](nimna-build-plan-v2-sessions.md).
 
 ## Layout

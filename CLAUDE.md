@@ -5,8 +5,9 @@ private line between two people." A **stateless Go relay** routes ciphertext
 between two live **Flutter** clients and never stores anything.
 
 ## Source of truth (in conflict, higher wins; flag conflicts in PROGRESS.md)
-1. `docs/nimna-protocol-spec-v0.1.1.md` — THE spec. Wire formats, limits,
-   TTLs, doctrines verbatim; no silent protocol "improvements."
+1. `docs/nimna-protocol-spec-v0.2.md` — THE spec (supersedes v0.1.1, kept
+   as history). Wire formats, limits, TTLs, doctrines verbatim; no silent
+   protocol "improvements."
 2. `nimna-build-plan-v2-sessions.md` — 19 atomic sessions; one session =
    one sitting = one done-check. Governed by
    `nimna-implementation-workloop-prompt.md`.
