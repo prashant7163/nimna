@@ -148,8 +148,10 @@ func TestEncodeParseRoundTrip(t *testing.T) {
 }
 
 // outerFrameVector mirrors the outer_frames entries of
-// docs/test-vectors/framing.json (read-only conformance fixtures — the
-// committed vectors are never regenerated or edited here).
+// testdata/framing.json (read-only conformance fixtures — the committed
+// vectors are never regenerated or edited here). The file is a vendored
+// byte-identical copy of the monorepo's docs/test-vectors/framing.json
+// (see testdata/README.md); monorepo CI cmp-asserts it never drifts.
 type outerFrameVector struct {
 	Name      string `json:"name"`
 	FrameType string `json:"frame_type"` // "0x01 REGISTER_TOPIC"
@@ -161,7 +163,7 @@ type outerFrameVector struct {
 // TestFramingVectors loads the valid outer_frames cases from the committed
 // protocol test vectors and asserts byte-exact Parse and Encode agreement.
 func TestFramingVectors(t *testing.T) {
-	raw, err := os.ReadFile("../../../../docs/test-vectors/framing.json")
+	raw, err := os.ReadFile("testdata/framing.json")
 	if err != nil {
 		t.Fatalf("reading committed vectors: %v", err)
 	}

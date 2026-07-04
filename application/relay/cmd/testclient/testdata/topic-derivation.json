@@ -1,0 +1,156 @@
+{
+  "_purpose": "Pairing-code canonicalization and rendezvous topic/psk derivation. Valid cases carry outputs under both parameter sets; invalid inputs must be rejected client-side with nothing sent.",
+  "_spec": "nimna-protocol-spec-v0.2.md §3.1.1, §3.1.2",
+  "crockford_alphabet": "0123456789ABCDEFGHJKMNPQRSTVWXYZ",
+  "argon2id_production": {
+    "variant": "Argon2id",
+    "version": 19,
+    "time": 3,
+    "memory_kib": 65536,
+    "parallelism": 1,
+    "output_len": 32,
+    "note": "Fixed protocol constants (spec §3.1.2): t=3, m=64 MiB, p=1, Argon2 v1.3 (0x13)."
+  },
+  "argon2id_reduced_test_only": {
+    "variant": "Argon2id",
+    "version": 19,
+    "time": 1,
+    "memory_kib": 8192,
+    "parallelism": 1,
+    "output_len": 32,
+    "note": "REDUCED COST — FOR FAST UNIT TESTS ONLY. Never used by the protocol; exists so test suites can exercise the derivation pipeline cheaply."
+  },
+  "hkdf": {
+    "salt": "zero-length (RFC 5869 default)",
+    "topic_info": "nimna/topic/v1",
+    "topic_len": 16,
+    "psk_info": "nimna/psk/v1",
+    "psk_len": 32
+  },
+  "cases": [
+    {
+      "name": "canonical-input",
+      "input": "7Q2M4K9XV",
+      "valid": true,
+      "canonical": "7Q2M4K9XV",
+      "creation_date_utc": "2026-07-04",
+      "salt_preimage_ascii": "nimna/topic/v1|2026-07-04",
+      "salt": "3ac4bfe2fc1a9e201456f4653c91619a",
+      "production": {
+        "seed": "cd0ea9508297bacdbfd3c8fe5831d255f05f3da8033f3055d800de1a8fbe94da",
+        "topic": "5196b942d53988c2e8a2b02d9624dc95",
+        "psk": "56a2158d3061d28062d289fe6c937231fb5be5b7799a173f5270c38851b5bebd"
+      },
+      "reduced_test_only": {
+        "seed": "d832d58d1cbc6fa032a1da0a41ec63d5ba555353cadef11402307bdedb36baaf",
+        "topic": "7f7d11a531791e2be612759683a864e1",
+        "psk": "75edebbd6dddb6cee62eaaa4f686d49a07d4e826bcacbff92bdebdfcb8b4ff93"
+      },
+      "note": "Already canonical: 9 uppercase Crockford Base32 characters."
+    },
+    {
+      "name": "display-hyphens",
+      "input": "7Q2-M4K-9XV",
+      "valid": true,
+      "canonical": "7Q2M4K9XV",
+      "creation_date_utc": "2026-07-04",
+      "salt_preimage_ascii": "nimna/topic/v1|2026-07-04",
+      "salt": "3ac4bfe2fc1a9e201456f4653c91619a",
+      "production": {
+        "seed": "cd0ea9508297bacdbfd3c8fe5831d255f05f3da8033f3055d800de1a8fbe94da",
+        "topic": "5196b942d53988c2e8a2b02d9624dc95",
+        "psk": "56a2158d3061d28062d289fe6c937231fb5be5b7799a173f5270c38851b5bebd"
+      },
+      "reduced_test_only": {
+        "seed": "d832d58d1cbc6fa032a1da0a41ec63d5ba555353cadef11402307bdedb36baaf",
+        "topic": "7f7d11a531791e2be612759683a864e1",
+        "psk": "75edebbd6dddb6cee62eaaa4f686d49a07d4e826bcacbff92bdebdfcb8b4ff93"
+      },
+      "note": "Display form XXX-XXX-XXX; hyphens strip to the same canonical bytes and identical outputs."
+    },
+    {
+      "name": "lowercase-and-whitespace",
+      "input": " 7q2 m4k 9xv\t",
+      "valid": true,
+      "canonical": "7Q2M4K9XV",
+      "creation_date_utc": "2026-07-04",
+      "salt_preimage_ascii": "nimna/topic/v1|2026-07-04",
+      "salt": "3ac4bfe2fc1a9e201456f4653c91619a",
+      "production": {
+        "seed": "cd0ea9508297bacdbfd3c8fe5831d255f05f3da8033f3055d800de1a8fbe94da",
+        "topic": "5196b942d53988c2e8a2b02d9624dc95",
+        "psk": "56a2158d3061d28062d289fe6c937231fb5be5b7799a173f5270c38851b5bebd"
+      },
+      "reduced_test_only": {
+        "seed": "d832d58d1cbc6fa032a1da0a41ec63d5ba555353cadef11402307bdedb36baaf",
+        "topic": "7f7d11a531791e2be612759683a864e1",
+        "psk": "75edebbd6dddb6cee62eaaa4f686d49a07d4e826bcacbff92bdebdfcb8b4ff93"
+      },
+      "note": "Lowercase folds up, whitespace strips; same canonical bytes and identical outputs."
+    },
+    {
+      "name": "crockford-mappings",
+      "input": "iLo-oLi-2ab",
+      "valid": true,
+      "canonical": "1100112AB",
+      "creation_date_utc": "2026-01-31",
+      "salt_preimage_ascii": "nimna/topic/v1|2026-01-31",
+      "salt": "636517b0062a727ec42f4af384ac9d9d",
+      "production": {
+        "seed": "ebe02866a8b89145b86943e0a8997dd4c308406b25d8f91a0d4cffaebaab775e",
+        "topic": "47e6bc16669af5c6829f38c42c5499c9",
+        "psk": "88d7fe476a497c08d8cd439bb317cb24010eea399d2a93aa6306145fae661101"
+      },
+      "reduced_test_only": {
+        "seed": "b7082daf2070d0c18d75b47141ceeffefdc69f001559c90f028ae6f7b8348560",
+        "topic": "e6b1c59877bd0832893d8fd2496d1130",
+        "psk": "fe820ff81dae7f05b7b2ceb5c636de7d959d02545b5cb4268f053aebccda5d66"
+      },
+      "note": "Crockford decode mappings: I→1, L→1, O→0 (upper- and lowercase). Canonical is 1100112AB."
+    },
+    {
+      "name": "alphabet-edge",
+      "input": "ZZZZZZZZZ",
+      "valid": true,
+      "canonical": "ZZZZZZZZZ",
+      "creation_date_utc": "2026-12-31",
+      "salt_preimage_ascii": "nimna/topic/v1|2026-12-31",
+      "salt": "65855b1064b05fe161f693ae5501bd24",
+      "production": {
+        "seed": "833a9f1a298b86e2718fb3fb7cb2b5f7c31990ef517b51f7f56b555b1f623c82",
+        "topic": "8b3aba82ea9e94327daa561008d00db7",
+        "psk": "d324b5337ea635c3c29d902b09cd8d874b71846dd306f3b63df92efae6553042"
+      },
+      "reduced_test_only": {
+        "seed": "80fc2245460ebbc61af5f233c009818a92af81f9dfedf042848546308daf198d",
+        "topic": "a8b95f7e1d6bd8ec7a3ebf5f6f38cdac",
+        "psk": "6a724594037f824001686305cfba4b6211d533eda6bc8223e7ae3dc2c062b3f5"
+      },
+      "note": "Last alphabet character; distinct creation date exercises the date-salted derivation."
+    },
+    {
+      "name": "u-rejected",
+      "input": "7QU-M4K-9XV",
+      "valid": false,
+      "reject_reason": "U is not in the Crockford alphabet and is rejected, never mapped (spec §3.1.1)."
+    },
+    {
+      "name": "wrong-length-short",
+      "input": "7Q2-M4K-9X",
+      "valid": false,
+      "reject_reason": "Canonicalizes to 8 characters; canonical form must be exactly 9."
+    },
+    {
+      "name": "wrong-length-long",
+      "input": "7Q2-M4K-9XVA",
+      "valid": false,
+      "reject_reason": "Canonicalizes to 10 characters; canonical form must be exactly 9."
+    },
+    {
+      "name": "invalid-character",
+      "input": "7Q2-M4K-9X$",
+      "valid": false,
+      "reject_reason": "'$' is not in the alphabet and has no mapping."
+    }
+  ]
+}

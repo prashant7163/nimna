@@ -123,7 +123,7 @@ func TestEncodeKnockPayloadRoundTrip(t *testing.T) {
 // outer-frame vectors (read-only conformance fixtures, like
 // TestFramingVectors) — byte-order and shape locked to the spec vectors.
 func TestKnockPayloadVectors(t *testing.T) {
-	raw, err := os.ReadFile("../../../../docs/test-vectors/framing.json")
+	raw, err := os.ReadFile("testdata/framing.json")
 	if err != nil {
 		t.Fatalf("reading committed vectors: %v", err)
 	}

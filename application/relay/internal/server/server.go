@@ -1,8 +1,10 @@
 // Package server implements the relay's WebSocket accept loop, connection
 // lifecycle, and frame router (architecture note §3, §5), plus the
-// Session 5 hardening: limit enforcement wiring, the liveness/per-IP limit
-// listener, identifier-free metrics, and the panic recover-and-scrub
-// discipline (note §§14–22).
+// Session 5 hardening — limit enforcement wiring, the liveness/per-IP
+// limit listener, identifier-free metrics, the panic recover-and-scrub
+// discipline (note §§14–22) — and the Session 6 transport surface: TLS
+// on the public listener with in-process certificate hot-reload
+// (note §25) and /healthz on the ops listener (note §26).
 //
 // Concurrency model, per connection: one read-loop goroutine plus one
 // writer goroutine draining a bounded channel (cap 32). All outbound
@@ -38,6 +40,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -125,9 +128,21 @@ type Config struct {
 	// count structurally). Default 90 s = three missed 30 s client
 	// pings (§17).
 	IdleTimeout time.Duration
-	// MetricsAddr is the ops listener address serving GET /metrics
-	// (§18). Empty disables. cmd/relay defaults it to 127.0.0.1:9441.
+	// MetricsAddr is the ops listener address serving GET /metrics and
+	// GET /healthz (§18, §26). Empty disables. cmd/relay defaults it to
+	// 127.0.0.1:9441.
 	MetricsAddr string
+	// TLSCert/TLSKey are PEM certificate-chain and key paths (certbot
+	// fullchain.pem/privkey.pem). Both set = the public listener serves
+	// TLS 1.3 with in-process mtime-checked certificate reload (§25);
+	// both empty = plain listener (dev, tunnel/LB-terminated — a
+	// first-class mode). Both-or-neither validation is cmd/relay's
+	// boot-fatal job; Serve treats "both set" as TLS on.
+	TLSCert string
+	TLSKey  string
+	// Version surfaces in the /healthz body ("ok nimna-relay <version>",
+	// §26). Empty means "dev".
+	Version string
 	// DebugTrace enables per-connection debug tracing (§19). NEVER in
 	// production: even structurally identifier-free traces map activity
 	// over time.
@@ -255,15 +270,50 @@ func (s *Server) Handler() http.Handler {
 	return http.HandlerFunc(s.handleWS)
 }
 
+// tlsConfig builds the public listener's TLS configuration, nil when TLS
+// is off (§25): stdlib crypto/tls only, TLS 1.3 floor (both clients are
+// ours and speak 1.3; no cipher-suite knobs exist to misconfigure),
+// h2 OFF on the public port (it speaks WebSocket-upgrade-or-nothing,
+// and the upgrade needs the HTTP/1.1 hijack). Handshake alerts are
+// stdlib-emitted, below the Nimna outer frame, and a pure function of
+// the offending transport bytes + the RFC + the deployment-configured
+// certificate — the §5.1 carve-out class, covering-tested for
+// state-independence in tls_test.go.
+//
+// The reloader's initial certificate load happens HERE, so callers can
+// fail boot-fatally before the public port is bound: an unloadable pair
+// must not flap bind/unbind under systemd Restart=always.
+func (s *Server) tlsConfig() (*tls.Config, error) {
+	if s.cfg.TLSCert == "" || s.cfg.TLSKey == "" {
+		return nil, nil
+	}
+	reloader, err := newCertReloader(s.cfg.TLSCert, s.cfg.TLSKey, s.log, nil, 0)
+	if err != nil {
+		// Boot-fatal: a relay that cannot serve its configured
+		// certificate must not come up half-configured.
+		return nil, fmt.Errorf("tls: %w", err)
+	}
+	return &tls.Config{
+		MinVersion:     tls.VersionTLS13,
+		NextProtos:     []string{"http/1.1"},
+		GetCertificate: reloader.GetCertificate,
+	}, nil
+}
+
 // Run listens on cfg.Addr and serves until ctx is cancelled, then shuts
 // down: no new connections, and every live connection's context is
-// cancelled so its teardown runs.
+// cancelled so its teardown runs. Boot-fatal config — the TLS pair's
+// initial load — resolves BEFORE the bind.
 func (s *Server) Run(ctx context.Context) error {
+	tcfg, err := s.tlsConfig()
+	if err != nil {
+		return err
+	}
 	ln, err := net.Listen("tcp", s.cfg.Addr)
 	if err != nil {
 		return err
 	}
-	return s.Serve(ctx, ln)
+	return s.serve(ctx, ln, tcfg)
 }
 
 // connKey stashes the limit listener's tracked conn in the request
@@ -271,16 +321,34 @@ func (s *Server) Run(ctx context.Context) error {
 // idle-close attribution.
 type connKey struct{}
 
-// Serve serves WebSocket connections on ln until ctx is cancelled. ln is
-// wrapped in the limit listener (§17): per-IP cap at the TCP accept
-// boundary, liveness deadline, TCP keepalive backstop. S6 ordering,
-// pinned: raw TCP → limit listener → tls.NewListener → HTTP.
+// Serve serves WebSocket connections on ln until ctx is cancelled
+// (callers that bind their own listener — tests; Run resolves TLS
+// config before its bind instead).
 func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
+	tcfg, err := s.tlsConfig()
+	if err != nil {
+		return err
+	}
+	return s.serve(ctx, ln, tcfg)
+}
+
+// serve wraps ln in the limit listener (§17): per-IP cap at the TCP
+// accept boundary, liveness deadline, TCP keepalive backstop — then, with
+// TLS configured, in tls.NewListener. S6 ordering, executed as pinned:
+// raw TCP → limit listener → tls.NewListener → HTTP — over-cap abusers
+// cost zero TLS handshakes, and the liveness clock counts ciphertext
+// bytes (liveness is a transport-level property).
+func (s *Server) serve(ctx context.Context, ln net.Listener, tcfg *tls.Config) error {
 	lim := limits.NewListener(ln, limits.ListenerConfig{
 		MaxConnsPerIP: s.cfg.MaxConnsPerIP,
 		IdleTimeout:   s.cfg.IdleTimeout,
 		Metrics:       s.m,
 	})
+
+	var serveLn net.Listener = lim
+	if tcfg != nil {
+		serveLn = tls.NewListener(lim, tcfg)
+	}
 
 	hs := &http.Server{
 		Handler: s.Handler(),
@@ -325,9 +393,9 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 		s.goRecoverLoop(ctx, metrics.SitePush, func() { s.push.Run(ctx) })
 	}
 
-	// The ops listener (§18): GET /metrics, everything else 404, plain
-	// HTTP, operator-local by default. It shuts down alongside the main
-	// listener (§22).
+	// The ops listener (§18, §26): GET /metrics and GET /healthz,
+	// everything else 404, plain HTTP, operator-local by default. It
+	// shuts down alongside the main listener (§22).
 	var ops *http.Server
 	var opsLn net.Listener
 	if s.cfg.MetricsAddr != "" {
@@ -341,7 +409,7 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 		// would swallow a scrape-path panic uncounted (its ErrorLog is
 		// discarded). Same fixed site label as the WS handler — both
 		// are relay-owned HTTP handlers; the enum stays pinned.
-		opsHandler := metrics.Handler(s.m, s.Gauges)
+		opsHandler := s.opsHandler()
 		ops = &http.Server{
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				defer func() {
@@ -364,7 +432,7 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 	s.log.Info("relay listening", "addr", lim.Addr().String())
 
 	errc := make(chan error, 1)
-	go func() { errc <- hs.Serve(lim) }()
+	go func() { errc <- hs.Serve(serveLn) }()
 
 	select {
 	case <-ctx.Done():
@@ -392,6 +460,36 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 		}
 		return err
 	}
+}
+
+// opsHandler is the ops listener's route set (§18, §26): GET /metrics
+// (identifier-free aggregates), GET /healthz (below), everything else —
+// every other path AND method — 404s.
+//
+// /healthz semantics, pinned: 200 means "the process is alive and
+// serving." A stateless relay has no deeper health — no database, no
+// disk, no downstream dependency whose degradation a handler could
+// report; the handler is static and cannot return non-200, so
+// absence-of-answer is the failure signal, by design. The body is the
+// fixed shape `ok nimna-relay <version>\n` — identifier-free by
+// construction; external "is it up" liveness is a TLS/WSS probe of the
+// public port (the runbook's job), never a new public surface: the ops
+// listener stays 127.0.0.1.
+func (s *Server) opsHandler() http.Handler {
+	version := s.cfg.Version
+	if version == "" {
+		version = "dev"
+	}
+	healthBody := []byte("ok nimna-relay " + version + "\n")
+	metricsHandler := metrics.Handler(s.m, s.Gauges)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet && r.URL.Path == "/healthz" {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			_, _ = w.Write(healthBody)
+			return
+		}
+		metricsHandler.ServeHTTP(w, r)
+	})
 }
 
 // OpsAddr reports the bound metrics listener address, empty until Serve

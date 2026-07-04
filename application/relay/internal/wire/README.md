@@ -19,7 +19,9 @@ protocol-parsing surface in the relay module:
   empty/short frame, bad version, unknown type, oversize) plus boundary
   semantics (all-zero routing_id is routable; exactly-MaxFrame accepted),
   and conformance tests over the committed `outer_frames` vectors in
-  `docs/test-vectors/framing.json` (read-only; never regenerated here).
+  `testdata/framing.json` (read-only; never regenerated here — a
+  vendored byte-identical copy of the monorepo's canonical
+  `docs/test-vectors/framing.json`, see `testdata/README.md`).
 - `knock_test.go` — table-driven KNOCK payload invalid cases (truncated
   forms, zero/lying token_len, bad platform bytes, endianness probe),
   valid boundaries (1-byte and max-uint16 tokens, big-endian length

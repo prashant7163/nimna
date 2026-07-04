@@ -32,6 +32,13 @@
 // in both planes — real Noise handshaking is app work (Sessions 8+), and
 // the relay forwards data frames verbatim without ever parsing them.
 //
+// Transport: --relay accepts ws:// and wss:// URLs. For TLS relays with
+// a local/QA certificate authority, -tls-ca <file> loads a PEM pool that
+// REPLACES the system roots for the dial (stricter than appending — the
+// QA relay must present exactly the expected CA). There is deliberately NO insecure-skip-verify flag
+// anywhere (architecture note §30) — a verify-off switch is a standing
+// footgun and the CA flag costs the same line count.
+//
 // This is a TEST TOOL, not the relay: it prints its own identifiers and
 // frames freely. The relay side stays provably silent — it never sends
 // anything beyond the §5.4 go-signals and forwarded data frames, and
@@ -43,9 +50,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -65,7 +75,8 @@ func fail(format string, a ...any) int {
 
 func run() int {
 	role := flag.String("role", "", "create | join | knock | answer (required)")
-	relayURL := flag.String("relay", "ws://127.0.0.1:9440", "relay WebSocket URL")
+	relayURL := flag.String("relay", "ws://127.0.0.1:9440", "relay WebSocket URL (ws:// or wss://)")
+	tlsCA := flag.String("tls-ca", "", "PEM root-CA pool that REPLACES the system roots for wss:// dials (local/QA CAs); unset = system roots")
 	code := flag.String("code", "", "pairing code, e.g. 7Q2-M4K-9XV (required unless --crid)")
 	date := flag.String("date", "", "creator only: code-creation date YYYY-MM-DD (default: today UTC)")
 	wait := flag.Duration("wait", 0, "max wait for the bridge go-signal (defaults: create 120s, join 30s, knock 75s, answer 120s)")
@@ -143,8 +154,29 @@ func run() int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// wss:// support: -tls-ca loads a PEM pool into tls.Config.RootCAs,
+	// REPLACING the system roots for the dial (a local done-check CA, a
+	// QA relay's private CA — the relay must present exactly that CA).
+	// There is deliberately NO insecure-skip-verify flag anywhere — a
+	// verify-off switch is a standing footgun and the CA flag costs the
+	// same line count (architecture note §30).
+	var dialOpts *websocket.DialOptions
+	if *tlsCA != "" {
+		pemBytes, err := os.ReadFile(*tlsCA)
+		if err != nil {
+			return fail("tls-ca: %v", err)
+		}
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(pemBytes) {
+			return fail("tls-ca: no certificates found in %s", *tlsCA)
+		}
+		dialOpts = &websocket.DialOptions{HTTPClient: &http.Client{
+			Transport: &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool}},
+		}}
+	}
+
 	fmt.Printf("[%s] dialing %s\n", *role, *relayURL)
-	ws, _, err := websocket.Dial(ctx, *relayURL, nil)
+	ws, _, err := websocket.Dial(ctx, *relayURL, dialOpts)
 	if err != nil {
 		return fail("dial: %v", err)
 	}

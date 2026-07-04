@@ -8,8 +8,12 @@ import (
 )
 
 // vectorsPath is the committed protocol test-vector file — read-only,
-// never regenerated or edited here.
-const vectorsPath = "../../../../docs/test-vectors/topic-derivation.json"
+// never regenerated or edited here. It is a vendored byte-identical copy
+// of the monorepo's docs/test-vectors/topic-derivation.json (see
+// testdata/README.md): vendoring keeps `go test ./...` self-contained in
+// the public relay repo, and monorepo CI cmp-asserts the copy never
+// drifts from its source.
+const vectorsPath = "testdata/topic-derivation.json"
 
 type topicOutputs struct {
 	Seed  string `json:"seed"`

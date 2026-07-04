@@ -1,8 +1,13 @@
 # cmd/testclient/
 
-The Session 3/4 done-check tool: one binary, four roles, run in pairs —
-`create`/`join` drive the rendezvous plane (PAIR_DATA), `knock`/`answer`
-drive the channel plane (knock → accept → SESSION_DATA → teardown).
+The relay's hands-on test/audit client: one binary, four roles, run in
+pairs — `create`/`join` drive the rendezvous plane (PAIR_DATA),
+`knock`/`answer` drive the channel plane (knock → accept → SESSION_DATA
+→ teardown). `--relay` accepts `ws://` and `wss://`; `-tls-ca <file>`
+supplies a PEM root-CA pool that replaces the system roots for local/QA
+TLS relays (there is deliberately NO
+insecure-skip-verify flag — a verify-off switch is a standing footgun
+and the CA flag costs the same lines; architecture note §30).
 
 - `main.go` — flags and role dispatch, plus the Session 3 roles:
   `--role create|join`, `--relay` URL, `--code`; the creator registers its
@@ -33,9 +38,12 @@ drive the channel plane (knock → accept → SESSION_DATA → teardown).
   never leak into relay packages — the relay never derives topics, and
   `cmd/relay`'s import graph stays x/crypto-free.
 - `derive_test.go` — vector-locked against the committed
-  `docs/test-vectors/topic-derivation.json`: canonicalization (valid and
-  reject cases), salts, and seed/topic/psk under both parameter sets —
-  reduced-cost always, production-cost skipped under `-short`.
+  `testdata/topic-derivation.json` (a vendored byte-identical copy of
+  the monorepo's canonical vectors; see `testdata/README.md`):
+  canonicalization (valid and reject cases), salts, and seed/topic/psk
+  under both parameter sets — reduced-cost always, production-cost
+  skipped under `-short`.
+- `testdata/` — the vendored vector file + provenance README.
 
 This is a TEST TOOL, not the relay: it prints its own identifiers and
 frames freely. The relay side stays provably silent.

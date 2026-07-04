@@ -25,5 +25,7 @@ Identifier-free aggregate metrics — the relay's production instrument
   strings), nil-instrument safety, and the GET-/metrics-else-404 surface.
 
 The ops listener that serves this (default `127.0.0.1:9441`, `-metrics-
-listen`, empty disables) lives in `internal/server`; S6's `/healthz`
-lands on that same listener.
+listen`, empty disables) lives in `internal/server`, which also serves
+`GET /healthz` (`ok nimna-relay <version>`) on the same listener; the
+`pushes_total{outcome="dropped"}` outcome covers both dispatch-queue
+overflow and dispatches for a platform with no configured transport.

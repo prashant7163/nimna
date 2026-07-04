@@ -6,10 +6,14 @@ on:
     paths:
       - "application/relay/**"
       - ".github/workflows/relay.yml"
+      - "docs/test-vectors/**"
+      - "docs/nimna-protocol-spec-v0.2.md"
   pull_request:
     paths:
       - "application/relay/**"
       - ".github/workflows/relay.yml"
+      - "docs/test-vectors/**"
+      - "docs/nimna-protocol-spec-v0.2.md"
 
 defaults:
   run:
@@ -37,3 +41,14 @@ jobs:
         run: test "$(go list -deps ./cmd/relay | grep -c '^golang.org/x/crypto$\|^golang.org/x/crypto/')" -eq 0
       - name: test (includes the cmd/relay real-binary log-scrub assertion, note §20)
         run: go test ./...
+      - name: vendored spec copy is byte-identical to the canonical spec (note §29)
+        # The relay tree ships a self-contained copy of the protocol spec
+        # so the split repo is auditable offline; the monorepo copy stays
+        # canonical and drift cannot land silently.
+        working-directory: .
+        run: cmp docs/nimna-protocol-spec-v0.2.md application/relay/docs/nimna-protocol-spec-v0.2.md
+      - name: vendored test vectors are byte-identical to docs/test-vectors (note §29)
+        working-directory: .
+        run: |
+          cmp docs/test-vectors/framing.json application/relay/internal/wire/testdata/framing.json
+          cmp docs/test-vectors/topic-derivation.json application/relay/cmd/testclient/testdata/topic-derivation.json

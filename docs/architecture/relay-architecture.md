@@ -2,7 +2,8 @@
 
 **Author:** tech-architect · **Date:** 2026-07-04 (Session 3 intake;
 §§9–13 added 2026-07-04 15:45 +0200 at Session 4 intake; §§14–23 added
-2026-07-04 17:09 +0200 at Session 5 intake) ·
+2026-07-04 17:09 +0200 at Session 5 intake; §§24–31 added
+2026-07-04 22:06 +0200 at Session 6 intake) ·
 **Binding for:** `application/relay/` implementation, Sessions 3–6.
 **Sources:** spec `docs/nimna-protocol-spec-v0.2.md` (§3.1.2, §3.1.6,
 §3.2, §3.2.1, §3.3, §3.3.1, §3.4, §4, §5.4–§5.7),
@@ -971,3 +972,475 @@ externally observable additions — zero-byte accept refusal, read
 pacing, idle closes — are adjudicated in §§16–17 and carry no
 Nimna-layer bytes. The metrics listener is operator-local and is not
 part of the public wire surface.
+
+---
+
+# Session 6 addendum — TLS, real push transports, deploy kit, public-repo readiness
+
+Added 2026-07-04 22:06 +0200 (Session 6 intake). §§1–23 stand unchanged
+and govern everything below. Governing USER decisions (DECISIONS.md,
+2026-07-04 21:59 +0200): repo **prepared now, published at S19**
+(dry-run split verified in-session); **no VPS exists** — S6 delivers
+the complete deploy kit and the done-check runs against a local
+production-shaped deployment, with "relay live on relay.nimna.app"
+a logged deferral; real APNs/FCM transports **land now**, live-platform
+verification **deferred to S15** (S6 verifies against local mock
+platform servers checking JWT signatures and exact request shapes);
+AGPL-3.0 copyright holder is **"The Nimna Authors"**. Nothing here
+touches the wire: S6 adds no frame types and no Nimna-level response
+surfaces — the public port's behavior change is exactly "TLS first."
+
+## 24. S6 scope fence & config surface
+
+**S6 implements:** TLS on the public listener (§25), `/healthz` on the
+ops listener (§26), real APNs/FCM Senders behind the S4 `push.Sender`
+interface (§27), the deploy kit under `application/relay/deploy/`
+(§28), and public-repo readiness of the relay tree incl. the dry-run
+split (§29). **Not S6:** the actual VPS deployment and DNS (deferred
+with the VPS), live-platform push verification (S15), the publish
+click (S19), go-import meta tags on nimna.app (S19 website work).
+
+New config, following `cmd/relay`'s existing flag-seeded-from-env
+pattern (§14). The push credential slots keep the §11-pinned env names
+and gain matching flags (uniform surface; env is the deployment path
+via `EnvironmentFile`, flags exist for parity and local runs):
+
+| Knob | Flag · env (`NIMNA_RELAY_`) | Default | Notes |
+|---|---|---|---|
+| TLS certificate | `-tls-cert` · `TLS_CERT` | empty | PEM chain path (certbot `fullchain.pem`) |
+| TLS key | `-tls-key` · `TLS_KEY` | empty | PEM key path (certbot `privkey.pem`) |
+| APNs key file | `-apns-key-file` · `APNS_KEY_FILE` | empty | .p8 path (§11 slot) |
+| APNs key id | `-apns-key-id` · `APNS_KEY_ID` | empty | §11 slot |
+| APNs team id | `-apns-team-id` · `APNS_TEAM_ID` | empty | §11 slot |
+| APNs topic | `-apns-topic` · `APNS_TOPIC` | empty | bundle id (§11 slot) |
+| FCM service account | `-fcm-sa-file` · `FCM_SA_FILE` | empty | JSON path (§11 slot) |
+
+**Config validity rules (all violations boot-fatal, loud):** TLS
+cert/key are both-or-neither — one without the other is a config error,
+not a mode; both empty = plain listener (dev, tunnel/LB-terminated
+deployments — the local done-check and CI run this daily, so plaintext
+mode stays first-class, not a rot path). The four APNs slots are
+all-or-nothing; a partial set is boot-fatal (the error names the
+missing *slot names* only — never values). The FCM file must parse at
+boot (§27). `-push-sink` set together with **any** real credential
+slot is **boot-fatal** (§27). Rationale for loud-vs-fallback: §14's
+malformed-env fallback covers *values* of a limit that has a safe
+default; a contradictory or half-configured *transport* has no safe
+default — silently running push-less against operator intent, or
+silently swallowing production pushes into a test sink, are exactly
+the classes of quiet misbehavior the boot log exists to prevent.
+
+The boot config summary gains: `tls` = `on|off`, the cert/key *paths*
+(config values, never contents), and `push_mode` widened to the fixed
+enumeration `push-less|sink|apns|fcm|apns+fcm`.
+
+## 25. TLS on the public listener
+
+**Stdlib `crypto/tls` only.** `golang.org/x/crypto/acme/autocert` is
+structurally forbidden: it lives under `golang.org/x/crypto`, and §20's
+anchored CI step asserts `cmd/relay`'s import graph is x/crypto-free —
+the invariant that keeps "no protocol crypto in the relay" auditable at
+a glance would be dead the day an ACME client imports the same module
+path. Issuance and renewal belong to certbot (§28); the relay only
+*serves* what the deployment provides. Listener ordering is §17's pin,
+restated: **raw TCP → limit listener → `tls.NewListener` → HTTP** —
+over-cap abusers cost zero handshakes, and the liveness clock counts
+ciphertext bytes.
+
+**Certificate reload: in-process, mtime-checked, via
+`tls.Config.GetCertificate` — not restart-on-renew.** A ~30-line
+reloader holds an `atomic.Pointer[tls.Certificate]`; `GetCertificate`
+returns the current pointer, and at most once per 60 s (stat throttle,
+handshake-driven, no goroutine) it stats the cert file and reloads the
+pair via `tls.LoadX509KeyPair` when mtime moves. Boot-fatal if the
+initial load fails; on a later reload failure it **keeps serving the
+old cert** and logs a fixed Warn. Restart-on-renew was weighed and
+rejected: dies-with-process is doctrine-compatible, but a scheduled
+cert renewal killing every live session (bridged pairs torn down,
+pending knocks lost) is a needless product cost when the stdlib
+alternative is this small; the deploy hook (§28) becomes a pure file
+copy with no service coupling. External SIGHUP protocols were also
+rejected — mtime is the certbot-native signal and needs no operator
+verb.
+
+**Posture, pinned:** `MinVersion: tls.VersionTLS13`. Both clients are
+ours (Flutter app, testclient) and speak 1.3; 1.3 removes the entire
+cipher-suite configuration surface (Go exposes no 1.3 suite knobs),
+is all-AEAD, and gives forward secrecy unconditionally. A 1.2 floor
+serves no client we ship and was rejected. `NextProtos:
+["http/1.1"]` — **h2 is disabled on the public listener**: the port
+speaks WebSocket-upgrade-or-nothing (§18's by-port auditability), the
+upgrade requires HTTP/1.1 hijack, and an h2 negotiation surface would
+only add a protocol whose sole possible outcome here is a failed
+upgrade. (The *outbound* APNs client negotiates h2 for itself — §27 —
+unaffected.) No client certificates, no session-ticket configuration
+beyond stdlib defaults, no curve/suite tuning: every knob not taken is
+surface that cannot be misconfigured.
+
+**Silence doctrine at the TLS layer:** handshake alerts are
+stdlib-emitted, live strictly below the Nimna outer frame, and are a
+pure function of the offending transport bytes and the RFC plus the
+*deployment-configured* certificate — no Nimna protocol state can
+reach them. This is precisely the §5.1 carve-out class, already
+adjudicated there ("or, at S6, stdlib TLS alerts"). Covering test
+extension: TLS-layer probes (plain HTTP to the TLS port, bad ALPN,
+1.2-only ClientHello) produce byte-identical behavior against an empty
+relay and a loaded one.
+
+**TLS events in the log (§19's reserved slot, now defined
+exhaustively):** (a) boot summary — `tls=on|off` + configured paths;
+(b) reload success — one Info line whose only variable is the new
+leaf's `notAfter` (cert metadata, operator-relevant,
+identifier-free); (c) reload failure — one Warn line; inputs are
+operator-owned files, so the error rendering may appear (it can carry
+paths — config — but never user data). **Per-handshake errors are
+never logged:** `net/http`/`tls` handshake failures embed remote
+addresses; they go to the `http.Server.ErrorLog` we already discard
+(§19) and stay discarded. The §20 logscrub test extends to: relay
+booted with TLS, a client that fails its handshake on purpose, real
+flows over `wss://` — asserting the client IP and all known
+identifiers still never appear.
+
+## 26. `/healthz` — ops listener
+
+Lands on the S5 ops listener exactly as §18 reserved: the ops mux now
+serves `GET /metrics` and `GET /healthz`; everything else still 404s.
+**Semantics:** 200 means "the process is alive and serving." A
+stateless relay has no deeper health — no database, no disk, no
+downstream dependency whose degradation a handler could report; the
+handler is static and cannot return non-200, so absence-of-answer is
+the failure signal, by design. **Body, pinned:**
+`ok nimna-relay <version>\n`, `text/plain` — fixed shape,
+identifier-free by construction; this plus the boot log line are where
+the §28 version stamp surfaces. **External liveness is explicitly not
+this endpoint's job:** the ops listener is 127.0.0.1 (§18) and stays
+so; "is it up from the internet" is a TLS/WSS probe of the public
+port — the runbook's problem (§28), never a new public surface.
+
+## 27. Real push transports — `internal/push` grows `apns.go`, `fcm.go`
+
+§11's stdlib-only pin executes unchanged: no `golang-jwt`, no
+`x/oauth2`, no `sideshow/apns2`, no Firebase SDK — sign-off remains
+withheld as unnecessary. JWT assembly is fixed base64url/JSON encoding
+over stdlib `crypto/ecdsa` / `crypto/rsa` signatures — composition,
+not hand-rolled crypto — verified in tests against the public keys.
+`cmd/relay`'s import graph stays x/crypto-free (§1, CI-asserted).
+
+**Wiring shape:** a `push.Router` (implements `Sender`) holds an
+optional APNs sender and an optional FCM sender and routes on the
+platform byte. **Per-platform missing credentials, pinned:** a
+dispatch for an unconfigured platform is a **silent drop counted as
+`outcome="dropped"`** — the same best-effort class as queue overflow;
+the label enumeration does not grow. A one-platform deployment is
+legal and spec-sanctioned (§3.2.1: self-hosters "run push-less" — or
+half-push-less). Mode precedence: `-push-sink` + any credential =
+boot-fatal (§24). Goroutine placement unchanged: the single §11
+dispatcher worker calls `Send` inline; token/JWT refresh happens
+lazily inline on that worker — **zero new goroutines**.
+
+**APNs (`apns.go`):** production endpoint `https://api.push.apple.com`
+(the 2197 alternative not used; a sandbox-endpoint switch is *not*
+added — S15 adds one flag if dev-build tokens require it, YAGNI now).
+Request: `POST {base}/3/device/<hex(token)>` with headers
+`authorization: bearer <jwt>`, `apns-topic: <config>`,
+`apns-push-type: alert`, `apns-priority: 10`, `apns-expiration:
+now+60s` (the §11 knock-window pin), body = the `apnsBody` constant,
+byte-identical across all pushes. APNs requires HTTP/2; stdlib
+`net/http` negotiates it transparently over TLS (mock tests assert
+`ProtoMajor == 2`). **JWT:** ES256; header `{alg, kid}`, claims
+`{iss: team-id, iat}`; cached in memory and reused until **40 min
+old**, then re-signed lazily — inside Apple's window (≥ 20 min between
+refreshes, ≤ 60 min validity) with margin on both sides for clock
+skew. The .p8 must parse at boot as a PKCS#8 ECDSA P-256 key
+(boot-fatal otherwise — a relay that discovers its key is garbage at
+first dispatch has been silently push-less all along).
+
+**FCM (`fcm.go`):** the service-account JSON supplies `client_email`,
+`private_key` (RSA, must parse at boot), `token_uri`, and
+`project_id` — no extra env slots. OAuth2 JWT-bearer grant: RS256 JWT
+`{iss: client_email, scope:
+https://www.googleapis.com/auth/firebase.messaging, aud: token_uri,
+iat, exp: iat+1h}` posted to `token_uri`
+(`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer`) →
+`access_token`/`expires_in`, **cached until expiry − 5 min**,
+refreshed lazily. Message: `POST
+https://fcm.googleapis.com/v1/projects/<project_id>/messages:send`,
+`Authorization: Bearer <access_token>`, body = the §11 constant
+message (`title_loc_key: NEW_ACTIVITY`, `priority: high`, `ttl: 60s`)
+plus **exactly one per-dispatch field: `message.token`**, built by
+`json.Marshal` of a fixed struct (correct escaping, fixed shape). §11
+already states the constancy claim as "byte-identical except
+addressing"; for APNs addressing is the URL path, for FCM it is this
+one field — restated so the audit claim reads precisely.
+
+**Token bytes contract (client-facing, documented here and in the
+relay README):** the KNOCK token field carries the **platform-native
+token verbatim** — APNs: the raw 32-byte binary device token (the
+relay hex-encodes it into the URL path); FCM: the registration
+token's ASCII bytes (inserted as the JSON string value). Consistent
+with §5.4's opaque-bytes definition; flagged for a one-line editorial
+note at the spec's next touch, like §10's deliver-on-register flag.
+The app implements this at S15; testclient's `--token <hex>` already
+models the APNs form.
+
+**Why the JWT/access-token caches don't touch the statelessness
+claim:** both are in-memory *derivatives of the credential config* —
+recomputable from the .p8/SA-file at any instant, containing zero
+user, channel, or token data — i.e. the push-credential item of §4's
+at-rest inventory, held in its working form. They die with the
+process; nothing new is at rest.
+
+**Errors → log/metrics:** platform responses are drained (bounded)
+and **discarded — never parsed, never logged**; non-2xx returns the
+existing `StatusError{code}`, so the §19 fixed-field Warn (platform +
+HTTP status only) and `pushes_total{outcome}` cover the real
+transports with no new code paths. APNs 410/FCM 404 on a stale token
+IS spec §3.2.1's "a push silently fails" — and since no token registry
+exists, there is deliberately no feedback loop to act on it.
+
+**HTTP clients:** one `http.Client` per sender, default-Transport
+based, keep-alives on (APNs explicitly favors long-lived
+connections); the per-attempt bound stays the dispatcher's 10 s
+context — one timeout, not two competing ones (the `HTTPSink` pattern,
+kept).
+
+**Test injection (USER decision 3 executed):** base URLs are
+**constructor parameters** — APNs endpoint, FCM `messages:send` base;
+the FCM `token_uri` already comes from the SA file, so a test SA file
+points it at the mock. **No new flags:** the public flag surface
+carries no test knobs; `-push-sink` remains the only test-mode flag.
+Mock platform servers are in-package `httptest` TLS servers (h2 for
+APNs) that verify the ES256/RS256 signatures against the public keys
+and assert the exact request shape (path, headers, body bytes). Test
+keys are **generated at test runtime** (`ecdsa.GenerateKey`,
+`rsa.GenerateKey`) and serialized into .p8/SA-JSON shapes in
+`t.TempDir()` — no key-shaped file is ever committed, so the §29
+secret scan stays trivially and unambiguously clean.
+
+## 28. Deploy kit — `application/relay/deploy/`
+
+**Location pinned: inside the relay tree**, so the public repo ships
+its own deployment story (spec §4's reproducible-deployment claim is
+only auditable if the unit file and build script are in the audited
+repo). Contents: `nimna-relay.service`, `relay.env.example`,
+`build.sh`, `certbot-deploy-hook.sh`, `RUNBOOK.md`, `README.md`
+(folder convention). `relay.env.example` — in systemd
+`EnvironmentFile` syntax, all `NIMNA_RELAY_*` slots present, **push
+and TLS slots empty** — IS the build plan's "config.example"
+deliverable, realized in the form the unit actually consumes.
+
+**systemd unit (hardening set pinned):**
+
+- **Dedicated system user `nimna-relay`** — not `DynamicUser`:
+  certbot-renewed certs and credential files need stable ownership
+  that a deploy hook can `chown` to; ephemeral UIDs can't own files
+  across restarts. `User=nimna-relay`, `Group=nimna-relay`.
+- **Port 443 via `AmbientCapabilities=CAP_NET_BIND_SERVICE`** (+
+  `CapabilityBoundingSet=CAP_NET_BIND_SERVICE`). Listening high behind
+  an nftables redirect was rejected: it adds a second moving part that
+  can silently diverge from the unit.
+- **The statelessness claim as a unit property:** `ProtectSystem=strict`
+  with **no `StateDirectory`, no `CacheDirectory`, no `LogsDirectory`,
+  no `ReadWritePaths`** — the service structurally cannot write to the
+  filesystem at all. The sandbox enforces zero-at-rest; an auditor
+  reads it off the unit file in one line.
+- Rest of the set: `NoNewPrivileges=yes`, `ProtectHome=yes`,
+  `PrivateTmp=yes`, `PrivateDevices=yes`, `ProtectKernelTunables=yes`,
+  `ProtectKernelModules=yes`, `ProtectKernelLogs=yes`,
+  `ProtectControlGroups=yes`, `RestrictNamespaces=yes`,
+  `RestrictRealtime=yes`, `RestrictSUIDSGID=yes`,
+  `LockPersonality=yes`, `MemoryDenyWriteExecute=yes` (Go doesn't
+  JIT), `SystemCallFilter=@system-service`,
+  `SystemCallArchitectures=native`,
+  `RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX`, `UMask=0077`,
+  `LimitNOFILE=65536`, `Restart=always`,
+  `EnvironmentFile=/etc/nimna-relay/relay.env`.
+- File layout: `/etc/nimna-relay/relay.env` (root:nimna-relay 0640),
+  `/etc/nimna-relay/tls/{fullchain,privkey}.pem` and
+  `/etc/nimna-relay/credentials/` (same ownership; dirs 0750),
+  binary at `/usr/local/bin/nimna-relay`.
+
+**Certbot, pinned: `certonly --standalone` (http-01 on :80) + deploy
+hook.** The relay owns 443 and serves no files, so webroot has no
+web server to lean on; standalone binds :80 only during renewal, and
+:80 stays otherwise unbound — no HTTP redirect service exists because
+the relay is not a website and nothing legitimate speaks plain HTTP to
+it. `certbot-deploy-hook.sh` copies fullchain/privkey into
+`/etc/nimna-relay/tls/` with nimna-relay group-read — **a pure file
+copy, no restart**: §25's mtime reloader picks it up within ~60 s and
+live sessions survive renewal.
+
+**`build.sh`:** `CGO_ENABLED=0 GOOS=linux GOARCH={amd64,arm64} go
+build -trimpath -ldflags "-s -w -X main.version=<git describe
+--tags --always>" ./cmd/relay` → `dist/nimna-relay-linux-<arch>`
+(`dist/` git-ignored). Best-effort reproducibility per spec §4: pinned
+toolchain (go.mod), `-trimpath`, CGO off — same toolchain, same
+commit, byte-identical binary; stated in the RUNBOOK so third parties
+can verify the deployed binary against the repo. The version stamp
+surfaces in the boot log line (exists), `-version` (exists), and the
+`/healthz` body (§26).
+
+**`RUNBOOK.md` contents list (pinned):** 1 provision — Debian stable
+minimal, `systemd-timesyncd` on (JWT `iat`/`exp` and cert validation
+need a sane clock — a skewed clock is a push outage), firewall
+22/80/443 only; 2 DNS — A/AAAA `relay.nimna.app`; 3 user + dirs +
+permissions; 4 binary install; 5 certs — certbot standalone + hook;
+6 `relay.env` from the example; 7 `systemctl enable --now`; 8 verify —
+journalctl boot lines, `curl 127.0.0.1:9441/healthz` on-host, external
+`wss://` probe via testclient from a second machine, metrics scrape;
+9 operate — metrics via SSH tunnel only (never exposed), renewal
+dry-run, upgrade = replace binary + restart, and the incident
+doctrine verbatim: **"restart is always safe — the relay is
+stateless; the entire recovery procedure is `systemctl restart
+nimna-relay`; live pairs re-knock."** Logs are identifier-free by
+construction, so journalctl output is shareable in incident notes.
+
+## 29. Public-repo readiness & publish mechanics
+
+**The published artifact is the `application/relay` subtree**, split
+with history (`git subtree split --prefix=application/relay`).
+History-preserved is the CODE default — the commit trail *is*
+auditability evidence (the invariants visibly held over time) — with
+squash-to-single-commit documented in the publish runbook as the S19
+alternative; the choice is revisitable at the publish click with zero
+rework. Everything the public repo needs must therefore live **inside**
+`application/relay/`:
+
+- **LICENSE** — full AGPL-3.0 text, copyright line "The Nimna Authors"
+  (USER, 2026-07-04). The README states the AGPL rationale in spec §4's
+  own terms (Signal-server/SimpleX precedent).
+- **README rework** (developer implements; content list pinned): leads
+  with the zero-storage claim and **how to audit it** — spec §4's
+  at-rest inventory, `internal/ident` unloggable types, the
+  real-binary logscrub test, the anchored x/crypto CI step, the
+  silence-doctrine tests, `deploy/` reproducible build; then build/run,
+  config table, demos (all existing material survives below the fold).
+  Plus the §27 token-bytes contract and the vanity-path build note
+  below.
+- **CONTRIBUTING.md** — small fixes welcome; DCO `Signed-off-by`
+  required, no CLA; **protocol behavior is spec-governed and not
+  changeable by PR** — wire formats, limits, TTLs, silence semantics
+  change only via the spec; security contact lands at S19 (needs the
+  domain mailbox).
+- **Spec copy, pinned:** byte-identical at
+  `application/relay/docs/nimna-protocol-spec-v0.2.md`. Spec §4 says
+  "published openly alongside"; a README link to a website that does
+  not exist until S19 would leave the split repo unauditable
+  offline — self-containment wins. Provenance lives in the relay tree's
+  `docs/README.md` (keeping the spec copy itself byte-identical);
+  drift is prevented by a monorepo CI `cmp` step (below).
+- **Test vectors vendored:** `docs/test-vectors/framing.json` →
+  `internal/wire/testdata/framing.json`;
+  `docs/test-vectors/topic-derivation.json` →
+  `cmd/testclient/testdata/topic-derivation.json`. The three test
+  files currently reach `../../../../docs/test-vectors/` — paths that
+  **escape the subtree and break `go test ./...` in the split repo**;
+  they switch to testdata-relative paths (idiomatic Go). The 681 KB
+  duplication is accepted: self-containment outranks bytes. Symlinks
+  rejected (dangle on split); runtime fallback-and-skip rejected
+  (conformance tests that silently skip in the public tree would
+  hollow the audit claim). Byte-equality with the monorepo sources is
+  a CI `cmp` step; provenance noted in each `testdata/README.md`.
+- **CI the split can carry, pinned mechanism:**
+  `application/relay/.github/workflows/ci.yml` — committed **inside
+  the relay tree**, inert in the monorepo (GitHub reads only the root
+  `.github/`), active verbatim in the public repo. Same steps as
+  relay.yml minus `working-directory`: gofmt, vet, build, the anchored
+  x/crypto step, `go test ./...`. The monorepo `relay.yml` stays, and
+  gains the byte-sync `cmp` steps (spec copy, both vendored vectors,
+  and ci.yml-vs-relay.yml step parity is reviewer-checked, not
+  CI-diffed) with its trigger paths extended to `docs/test-vectors/**`
+  and the spec file.
+- **go.mod module path: keep `nimna.app/relay`.** The relay is a
+  binary — nothing imports it; the vanity path is a
+  hosting-independent identity. `go install
+  nimna.app/relay/cmd/relay@latest` requires go-import meta tags on
+  nimna.app — **an S19 website work item**, logged; until then the
+  README documents clone + `go build` (which needs no meta tags).
+  Renaming to a github path was rejected: it couples module identity
+  to a hosting choice and a repo name that isn't final.
+- **`cmd/testclient` and `cmd/soak` SHIP in the public repo.** They
+  are the hands-on audit tools — anyone can drive a relay and watch
+  the silence and the limits. Consequence, stated explicitly: the
+  split tree's go.mod/go.sum carry `golang.org/x/crypto` (testclient's
+  argon2). Acceptable because the invariant was never module-scoped:
+  it is "**`cmd/relay`'s import graph** is x/crypto-free," asserted by
+  the anchored CI step that ships in the public workflow, visible on
+  the repo's face (§20's exact intent).
+- **`.gitignore` guard extended** (relay tree): existing `*.pem`,
+  `*.p8`, `*.json.key`, `config.local.*` plus `/soak`, `/dist/`,
+  `*.key`, `*.crt`, `.env`, `*.env`, `service-account*.json`.
+  (`relay.env.example` is not matched — correct.)
+- **READMEs per repo convention:** `deploy/`, relay-tree `docs/`, and
+  both `testdata/` folders carry READMEs.
+
+**Publish runbook (private side):**
+`docs/release/relay-publish-runbook.md` — monorepo-only, not part of
+the split.
+Contents pinned: the split procedure (`git subtree split
+--prefix=application/relay HEAD -b relay-public`; squash alternative
+noted for S19); fresh-clone verification of the split tree — `go
+build/test/vet ./...`, `gofmt -l .`, the anchored x/crypto check,
+presence checks (LICENSE, README, CONTRIBUTING, docs/spec copy,
+deploy/, ci.yml, testdata vectors), and a **history-wide secret
+scan** (`git log -p` grepped for `BEGIN.*PRIVATE KEY`,
+`private_key_id`, key-file magic, credential-shaped filenames via
+`git log --diff-filter=A --name-only`) — history ships, so history is
+scanned; the S19 trigger sequence (push split branch to the public
+remote, branch protection, publish click = launch step 1, then S19
+website items: go-import meta tags, README links).
+
+## 30. Done-check adaptation — local production-shaped deployment
+
+USER decision 2 executed. "Production-shaped" means the real binary
+under production config with real TLS — **not** macOS service
+management (launchd is NOT required; the systemd unit is verified as a
+deliverable by review, its live verification is part of the deferred
+VPS clause). QA runs, minimum:
+
+1. **Build:** `deploy/build.sh` produces both linux binaries
+   (cross-compile must succeed); a host-native build runs locally.
+2. **TLS smoke:** a throwaway local CA + leaf for `localhost`
+   generated at check time (script writes under git-ignored `temp/`,
+   per repo convention); relay booted with `-tls-cert/-tls-key` and an
+   env file shaped like `relay.env.example`; **testclient gains
+   `wss://` URL support and a `-tls-ca <file>` flag** (loads a PEM
+   pool into `tls.Config.RootCAs` for the dial). Pinned: **no
+   insecure-skip-verify flag exists anywhere** — a verify-off switch
+   is a standing footgun and the CA flag costs the same line count.
+   Full create/join and knock/answer flows run over `wss://`.
+3. **`/healthz`:** `curl http://127.0.0.1:9441/healthz` → 200, body
+   `ok nimna-relay <version>`.
+4. **Push transports:** `go test ./internal/push` — mock platform
+   servers verify ES256/RS256 signatures against the public keys,
+   exact request shapes, h2 for APNs (USER decision 3's S6
+   verification standard); plus the sink-based end-to-end knock flow
+   unchanged. Live-platform verification: S15, logged.
+5. **Dry-run split:** subtree split → fresh clone into scratch → the
+   full §29 verification suite green, including the history secret
+   scan.
+6. **PROGRESS.md** records the two logged deferrals verbatim: "relay
+   live on relay.nimna.app" (awaits VPS) and live-platform push
+   (S15).
+
+## 31. Restated for S6 (non-negotiable)
+
+**Zero new dependencies:** TLS, both push transports, `/healthz`, and
+the deploy kit are stdlib plus the existing pins; autocert, ACME
+clients, JWT libraries, oauth2, and push SDKs all remain withheld —
+the S6 go.mod diff is empty. **Statelessness inventory unchanged:**
+TLS certs and push credentials were *always* the two non-memory items
+of spec §4's at-rest inventory; S6 is the session that makes them
+real, and adds nothing beside them — the JWT/access-token caches are
+in-memory credential derivatives (§27), and the systemd sandbox makes
+no-writes structural (§28). **Wire behavior untouched:** no new frame
+types, no Nimna-level response surfaces; TLS alerts are the §5.1
+carve-out class as pre-adjudicated, covering-tested for
+state-independence. **Silence doctrine untouched:** every Nimna-level
+failure remains byte-identical silence or a bare close; TLS handshake
+failure is below the Nimna layer and independent of all relay state.
+**Identifier-free logging extended, not relaxed:** TLS events are
+boot/reload lines carrying config paths and cert `notAfter` only;
+handshake errors (which embed remote addresses) stay in the discarded
+ErrorLog; push transport lines remain platform + HTTP status only;
+the logscrub test grows TLS and real-transport coverage (§25, §27).

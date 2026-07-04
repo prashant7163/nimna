@@ -1,11 +1,19 @@
-# build artifacts: `go build ./cmd/relay` / `go build ./cmd/testclient`
-# drop these binaries here
+# build artifacts: `go build ./cmd/...` drops binaries here; deploy/build.sh
+# writes release binaries to dist/
 /relay
 /testclient
+/soak
+/dist/
 
-# push credentials are deployment configuration, never repository content
-# (spec §4) — guard the config slots from Session 4 on
+# credentials and TLS material are deployment configuration, never
+# repository content (spec §4) — guard every file shape a secret could
+# take. relay.env.example is deliberately not matched.
 *.pem
 *.p8
+*.key
+*.crt
 *.json.key
+.env
+*.env
+service-account*.json
 config.local.*

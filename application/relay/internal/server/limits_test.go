@@ -511,7 +511,9 @@ func TestOpsListener(t *testing.T) {
 		t.Fatalf("exposition missing pinned inventory:\n%s", body)
 	}
 
-	for _, path := range []string{"/", "/healthz", "/metrics/sub"} {
+	// S6 filled the reserved /healthz seam (§26; asserted in
+	// tls_test.go); every other path still 404s.
+	for _, path := range []string{"/", "/health", "/metrics/sub"} {
 		resp, err := http.Get("http://" + opsAddr + path)
 		if err != nil {
 			t.Fatalf("GET %s: %v", path, err)

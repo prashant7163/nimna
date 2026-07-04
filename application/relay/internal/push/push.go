@@ -126,11 +126,13 @@ func (d *Dispatcher) Enqueue(platform wire.Platform, token ident.DeviceToken) {
 }
 
 // Run drains the queue with one worker until ctx is done. Every attempt
-// is counted (sent/failed); a failure additionally logs the fixed-field
-// Warn line — platform and HTTP status only (status 0 when the transport
-// produced no HTTP response), never the error's own rendering (note §19).
-// Jobs still queued at shutdown die with the process, like every other
-// in-memory table.
+// is counted: sent, failed (with the fixed-field Warn line — platform and
+// HTTP status only, status 0 when the transport produced no HTTP
+// response, never the error's own rendering; note §19), or dropped when
+// the Sender reports ErrNoTransport (a dispatch for an unconfigured
+// platform: silent, unlogged — the same best-effort class as queue
+// overflow, §27). Jobs still queued at shutdown die with the process,
+// like every other in-memory table.
 func (d *Dispatcher) Run(ctx context.Context) {
 	for {
 		select {
@@ -142,6 +144,10 @@ func (d *Dispatcher) Run(ctx context.Context) {
 			cancel()
 			if err == nil {
 				d.m.Push(metrics.PushSent)
+				continue
+			}
+			if errors.Is(err, ErrNoTransport) {
+				d.m.Push(metrics.PushDropped)
 				continue
 			}
 			d.m.Push(metrics.PushFailed)

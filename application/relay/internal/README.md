@@ -14,10 +14,13 @@ module `nimna.app/relay`; nothing here is importable from outside.
 - [`channel/`](channel/README.md) — CRID registry: registrations, pending
   knocks (60 s), knock → accept → bridged sessions
 - [`push/`](push/README.md) — stateless push forwarding: content-free by
-  construction, bounded dispatcher, config-gated test sink
+  construction, bounded dispatcher, platform router, real APNs (HTTP/2 +
+  ES256 JWT) and FCM v1 (OAuth2 RS256 grant) transports, config-gated
+  test sink
 - [`limits/`](limits/README.md) — token bucket, per-IP rendezvous window,
   bounded per-CRID rate table, limit listener (per-IP cap + liveness)
 - [`metrics/`](metrics/README.md) — identifier-free counters +
   hand-rolled Prometheus text exposition
-- [`server/`](server/README.md) — WebSocket accept loop, connection
-  lifecycle, frame router, limit wiring, ops listener, panic scrub
+- [`server/`](server/README.md) — WebSocket accept loop, TLS wiring +
+  certificate hot-reload, connection lifecycle, frame router, limit
+  wiring, ops listener (`/metrics`, `/healthz`), panic scrub

@@ -27,5 +27,8 @@ Protocol truth and build-loop reference material.
   **architecture notes**, binding technical shape for implementation
   sessions (relay architecture for Sessions 3–6 lives here; more
   accumulate as phases open).
+- [`release/`](release/README.md) — private-side release procedures
+  (the relay publish runbook: subtree split, split-tree verification,
+  history secret scan, S19 trigger). Monorepo-only, never published.
 - [`archive/`](archive/) — superseded documents kept as provenance, never
   synced (see its README).

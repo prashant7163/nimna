@@ -1,0 +1,39 @@
+# Public-repo CI for the nimna relay.
+#
+# In the Nimna monorepo this file is INERT (GitHub only reads the
+# repository root's .github/); after the subtree split it sits at the
+# repo root and runs verbatim. Same steps as the monorepo's relay
+# workflow, minus the working-directory indirection. Step parity with
+# that workflow is reviewer-checked at each session wrap.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt (must be clean)
+        run: test -z "$(gofmt -l .)"
+      - name: vet
+        run: go vet ./...
+      - name: build
+        run: go build ./...
+      - name: relay binary import graph is x/crypto-free (anchored)
+        # The relay never derives topics — protocol crypto must not enter
+        # its import graph. The module carries golang.org/x/crypto ONLY
+        # for cmd/testclient's Argon2id derivation (a hands-on audit
+        # tool); the invariant is cmd/relay's IMPORT GRAPH. ANCHORED
+        # grep: an unanchored form would false-positive on Go's
+        # stdlib-vendored vendor/golang.org/x/crypto TLS paths, present
+        # in any HTTP binary.
+        run: test "$(go list -deps ./cmd/relay | grep -c '^golang.org/x/crypto$\|^golang.org/x/crypto/')" -eq 0
+      - name: test (includes the real-binary log-scrub assertion)
+        run: go test ./...

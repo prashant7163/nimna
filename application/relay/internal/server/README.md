@@ -11,11 +11,19 @@ Session 5 limit/observability wiring (architecture note §3, §5, §5.1,
   carve-out, so it is disabled), graceful shutdown on context cancel (NO
   drain — pending knocks and queued pushes are the dies-with-process
   class, §22). Serve wraps the raw listener in the `internal/limits`
-  limit listener (per-IP cap, liveness; S6 ordering: TCP → limit listener
-  → TLS → HTTP), stashes the tracked conn in the request context (one
-  canonical IP key; idle-close attribution), runs all janitors and the
-  push worker under the recover-and-scrub discipline, and serves the ops
-  listener (`GET /metrics`, everything else 404) that dies with the same
+  limit listener (per-IP cap, liveness), then — when the TLS pair is
+  configured — in `tls.NewListener` (the §17 ordering executed: raw TCP →
+  limit listener → TLS → HTTP; over-cap abusers cost zero handshakes and
+  the liveness clock counts ciphertext bytes). TLS posture (§25):
+  stdlib-only, MinVersion 1.3, `NextProtos ["http/1.1"]` (h2 off — the
+  port speaks WebSocket-upgrade-or-nothing), no further knobs. Serve
+  stashes the tracked conn in the request context (one canonical IP key;
+  idle-close attribution; the unwrap loop handles the `tls.Conn` layer),
+  runs all janitors and the push worker under the recover-and-scrub
+  discipline, and serves the ops listener (`GET /metrics` +
+  `GET /healthz` → `ok nimna-relay <version>`, everything else 404 —
+  §26: a stateless relay has no deeper health, so the handler is static
+  and absence-of-answer is the failure signal) that dies with the same
   context. Panic scrub (§19): every long-lived goroutine recovers, logs
   site + panic Go TYPE only (never the value, never a stack at production
   level), counts `panics_total{site}`, and restarts (janitors, worker) or
@@ -23,6 +31,13 @@ Session 5 limit/observability wiring (architecture note §3, §5, §5.1,
   net/http's internal error logger is discarded (its fallback writes raw
   client IPs). `-debug-trace` gates per-connection tracing keyed by an
   opaque process-local sequence number.
+- `tlsreload.go` — the §25 certificate reloader behind
+  `tls.Config.GetCertificate`: `atomic.Pointer` cert, handshake-driven
+  mtime check throttled to one stat per 60 s (CAS single-flight, no
+  goroutine), boot-fatal initial load, keep-old-cert + one fixed Warn on
+  reload failure, one Info carrying only the new leaf's notAfter on
+  success. Per-handshake errors are never logged — they embed remote
+  addresses and stay in the discarded `http.Server` ErrorLog.
 - `conn.go` — per connection: one read goroutine + one writer goroutine
   draining a bounded channel (cap 32; a full buffer closes the peer — the
   relay never queues); the read loop charges one token per WebSocket
@@ -53,6 +68,14 @@ Session 5 limit/observability wiring (architecture note §3, §5, §5.1,
   `TestChannelPlaneEndToEnd` (relay memory empty after; exactly one
   content-free POST per eligible knock). Tests that fire repeated knocks
   shrink the S5 windows via config — the limits have their own tests.
+- `tls_test.go` — Session 6: the wss:// bridge smoke over the full
+  listener chain, the pinned `/healthz` surface, §25's covering test
+  (plain-HTTP/1.2-only/h2-only-ALPN probes byte-identical against an
+  empty and a loaded relay — TLS alerts are the §5.1 carve-out class,
+  state-independent by construction), and the cert reloader (throttle,
+  reload success/failure lines, identifier-free log content, boot-fatal
+  initial load) under injectable clocks. Certificates are generated at
+  test runtime; no key-shaped file is committed.
 - `limits_test.go` — Session 5: the §16 empty-vs-loaded per-IP-cap
   covering test (zero-byte refusal in both worlds), frame-rate pacing
   (all frames delivered, paced, no errors), configured max-frame
