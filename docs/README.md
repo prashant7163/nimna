@@ -23,6 +23,9 @@ Protocol truth and build-loop reference material.
   normative); and the committed Go generator that regenerates everything
   byte-identically (CI-enforced, third-party-Noise-vector validated).
   Both stacks must reproduce these byte-for-byte (spec §7).
-- Tech-architect **architecture notes** accumulate here from Session 2 on.
+- [`architecture/`](architecture/README.md) — tech-architect
+  **architecture notes**, binding technical shape for implementation
+  sessions (relay architecture for Sessions 3–6 lives here; more
+  accumulate as phases open).
 - [`archive/`](archive/) — superseded documents kept as provenance, never
   synced (see its README).
