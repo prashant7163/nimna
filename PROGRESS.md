@@ -1,57 +1,59 @@
 # Nimna — Progress Log (append-only)
 
-## 2026-07-03 — Loop initialized
+Entry headers carry full datetime (`YYYY-MM-DD HH:MM +tz`). Times before 2026-07-04 15:29 +0200 were backfilled from each entry's introducing git commit (author time).
+
+## 2026-07-03 20:41 +0200 — Loop initialized
 - Read all three source docs in full (brand-context, protocol spec v0.1, design & website prompts) plus the build-plan for context.
 - Created TASKS.md / PROGRESS.md / DECISIONS.md / MEMORY.md; git initialized.
 - Task 1 opened; consolidated question list issued to user (wordmark casing, icon discretion level, accent-color leanings, typography flavor).
 - Next: answers → 1.1 three brand directions → Checkpoint A1.
 
-## 2026-07-03 — 1.1 Brand directions produced; Checkpoint A1 reached
+## 2026-07-03 20:50 +0200 — 1.1 Brand directions produced; Checkpoint A1 reached
 - Front-loaded Task 1 answers logged: lowercase wordmark, quietly-branded icon, accent + type proposed per direction.
 - Produced three directions: A "The Fine Object" (quiet luxury, brass/ember, Fraunces+Instrument Sans), B "Deep Water" (nimn etymology, ink indigo/lamp gold, Martel+Mukta), C "The Line" (protocol-as-motif, near-black/incandescent amber, Schibsted Grotesk). Recommended C.
 - Lives in designs/brand/brand-directions.md + direction-previews.html (browser side-by-side).
 - Next: user selects direction → 1.2 color, 1.3 type, 1.4 voice → 2.1 logo concepts → Checkpoint A2.
 
-## 2026-07-03 — A1: Direction C locked; 1.2–1.4 done; 2.1 logo concepts; Checkpoint A2 reached
+## 2026-07-03 21:17 +0200 — A1: Direction C locked; 1.2–1.4 done; 2.1 logo concepts; Checkpoint A2 reached
 - USER selected Direction C "The Line" at A1.
 - 1.2 color system (dark hero + light "amber ink on paper"), all 33 WCAG pairings verified programmatically (temp/contrast_final.py). 1.3 type: Schibsted Grotesk + Spline Sans Mono for codes. 1.4 voice guide: 10 strings + protocol-honesty checklist. All in designs/brand/.
 - 2.1: three logo concepts, custom monoline wordmark (drawn, not typeset): "Two Ends" (recommended), "The Dash", "The Headstroke". SVGs + logo-previews.html in designs/brand/logo/concepts/. Concept-3 first draft (stems touching headstroke) killed for legibility — read "hlmhd".
 - Next: A2 selection → 2.2 refine logo → 2.3 app icons → Task 1 done.
 
-## 2026-07-03 — TASK 1 COMPLETE
+## 2026-07-03 21:25 +0200 — TASK 1 COMPLETE
 - A2: USER selected Concept 1 "Two Ends". 2.2: nine final SVGs (lockup/wordmark/symbol × dark/light/mono) + usage.md in designs/brand/logo/final/. 2.3: iOS 1024 master + Android adaptive bg/fg/monochrome layers + app-icon.md in designs/brand/app-icon/; 48px legibility render-verified.
 - Full brand foundation now in designs/brand/ (directions, color, type, voice, logo, icons), all READMEs current.
 - Next: Task 2 (design system → wireframes F1–F9 → 12 hi-fi screens → handoff). Front-loading user questions (wipe style, paywall presentation, lock-screen posture) before starting.
 
-## 2026-07-03 — TASK 2 COMPLETE
+## 2026-07-03 21:55 +0200 — TASK 2 COMPLETE
 - USER front-loads: hold-to-wipe, full-screen paywall, zero-leak lock. System: foundations + components + 22 icons + tokens.json (designs/system/). Screens: 12 dark + 4 light hi-fi HTML at 390×844, token-exact, Chrome-render-verified (designs/screens/). Handoff: flutter-notes, asset checklist, brand cheat sheet (designs/handoff/). Wireframes (subagent, reviewed): 46 annotated frames F1–F9, all six mandated edge cases (designs/wireframes/).
 - Mid-task USER decisions: safety-phrase has no skip; free slot = ever-initiated (wipe doesn't reset).
 - PROTOCOL FLAGS (from wireframe review, for spec v0.2): (1) joiner-side "expired vs never-existed" code states are indistinguishable to a stateless relay — a distinct expired UI needs a QR-carried expiry hint or stays folded into the wrong-code error, as wireframed; (2) after a lapsed knock from a cold open, the app cannot attribute the knocker (content-free push) — named strings only apply to knocks seen while connected, as wireframed.
 - Open items: paywall price (USER), FLAG_SECURE (build phase).
 - Next: Task 3 website — Checkpoint B (outline + hero/relay concepts).
 
-## 2026-07-03 — TASK 3 COMPLETE · ALL THREE TASKS DONE
+## 2026-07-03 22:23 +0200 — TASK 3 COMPLETE · ALL THREE TASKS DONE
 - Checkpoint B: USER approved outline as proposed, hero H1 "Line Draws Itself", relay R1 "Glass Relay".
 - Built website/: index (9 sections) + /privacy + /security + /press, tokens verbatim from designs/system, fonts self-hosted (latin woff2 + OFL notice), zero external requests, dark default + light via prefers-color-scheme, reduced-motion honored throughout.
 - Assets: favicon set + og.png generated from brand; press kit (3 logo SVGs, 512px icon, 3 screen PNGs cropped from hi-fi mockups).
 - Verified: link check ALL OK / zero external resources (temp/check_links.py); responsive at true 390px & 360px via iframe test (fixed a real relay-diagram overflow found in testing); copy honesty self-check vs spec recorded in website/launch-checklist.md.
 - Launch blockers intentionally left as placeholders: store URLs, repo must go public, hello@nimna.app mailbox, Lighthouse run on the deployed URL.
 
-## 2026-07-04 — Paywall model corrected (USER)
+## 2026-07-04 00:35 +0200 — Paywall model corrected (USER)
 - USER clarification: there is NO free created line — creating any channel requires the one-time unlock; free users join and talk both ways, forever. Supersedes the 2026-07-03 "first line free / paywall at second create / free-slot counting" model (see DECISIONS.md 2026-07-04).
 - New voice string 9 headline: "Creating a line is the only thing that costs. Pay once for as many as you like."
 - Propagated: voice-and-microcopy.md string 9 · screens 09-paywall dark+light · wireframes F2.1/F4.1/F4.4/F9 (header, trigger, annotations, 3× headline) · wireframes README · website pricing cards + FAQ · press fact sheet.
 - NOT edited (user-authored prompt doc, per decision-log precedent): nimna-design-and-website-prompts.md still says "F9 Paywall: first initiated channel free" — flagged to USER to amend or leave.
 - Open item unchanged: paywall price (USER, pending).
 
-## 2026-07-04 — UPDATE LOOP opened: spec v0.1.1 sync (C1–C11)
+## 2026-07-04 04:30 +0200 — UPDATE LOOP opened: spec v0.1.1 sync (C1–C11)
 - Read nimna-protocol-spec-v0.1.1.md in full + C1–C11 changelog; loaded TASKS/PROGRESS/DECISIONS state.
 - Three sync tasks registered in TASKS.md (U1 system+microcopy · U2 wireframes+screens · U3 website).
 - Spec v0.1.1 closes two open items from the first loop: FLAG_SECURE is deliberately NOT used (spec §5.2, matching our 2026-07-03 recommendation), and the paywall-price question is retired — spec §10 mandates regional store pricing with NO number published anywhere (paywall renders the store's localized string; designs carry {STORE_PRICE}). C1 also supersedes the 2026-07-04 one-time-unlock correction — model is now a yearly subscription with the permanence guarantee.
 - Task U1 opened; front-loaded two USER questions: safety-phrase skip (answer: keep no-skip) and price display (answer: numberless — independently confirmed by the updated spec).
 - Mid-open, USER updated nimna-protocol-spec-v0.1.1.md and nimna-design-update-workloop-prompt.md on disk (C1 refined to the no-number doctrine); both re-read in full before any artifact edits. Root MEMORY.md source-of-truth pointer now names v0.1.1 (user edit).
 
-## 2026-07-04 — TASK U1 COMPLETE (system & microcopy sync)
+## 2026-07-04 04:36 +0200 — TASK U1 COMPLETE (system & microcopy sync)
 - Voice guide: 10 → 18 strings. String 9 rebuilt around "One of you buys the line. The other never pays." + permanence guarantee as headline + {STORE_PRICE}; new canonical strings for screenshot disclosure/in-thread notice (C3), share-sheet briefing (C5, verbatim), sensitive-content whisper + blur (C4, verbatim), stale-knock hint (C9), media/metadata/cap (C2), push trade (C7), knock patience (C8). "Nimna code" locked as the only UI name; words-we-avoid extended (pairing code, one-time/unlock/pay once, any price number). Honesty checklist 4 → 10 nevers.
 - Components: code entry rewritten for the permanent 9-char XXX-XXX-XXX format (drawn hyphens, Crockford normalization, four join methods, silence doctrine in the error state); QR display = one simultaneous surface; NEW media bubbles (sending/receiving/waiting/blurred/disappearing — progress is a 2px line, no percentages), whisper card (explicitly not a modal), media viewer (export as the deliberate act), screenshot system line, push toggle (caption IS the disclosure); knock-waiting rebuilt to invite patience (no Knock affordance during the 60s window; rate limits never surfaced as counters).
 - Tokens v1.1.0: code + media blocks, mediaVeil both modes (verified by mechanism, not ratio — noted in color-system.md). No price token exists by doctrine.
@@ -59,7 +61,7 @@
 - Process slip, self-caught: one inline `python3 -c` used for a preview.html edit despite the temp/-scripts rule; noted, not repeated.
 - Next: Task U2 (wireframes + hi-fi screens). No foreseeable USER questions — all taste was settled at loop open; will pause only if real drift surfaces.
 
-## 2026-07-04 — TASK U2 COMPLETE (wireframes via subagent + hi-fi screens) · TASK U3 COMPLETE (website)
+## 2026-07-04 05:20 +0200 — TASK U2 COMPLETE (wireframes via subagent + hi-fi screens) · TASK U3 COMPLETE (website)
 - U2 hi-fi: 02/03/05/09/10/11 regenerated (+ light variants via sed) — 9-char hyphenated code, four join affordances on 10, "Call them and compare" on 03, media bubble + "They took a screenshot." system line in 05, paywall rebuilt around string 9 with literal {STORE_PRICE}, patience caption on 11; net-new 13-media-viewer / 14-sensitive-blur / 15-whisper-attach. All 13 changed/new files screenshot-verified at 390×844. Code-entry geometry corrected mid-build (32→30px segments; 348px row fits 350px content width) — tokens/components/CSS kept in lockstep.
 - U2 wireframes (subagent, reviewed against its report + renders of F5/F9): 46 → 57 frames; every C-item applied; README index/decisions/edge-map resynced. Notably good: F9.5 restore edge annotates store-receipt-as-only-memory; F5.6 whisper card annotates the §5.3 hard boundary verbatim.
 - U2 handoff: flutter-notes gained media/sensitive-content/screenshot/paywall rows; FLAG_SECURE marked RESOLVED per §5.2; background-grace + no-auto-retry noted; icons 24.
@@ -67,19 +69,19 @@
 - **DRIFT FOUND (wireframes F2.4, awaiting USER):** caption "You can put the phone away — we'll be here." + annotation claiming rendezvous listening survives OS connection kills. Spec v0.1.1 §3.3 closes the socket ~30 s after backgrounding, and no push path exists during pairing (tokens exchange only inside an established channel) — the caption overpromises background presence. Not fixed silently, per loop rules; question issued.
 - Commits: b076b0b (screens+handoff), 353632a (website); wireframes commit follows the drift answer.
 
-## 2026-07-04 — Drift resolved (USER) · update loop closed
+## 2026-07-04 05:20 +0200 — Drift resolved (USER) · update loop closed
 - F2.4 rewritten with USER-authored copy: "Waiting for them to join…" / "Your code works for 24 hours — come back anytime. Pairing completes when you're both here." Annotation now records the ~30 s grace, H(code) re-registration on reopen, and the deliberate absence of push during pairing. The adjacent F2.3 "never stopped listening" annotation softened to the same standard (grace-window honest).
 - Per USER instruction, F3's joiner side checked for the same overpromise: **none found** — F3.3 is a sub-second bridge frame; "Found them." renders only at match; its drop-mid-handshake edge already states codes are spent on failure. Logged as drift-checked-clean.
 - Decision recorded as USER entry in DECISIONS.md (binding pattern for app copy at build time: pairing copy promises the code's lifetime, never background presence).
 - Note for spec v0.2 consideration: hi-fi screen 02's on-surface caption still says "Waiting for them to join…" only (no background promise — already clean).
 
-## 2026-07-04 — Both protocol flags RESOLVED (USER) · prompts doc archived
+## 2026-07-04 05:32 +0200 — Both protocol flags RESOLVED (USER) · prompts doc archived
 - Flag 1 (expired vs never-existed): USER decides expired = used = never-existed to the joiner — ONE generic response for all three; differing responses would let a prober confirm a code once existed (silence doctrine extended); carry into spec v0.2. Propagated: F3.7 reworked from "special-case expired state" to a decision-documentation frame rendering identically to F3.6 (QR-expiry-hint idea withdrawn); components.md code-entry error state; voice-guide register note; wireframes README index row + honesty note marked RESOLVED.
 - Flag 2 (lapsed-knock attribution): USER decides lapsed knocks carry NO attribution — knocker sees exactly "No answer.", never offline vs saw-and-ignored (receiver's plausible deniability outranks knocker's closure); carry into spec v0.2. Propagated: F5.13 caption corrected from "They didn't pick up." (a real leak — it implied the knock reached them); attribution-neutral rule pinned in voice guide + components session-indicator; README honesty note marked RESOLVED covering both directions. Scope note: string 5's "They're not on the line right now" (compose-time offline state, spec §3.4) is untouched — the decision governs lapsed knocks, and the outbox UX is spec-sanctioned presence.
 - nimna-design-and-website-prompts.md → docs/archive/ via git mv, with a superseded-provenance header (USER); never synced again, per decision.
 - Process note: USER acknowledged the logged temp/-rule slips as the system working; rule unchanged.
 
-## 2026-07-04 — IMPLEMENTATION LOOP opened · SESSION 1 COMPLETE (scaffolding & conventions)
+## 2026-07-04 06:03 +0200 — IMPLEMENTATION LOOP opened · SESSION 1 COMPLETE (scaffolding & conventions)
 - Opened per build plan v2 + implementation work-loop prompt; no USER decisions foreseen at session start (stated); four CODE decisions recorded (module `nimna.app/relay` + `app.nimna` identifiers; GitHub Actions CI; README-discipline scoping; command allowlist).
 - Produced: `application/relay/` (Go 1.26 module, build/test/vet/gofmt clean) · `application/mobile/` (Flutter 3.44.2, iOS+Android, template stripped, analyze/test/format clean) · `docs/` spec copy (diff-verified byte-identical) · agent fleet ×6 in `.claude/agents/` · root CLAUDE.md (<1 page) + root README · path-filtered CI skeletons for both stacks · READMEs per the scoped discipline.
 - Pipeline ran: **code-reviewer** found 2 BLOCKING (stray relay binary + missing relay .gitignore; README gaps at cmd/relay + .github/workflows with the CLAUDE.md convention lacking its exemptions) — both fixed and re-verified with the reviewer's own commands; SHOULD-FIXes applied (permission rules → documented `Bash(cmd:*)` form incl. two pre-existing broken entries; relay README claims §3–§4, §5 opaque); nits applied (pubspec description, CLAUDE.md check list gains dart format, code-TTL wording in backend role).
@@ -87,7 +89,7 @@
 - **MID-WRAP USER SCOPE ADDITION — i18n:** launch EN/DE/FR/ES/IT across app, store listings, website. Logged as USER decision; standing rules propagated into CLAUDE.md, mobile-developer-flutter / code-reviewer / product-manager role files, mobile README, TASKS.md S7/S16/S19, MEMORY.md. **Flag:** USER said the canonical plan/prompt files were updated to match, but the on-disk copies contain no i18n text (grep-verified) — not edited here (user-owned); please re-save/push or say the word and I'll fold the changes in.
 - Next: Session 2 — crypto selection & spec v0.2 (USER checkpoint: primitives presented with reasoning before locking; 45-bit code-space check under the chosen handshake).
 
-## 2026-07-04 — SESSION 2 COMPLETE (crypto selection & spec v0.2)
+## 2026-07-04 13:44 +0200 — SESSION 2 COMPLETE (crypto selection & spec v0.2)
 - USER CHECKPOINT held up front; all four choices locked as recommended: Q1 primitives X25519 + ChaCha20-Poly1305 + SHA-256/HKDF + Argon2id · Q2 pairing = Noise XXpsk2 implemented from the Noise spec (no library — Dart Noise ecosystem failed sign-off) + ZRTP-style commitment prologue + code-as-psk, fail-closed one-shot per code; sessions = Noise KK + per-message rekey (Double Ratchet rejected: async machinery for a protocol that forbids asynchrony) · Q3 topics = Argon2id(t=3, m=64 MiB, p=1) with UTC-creation-date salt · Q4 phrase = exactly 3 words from ONE global EFF-short-2.0 wordlist, locale-independent in all five launch locales. Nine DECISIONS entries (7 checkpoint + 2 spec-drafting CODE).
 - **45-bit check (plan's flag-to-USER item): HOLDS** — but only because of slow topic hashing: plain SHA-256 topics would fall offline in <1 GPU-hour; Argon2id + date salt ≈ ~1,100 server-years per code with precomputed tables dying daily. Arithmetic in crypto-evaluation.md §9.3, carried into spec §9.
 - Produced: `docs/crypto-evaluation.md` (LOCKED reasoning record) · `docs/nimna-protocol-spec-v0.2.md` (928 lines, supersedes v0.1.1 — concrete handshakes with exact byte tables M1=80/M2=96+n/M3=64+n/M4=16 and S1=S2=48, full framing byte layouts, exact derivations incl. canonicalization + QR payload, both 2026-07-04 USER protocol flags normative) · `docs/test-vectors/` (5 deterministic JSON suites, pinned 1296-word wordlist SHA-256 7aa57a4d…26f5, committed Go generator — third-party Noise vectors 64/64, RFC 5869/8439/7748 + PHC Argon2id vectors, byte-identical regeneration, reviewer-mutation-tested) · CI `test-vectors.yml` with regenerate-and-diff drift guard. Note: NO published XXpsk2 vector set exists anywhere; covered via composing-rule third-party vectors + an independent cross-implementation check (documented in generator/testdata/README.md).
@@ -96,7 +98,7 @@
 - **FLAGS FOR USER (veto window before S3 builds on them):** (1) spec v0.2 removes `PEER_OFFLINE` from the knocker-visible wire — structural enforcement of your lapsed-knock decision (a wire response would leak offline-vs-ignored to modified clients); the sanctioned outbox UX is unaffected. (2) Hi-fi screen 03's sample words ("ember canyon plume") are not in the now-normative wordlist — impossible protocol output in a binding design; needs a small design-sync (swap to three real EFF words + re-render). (3) Build-plan Session 4 text still lists `PEER_OFFLINE` among frames to implement — plan file is user-owned, not edited; spec v0.2 wins per the source-of-truth order.
 - Next: Session 3 — relay connections & rendezvous (WebSocket server, registries, topic bridging; done-check: two CLI clients rendezvous via code hash and exchange raw frames). No plan-level USER checkpoint; question list issued at session start.
 
-## 2026-07-04 — SESSION 3 done-check (senior-qa)
+## 2026-07-04 15:27 +0200 — SESSION 3 done-check (senior-qa)
 - **done-check: PASS** — "two CLI test clients rendezvous via a code hash and exchange raw frames" executed live against `go run ./cmd/relay` (127.0.0.1:9440): creator `--code 4XN-7P2-QW9` and joiner `--code "4xn 7p2 qw9"` (different §3.1.1 input form) both derived topic `4597f9ab7780950d1edeb4dcc05fe358`, TOPIC_BRIDGED both ends, 2 PAIR_DATA round trips forwarded verbatim both directions, both exited 0.
 - Relay silence verified live: complete relay stdout/stderr = 3 lifecycle lines (starting/listening-addr/stopped) — zero topics, codes, IPs, or frame bytes; negative joiner on never-created `9ZZ-8YY-7XX` registered today+yesterday topics, timed out silently, exited 1, relay log grew by zero lines.
 - Suite: `go test -race -count=1 ./...` all 6 packages ok (cmd/testclient 21.2s under -race — production Argon2id vectors ran); `go build ./...`, `go vet ./...`, `gofmt -l .` all clean.
@@ -105,7 +107,7 @@
 - Scope fence: router handlers = REGISTER_TOPIC + PAIR_DATA only; S4+ types exist solely as wire constants (per architecture note), silently dropped when received; no push/APNs/FCM/rate-limit code anywhere; only bounds present are the 128 KiB read limit (relay-enforced via LimitReader + bare CloseNow, library limiter disabled to keep the close Nimna-silent) and the cap-32 send channel.
 - Non-blocking observation for wrap: architecture note §5.1's covering test (raw-TCP RSV/unknown-opcode probes, state-independence of library 1002 closes) exists in internal/server/server_test.go and passed under -race with the full suite.
 
-## 2026-07-04 — SESSION 3 COMPLETE (relay connections & rendezvous)
+## 2026-07-04 15:27 +0200 — SESSION 3 COMPLETE (relay connections & rendezvous)
 - Opened with "no USER decisions foreseen" (stated); the S2 PEER_OFFLINE veto window closed unexercised at session start — spec v0.2 stands as committed. Phase-1 intake: tech-architect note committed at `docs/architecture/relay-architecture.md` (binding for S3–S6) — coder/websocket v1.8.15 signed off (zero transitive deps), package map (`internal/{wire,ident,rendezvous,server}` + `cmd/{relay,testclient}`), single-writer concurrency (bounded chan 32, full ⇒ close, never queue), topic lifecycle (silent register, first-two-bridge, third ignored stateless, no tombstones — entry deletion IS topic death, making §3.1.6 indistinguishability structural). Five CODE decisions recorded.
 - Produced (backend-developer-go): §5.4 wire codec with full frame-type enum + S2's deferred invalid-case tests + framing.json conformance fixtures · unloggable ident types (Topic/CRID/RemoteAddr/DeviceToken — fmt/json/slog all redact, sole accessor `WireBytes()`, struct-wrapped so the compiler enforces it) · rendezvous registry (injectable clock, 24h cap janitor) · WebSocket server (128 KiB bound enforced relay-side via LimitReader + bare CloseNow — library limiter disabled because it EXPLAINS; graceful shutdown; lifecycle-only slog) · thin cmd/relay (import graph provably x/crypto-free — anchored grep, unanchored form false-positives on stdlib-vendored TLS paths, documented for the S5 CI assertion) · cmd/testclient doing real §3.1.1/§3.1.2 derivation vector-locked to committed topic-derivation.json.
 - Pipeline: code-reviewer REOPEN — B1 BLOCKING: coder/websocket's own RFC 6455 writeError paths (RSV bits, unknown opcode) send close 1002 + generic reason text before relay code runs, falsifying the note's "no close frame, ever" and dodged by the then-current silence test. Architect adjudicated (not USER: no Nimna state becomes distinguishable; spec §5.4's own wording permits transport-standard closes): silence doctrine scoped ABSOLUTE at the Nimna layer; library compliance closes accepted residue under three conjunctive §5.1 conditions; suppression rejected (hand-framed WS / output-stream filtering = worse posture); same class covers stdlib TLS alerts at S6. Fix pass: comments corrected to the adjudicated invariant, new raw-TCP `TestTransportComplianceCloses` incl. the load-bearing state-independence assertion (close bytes byte-identical empty vs populated relay), `http.Server.ErrorLog` discarded (net/http would log raw client IPs around ident on panic/TLS paths), README build-claim fix. Reviewer re-verify: PASS (both mutation probes caught; ErrorLog leak-path empirically verified closed).

@@ -1,119 +1,120 @@
 # Nimna — Design Work Loop Task Board
 
 Single source of truth for loop status. Statuses: pending / in-progress / blocked-on-user / done.
+Stamps are full datetime (`YYYY-MM-DD HH:MM +tz`); times before 2026-07-04 15:29 +0200 were backfilled from git history (a line's stamp = its last status-changing commit).
 
 ---
 
 ## Task 1 — Brand Foundation & Logo
-**Status:** done (2026-07-03)
+**Status:** done (2026-07-03 21:25 +0200)
 
 Spec sections: design prompt §1 (Brand Foundation), §2 (Logo & App Icon).
 Taste Checkpoint A — two pauses: A1 brand direction (after 1.1), A2 logo concept (after 2.1).
 
 Deliverables:
-- [x] 1.1 Three brand-direction concepts + recommendation → `/designs/brand/brand-directions.md` (2026-07-03)
-- [x] **CHECKPOINT A1** — Direction C "The Line" selected (2026-07-03)
-- [x] 1.2 Color system, dark + light, WCAG AA verified (33/33 pass) → `/designs/brand/color-system.md` (2026-07-03)
-- [x] 1.3 Typography system (Schibsted Grotesk + Spline Sans Mono) → `/designs/brand/typography.md` (2026-07-03)
-- [x] 1.4 Voice & microcopy guide (10 strings + honesty checklist) → `/designs/brand/voice-and-microcopy.md` (2026-07-03)
-- [x] 2.1 Three logo concepts as SVG (wordmark + symbol) → `/designs/brand/logo/concepts/` (2026-07-03)
-- [x] **CHECKPOINT A2** — Concept 1 "Two Ends" selected (2026-07-03)
-- [x] 2.2 Refined final logo: 9 SVG variants + usage.md (clear-space, min sizes, mono/inverse, lockups) → `/designs/brand/logo/final/` (2026-07-03)
-- [x] 2.3 App icons: iOS 1024 master + Android adaptive (bg/fg/monochrome), 48px render-verified → `/designs/brand/app-icon/` (2026-07-03)
-- [x] `/designs/README.md` + `/designs/brand/README.md` indexes updated (2026-07-03)
+- [x] 1.1 Three brand-direction concepts + recommendation → `/designs/brand/brand-directions.md` (2026-07-03 20:50 +0200)
+- [x] **CHECKPOINT A1** — Direction C "The Line" selected (2026-07-03 21:08 +0200)
+- [x] 1.2 Color system, dark + light, WCAG AA verified (33/33 pass) → `/designs/brand/color-system.md` (2026-07-03 21:08 +0200)
+- [x] 1.3 Typography system (Schibsted Grotesk + Spline Sans Mono) → `/designs/brand/typography.md` (2026-07-03 21:08 +0200)
+- [x] 1.4 Voice & microcopy guide (10 strings + honesty checklist) → `/designs/brand/voice-and-microcopy.md` (2026-07-03 21:08 +0200)
+- [x] 2.1 Three logo concepts as SVG (wordmark + symbol) → `/designs/brand/logo/concepts/` (2026-07-03 21:17 +0200)
+- [x] **CHECKPOINT A2** — Concept 1 "Two Ends" selected (2026-07-03 21:25 +0200)
+- [x] 2.2 Refined final logo: 9 SVG variants + usage.md (clear-space, min sizes, mono/inverse, lockups) → `/designs/brand/logo/final/` (2026-07-03 21:25 +0200)
+- [x] 2.3 App icons: iOS 1024 master + Android adaptive (bg/fg/monochrome), 48px render-verified → `/designs/brand/app-icon/` (2026-07-03 21:25 +0200)
+- [x] `/designs/README.md` + `/designs/brand/README.md` indexes updated (2026-07-03 21:25 +0200)
 
-Completed: 2026-07-03
+Completed: 2026-07-03 21:25 +0200
 
 ---
 
 ## Task 2 — Design System, Wireframes & Hi-Fi Screens
-**Status:** done (2026-07-03)
+**Status:** done (2026-07-03 21:55 +0200)
 
 Spec sections: design prompt §3 (Design System), §4 (Wireframes F1–F9), §5 (Hi-Fi Screens), §6 (Handoff Notes).
 
 Deliverables:
-- [x] 3.1 Spacing/grid, radii, elevation, motion principles → `/designs/system/foundations.md` (2026-07-03)
-- [x] 3.2 Core components, all states → `/designs/system/components.md` (2026-07-03)
-- [x] 3.3 Iconography style + 22 icons → `/designs/system/icons/` (2026-07-03)
-- [x] 4 Annotated wireframes F1–F9, 46 frames, all six mandated edge cases → `/designs/wireframes/` (2026-07-03)
-- [x] 5.1–5.2 12 hi-fi screens 390×844 dark + 4 light variants, render-verified → `/designs/screens/` (2026-07-03)
-- [x] 5.3 Design tokens JSON (Flutter ThemeData-ready) → `/designs/system/tokens.json` (2026-07-03)
-- [x] 6 Flutter handoff notes + asset checklist + brand cheat sheet → `/designs/handoff/` (2026-07-03)
-- [x] README indexes for system / wireframes / screens / handoff (2026-07-03)
+- [x] 3.1 Spacing/grid, radii, elevation, motion principles → `/designs/system/foundations.md` (2026-07-03 21:55 +0200)
+- [x] 3.2 Core components, all states → `/designs/system/components.md` (2026-07-03 21:55 +0200)
+- [x] 3.3 Iconography style + 22 icons → `/designs/system/icons/` (2026-07-03 21:55 +0200)
+- [x] 4 Annotated wireframes F1–F9, 46 frames, all six mandated edge cases → `/designs/wireframes/` (2026-07-03 21:55 +0200)
+- [x] 5.1–5.2 12 hi-fi screens 390×844 dark + 4 light variants, render-verified → `/designs/screens/` (2026-07-03 21:55 +0200)
+- [x] 5.3 Design tokens JSON (Flutter ThemeData-ready) → `/designs/system/tokens.json` (2026-07-03 21:55 +0200)
+- [x] 6 Flutter handoff notes + asset checklist + brand cheat sheet → `/designs/handoff/` (2026-07-03 21:55 +0200)
+- [x] README indexes for system / wireframes / screens / handoff (2026-07-03 21:55 +0200)
 
-Completed: 2026-07-03
+Completed: 2026-07-03 21:55 +0200
 Open items: paywall price (USER, pending) · FLAG_SECURE stance (build phase)
 
 ---
 
 ## Task 3 — Website
-**Status:** done (2026-07-03)
+**Status:** done (2026-07-03 22:23 +0200)
 
 Spec: design prompt "Prompt 2" in full; reuse Task 1–2 tokens/logo/screens verbatim.
 Taste Checkpoint B: content outline + hero & relay-diagram visual concepts → pause → build.
 
 Deliverables:
-- [x] **CHECKPOINT B** — outline approved; hero H1 "Line Draws Itself"; relay R1 "Glass Relay" (2026-07-03)
-- [x] index.html — all nine sections, hero H1 animation, R1 glass-relay diagram (2026-07-03)
-- [x] /privacy, /security, /press sub-pages (2026-07-03)
-- [x] /assets — self-hosted woff2 fonts (OFL notice), favicon set, OG image, press kit (logos + 3 screenshots) (2026-07-03)
-- [x] Deployment README + launch checklist (2026-07-03)
-- [x] Copy self-checked against protocol spec (checklist "Copy honesty" section); link check ALL OK, zero external resources; responsive verified at 390/360px (2026-07-03)
+- [x] **CHECKPOINT B** — outline approved; hero H1 "Line Draws Itself"; relay R1 "Glass Relay" (2026-07-03 22:23 +0200)
+- [x] index.html — all nine sections, hero H1 animation, R1 glass-relay diagram (2026-07-03 22:23 +0200)
+- [x] /privacy, /security, /press sub-pages (2026-07-03 22:23 +0200)
+- [x] /assets — self-hosted woff2 fonts (OFL notice), favicon set, OG image, press kit (logos + 3 screenshots) (2026-07-03 22:23 +0200)
+- [x] Deployment README + launch checklist (2026-07-03 22:23 +0200)
+- [x] Copy self-checked against protocol spec (checklist "Copy honesty" section); link check ALL OK, zero external resources; responsive verified at 390/360px (2026-07-03 22:23 +0200)
 
-Completed: 2026-07-03
+Completed: 2026-07-03 22:23 +0200
 Open items: store URLs, repo public, hello@nimna.app mailbox, Lighthouse on deployed URL (see website/launch-checklist.md)
 
 ---
 
-# UPDATE LOOP — Spec v0.1.1 Sync (opened 2026-07-04)
+# UPDATE LOOP — Spec v0.1.1 Sync (opened 2026-07-04 04:30 +0200)
 
 Source of truth: `nimna-protocol-spec-v0.1.1.md` + the C1–C11 changelog in the update prompt.
 Rule: work strictly from the changelog; uncovered drift → log in PROGRESS.md ("drift found") and ask, never fix silently.
 
 ## Task U1 — Design System & Microcopy Sync
-**Status:** done (2026-07-04)
+**Status:** done (2026-07-04 04:36 +0200)
 
 Applies C1, C3, C5, C6 (+ all C-item canonical strings).
 
 Deliverables:
-- [x] Voice & microcopy guide: strings now 18 — string 9 rebuilt (subscription + permanence, {STORE_PRICE}, no numbers), 11–18 added (screenshot disclosure/notice, share briefing, whisper, blur, stale knock, media, push trade), "Nimna code" naming locked, honesty checklist grown to 10 nevers → `/designs/brand/voice-and-microcopy.md` (2026-07-04)
-- [x] Tokens v1.1.0: `code` block (9-char, 3-3-3, Crockford), `media` block (5 MB cap, progress line, blurSigma), `mediaVeil` dark+light → `/designs/system/tokens.json` (2026-07-04)
-- [x] Components: code entry fixed to XXX-XXX-XXX + four join methods + silence doctrine; QR+code simultaneous display; media bubbles (5 states); whisper card; media viewer; screenshot system line; push toggle; knock patience (C8 limits, no counters) → `/designs/system/components.md` (2026-07-04)
-- [x] Icons 22→24 (`i-doc`, `i-image`, render-verified); color-system + typography + READMEs synced; handoff cheat sheet verified clean (2026-07-04)
+- [x] Voice & microcopy guide: strings now 18 — string 9 rebuilt (subscription + permanence, {STORE_PRICE}, no numbers), 11–18 added (screenshot disclosure/notice, share briefing, whisper, blur, stale knock, media, push trade), "Nimna code" naming locked, honesty checklist grown to 10 nevers → `/designs/brand/voice-and-microcopy.md` (2026-07-04 04:36 +0200)
+- [x] Tokens v1.1.0: `code` block (9-char, 3-3-3, Crockford), `media` block (5 MB cap, progress line, blurSigma), `mediaVeil` dark+light → `/designs/system/tokens.json` (2026-07-04 04:36 +0200)
+- [x] Components: code entry fixed to XXX-XXX-XXX + four join methods + silence doctrine; QR+code simultaneous display; media bubbles (5 states); whisper card; media viewer; screenshot system line; push toggle; knock patience (C8 limits, no counters) → `/designs/system/components.md` (2026-07-04 04:36 +0200)
+- [x] Icons 22→24 (`i-doc`, `i-image`, render-verified); color-system + typography + READMEs synced; handoff cheat sheet verified clean (2026-07-04 04:36 +0200)
 
-Completed: 2026-07-04
+Completed: 2026-07-04 04:36 +0200
 
 ## Task U2 — Wireframes & Hi-Fi Screens Sync
-**Status:** done (2026-07-04) — F2.4 drift resolved with USER-authored copy (see DECISIONS.md); F3 joiner side checked clean
+**Status:** done (2026-07-04 05:20 +0200) — F2.4 drift resolved with USER-authored copy (see DECISIONS.md); F3 joiner side checked clean
 
 Deliverables:
-- [x] Wireframes 46 → 57 frames (subagent, reviewed + render-verified): F1 +screenshot-consent pane · F2 9 frames (share sheet, call-and-compare, silence doctrine) · F3 four join methods · F5 15 frames (+attach/whisper/media-send/blur/viewer/system-line/stale-knock) · F6/F7 push honesty + string 18 · F9 7 frames (subscription, {STORE_PRICE}, lapsed edge) · F4/F8 C1 sweeps · README synced (2026-07-04)
-- [x] Hi-fi: 02/03/05/09/10/11 + light variants regenerated; net-new 13-media-viewer, 14-sensitive-blur, 15-whisper-attach; 01 dots 3→4; all screenshot-verified at 390×844 (2026-07-04)
-- [x] Handoff synced: flutter-notes (media/sensitive/screenshot/paywall/push rows, FLAG_SECURE resolved, background reality), asset checklist, cheat sheet (2026-07-04)
+- [x] Wireframes 46 → 57 frames (subagent, reviewed + render-verified): F1 +screenshot-consent pane · F2 9 frames (share sheet, call-and-compare, silence doctrine) · F3 four join methods · F5 15 frames (+attach/whisper/media-send/blur/viewer/system-line/stale-knock) · F6/F7 push honesty + string 18 · F9 7 frames (subscription, {STORE_PRICE}, lapsed edge) · F4/F8 C1 sweeps · README synced (2026-07-04 05:20 +0200)
+- [x] Hi-fi: 02/03/05/09/10/11 + light variants regenerated; net-new 13-media-viewer, 14-sensitive-blur, 15-whisper-attach; 01 dots 3→4; all screenshot-verified at 390×844 (2026-07-04 05:20 +0200)
+- [x] Handoff synced: flutter-notes (media/sensitive/screenshot/paywall/push rows, FLAG_SECURE resolved, background reality), asset checklist, cheat sheet (2026-07-04 05:20 +0200)
 
 ## Task U3 — Website Sync
-**Status:** done (2026-07-04)
+**Status:** done (2026-07-04 05:20 +0200)
 
 Deliverables:
-- [x] CHECKPOINT — pricing section: two cards + permanence band + store badges (USER, 2026-07-04); built + render-verified desktop/mobile (2026-07-04)
-- [x] index: How-it-works (Nimna code, KR7-FM2-XQ4), relay sees-list + transient wake-token, 2 media facts, honesty (screenshot notice + push-trade card), FAQ (lost phone rewritten; +media, +Apple/Google, +no-trial, +self-host), footer AGPL-3.0 (2026-07-04)
-- [x] /security: v0.1.1 sections (code format, silence doctrine, background/rate limits, media, screenshots, sensitive-content, push forwarder-not-registry, device loss, abuse posture, AGPL + code-vs-deployment) (2026-07-04)
-- [x] /privacy (push rewrite, content-scanning row) + /press (facts rebuilt) (2026-07-04)
-- [x] Launch checklist: price item retired, copy-honesty section re-verified against v0.1.1 (2026-07-04)
-- [x] Link check ALL OK, zero external resources; stale-term sweep clean (2026-07-04)
+- [x] CHECKPOINT — pricing section: two cards + permanence band + store badges (USER, 2026-07-04 05:20 +0200); built + render-verified desktop/mobile (2026-07-04 05:20 +0200)
+- [x] index: How-it-works (Nimna code, KR7-FM2-XQ4), relay sees-list + transient wake-token, 2 media facts, honesty (screenshot notice + push-trade card), FAQ (lost phone rewritten; +media, +Apple/Google, +no-trial, +self-host), footer AGPL-3.0 (2026-07-04 05:20 +0200)
+- [x] /security: v0.1.1 sections (code format, silence doctrine, background/rate limits, media, screenshots, sensitive-content, push forwarder-not-registry, device loss, abuse posture, AGPL + code-vs-deployment) (2026-07-04 05:20 +0200)
+- [x] /privacy (push rewrite, content-scanning row) + /press (facts rebuilt) (2026-07-04 05:20 +0200)
+- [x] Launch checklist: price item retired, copy-honesty section re-verified against v0.1.1 (2026-07-04 05:20 +0200)
+- [x] Link check ALL OK, zero external resources; stale-term sweep clean (2026-07-04 05:20 +0200)
 
 ---
 
-# IMPLEMENTATION LOOP — Build Plan v2 (opened 2026-07-04)
+# IMPLEMENTATION LOOP — Build Plan v2 (opened 2026-07-04 06:03 +0200)
 
 Plan: `nimna-build-plan-v2-sessions.md` · Rules: `nimna-implementation-workloop-prompt.md` · Spec: `docs/nimna-protocol-spec-v0.2.md` (locked at S2, 2026-07-04; v0.1.1 kept as history).
 One session = one sitting = one done-check; code-reviewer + senior-qa sign-off required before done. Statuses: pending / in-progress / blocked-on-user / done.
 
 ## Phase 0 — Foundations
-- **Session 1 — Scaffolding & conventions: done** (2026-07-04) — skeletons (Go relay + Flutter app, all checks clean) · agent fleet ×6 · CI ×2 · CLAUDE.md · spec copied to docs/ · reviewer blockers fixed · QA done-check PASS · i18n scope addition (USER) logged & propagated
-- **Session 2 — Crypto selection & spec v0.2: done** (2026-07-04) — USER checkpoint held, all four choices locked as recommended (X25519/ChaCha20-Poly1305/SHA-256+HKDF/Argon2id · Noise XXpsk2-from-spec + commitment + code-psk, fail-closed · KK + per-message rekey · 3-word global EFF wordlist) · 45-bit check HOLDS (Argon2id date-salted topics required) · spec v0.2 committed, supersedes v0.1.1 · docs/test-vectors: 5 JSON suites + pinned wordlist + committed Go generator (third-party Noise 64/64, RFC vectors, byte-identical regeneration) + CI drift guard · reviewer REOPEN→PASS · QA done-check PASS · flagged: PEER_OFFLINE wire removal (USER veto window), screen-03 wordlist design-sync
+- **Session 1 — Scaffolding & conventions: done** (2026-07-04 06:03 +0200) — skeletons (Go relay + Flutter app, all checks clean) · agent fleet ×6 · CI ×2 · CLAUDE.md · spec copied to docs/ · reviewer blockers fixed · QA done-check PASS · i18n scope addition (USER) logged & propagated
+- **Session 2 — Crypto selection & spec v0.2: done** (2026-07-04 13:44 +0200) — USER checkpoint held, all four choices locked as recommended (X25519/ChaCha20-Poly1305/SHA-256+HKDF/Argon2id · Noise XXpsk2-from-spec + commitment + code-psk, fail-closed · KK + per-message rekey · 3-word global EFF wordlist) · 45-bit check HOLDS (Argon2id date-salted topics required) · spec v0.2 committed, supersedes v0.1.1 · docs/test-vectors: 5 JSON suites + pinned wordlist + committed Go generator (third-party Noise 64/64, RFC vectors, byte-identical regeneration) + CI drift guard · reviewer REOPEN→PASS · QA done-check PASS · flagged: PEER_OFFLINE wire removal (USER veto window), screen-03 wordlist design-sync
 ## Phase 1 — Relay (Go)
-- **Session 3 — Connections & rendezvous: done** (2026-07-04) — WebSocket relay (coder/websocket v1.8.15) with 18-byte §5.4 outer frame, silent topic registry (first-two-bridge, no tombstones, 24h janitor), verbatim PAIR_DATA forwarding, unloggable ident types, cmd/testclient with real §3.1.2 Argon2id derivation · architecture note docs/architecture/relay-architecture.md (binding S3–S6) · reviewer REOPEN→PASS (B1 transport-close carve-out adjudicated by architect, §5.1) · QA done-check PASS (live rendezvous, relay silence, -race suite)
+- **Session 3 — Connections & rendezvous: done** (2026-07-04 15:27 +0200) — WebSocket relay (coder/websocket v1.8.15) with 18-byte §5.4 outer frame, silent topic registry (first-two-bridge, no tombstones, 24h janitor), verbatim PAIR_DATA forwarding, unloggable ident types, cmd/testclient with real §3.1.2 Argon2id derivation · architecture note docs/architecture/relay-architecture.md (binding S3–S6) · reviewer REOPEN→PASS (B1 transport-close carve-out adjudicated by architect, §5.1) · QA done-check PASS (live rendezvous, relay silence, -race suite)
 - Session 4 — Channels, knock, sessions, push forwarding: pending
 - Session 5 — Hardening, rate limits & observability: pending
 - Session 6 — Deploy & open-source release: pending · USER checkpoint: repo publish timing

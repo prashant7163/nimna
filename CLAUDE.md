@@ -24,6 +24,8 @@ spec, test vectors, architecture notes · `temp/` git-ignored scratch.
 - `TASKS.md` session statuses · `PROGRESS.md` append-only log (+ QA
   sign-off per session) · `DECISIONS.md` append-only, USER vs CODE —
   settled matters are never re-opened. Unsure which kind → USER (ask).
+- Stamps are full datetime `YYYY-MM-DD HH:MM +tz` (USER, 2026-07-04) —
+  never date-only; local time with UTC offset.
 
 ## Standing rules
 - **Crypto:** only Session-2-locked primitives; no hand-rolled crypto, ever.
