@@ -1,9 +1,28 @@
 {
   "permissions": {
     "allow": [
-      "Bash (python *)",
-      "Bash(python3 *)",
-      "Bash (qlmanage *)"
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(qlmanage:*)",
+      "Bash(go:*)",
+      "Bash(gofmt:*)",
+      "Bash(flutter:*)",
+      "Bash(dart:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git mv:*)",
+      "Bash(git restore:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(git stash:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(xcrun simctl:*)",
+      "Bash(adb:*)"
     ]
   }
 }

@@ -1,0 +1,33 @@
+name: relay
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "application/relay/**"
+      - ".github/workflows/relay.yml"
+  pull_request:
+    paths:
+      - "application/relay/**"
+      - ".github/workflows/relay.yml"
+
+defaults:
+  run:
+    working-directory: application/relay
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: application/relay/go.mod
+      - name: gofmt (must be clean)
+        run: test -z "$(gofmt -l .)"
+      - name: vet
+        run: go vet ./...
+      - name: build
+        run: go build ./...
+      - name: test
+        run: go test ./...

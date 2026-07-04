@@ -1,0 +1,9 @@
+# build artifact: `go build ./...` drops the relay binary here
+/relay
+
+# push credentials are deployment configuration, never repository content
+# (spec §4) — guard the config slots from Session 4 on
+*.pem
+*.p8
+*.json.key
+config.local.*

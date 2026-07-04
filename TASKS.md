@@ -101,3 +101,37 @@ Deliverables:
 - [x] /privacy (push rewrite, content-scanning row) + /press (facts rebuilt) (2026-07-04)
 - [x] Launch checklist: price item retired, copy-honesty section re-verified against v0.1.1 (2026-07-04)
 - [x] Link check ALL OK, zero external resources; stale-term sweep clean (2026-07-04)
+
+---
+
+# IMPLEMENTATION LOOP — Build Plan v2 (opened 2026-07-04)
+
+Plan: `nimna-build-plan-v2-sessions.md` · Rules: `nimna-implementation-workloop-prompt.md` · Spec: `docs/nimna-protocol-spec-v0.1.1.md` (v0.2 supersedes at S2).
+One session = one sitting = one done-check; code-reviewer + senior-qa sign-off required before done. Statuses: pending / in-progress / blocked-on-user / done.
+
+## Phase 0 — Foundations
+- **Session 1 — Scaffolding & conventions: done** (2026-07-04) — skeletons (Go relay + Flutter app, all checks clean) · agent fleet ×6 · CI ×2 · CLAUDE.md · spec copied to docs/ · reviewer blockers fixed · QA done-check PASS · i18n scope addition (USER) logged & propagated
+- Session 2 — Crypto selection & spec v0.2: pending · USER checkpoint: crypto choices presented before locking
+## Phase 1 — Relay (Go)
+- Session 3 — Connections & rendezvous: pending
+- Session 4 — Channels, knock, sessions, push forwarding: pending
+- Session 5 — Hardening, rate limits & observability: pending
+- Session 6 — Deploy & open-source release: pending · USER checkpoint: repo publish timing
+## Phase 2 — App core (Flutter)
+- Session 7 — Skeleton & encrypted local storage: pending · i18n: ARB/l10n wiring from the first widget — zero hardcoded user-facing strings (reviewer-enforced S7 onward)
+- Session 8 — Pairing: initiator side: pending
+- Session 9 — Pairing: joiner side & handshake: pending
+- Session 10 — Live text messaging: pending
+- Session 11 — Media & documents: pending
+- Session 12 — Knock, presence, offline-compose, reconnect: pending
+## Phase 3 — Discretion features
+- Session 13 — App lock & panic wipe: pending
+- Session 14 — Screenshot policy & sensitive-content handling: pending · CODE-within-rails: Android sensitive-content path
+- Session 15 — Notifications end-to-end: pending
+## Phase 4 — Ship
+- Session 16 — Polish & first-run: pending · i18n: crafted DE/FR/ES/IT app translation pass vs voice guide (PM-reviewed; disputed renderings → USER)
+- Session 17 — Subscription & paywall: pending
+- Session 18 — Adversarial pass & test suite: pending
+- Session 19 — Store prep & launch assets: pending · USER checkpoints: publish execution, launch copy sign-off · i18n: store listings ×5 languages, localized text-bearing screenshots, website in all five (EN default + language switcher), launch-checklist copy-honesty verification run per language
+
+Milestones: M1 relay live (post-S6) · M2 two phones talking (post-S12) · M3 honest product (post-S18) · M4 launch-ready (post-S19). Terminal deliverable: `PUBLISH_READY.md`.

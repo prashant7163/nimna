@@ -1,6 +1,8 @@
 # Nimna — Loop Memory (resume notes)
 
-**What this project is:** Design work loop for Nimna — paid, account-less, synchronous-only, E2E-encrypted 1:1 messaging ("a private line between two people"). Three tasks: (1) brand+logo, (2) design system/wireframes/hi-fi screens, (3) website.
+**What this project is:** Nimna — paid, account-less, synchronous-only, E2E-encrypted 1:1 messaging ("a private line between two people"). The design loop (brand+logo, design system/screens, website) and its v0.1.1 update loop are DONE. Now running: the **IMPLEMENTATION LOOP** — 19 atomic sessions per `nimna-build-plan-v2-sessions.md`, rules in `nimna-implementation-workloop-prompt.md`, spec `docs/nimna-protocol-spec-v0.1.1.md` as single source of truth (spec v0.2 lands in Session 2).
+
+**Implementation loop conventions (opened 2026-07-04):** stack Go relay (`application/relay`, module `nimna.app/relay`, AGPL-3.0 at S6) + Flutter app (`application/mobile`, package `nimna`, IDs `app.nimna`). Agent fleet in `.claude/agents/` (PM, architect, Go dev, Flutter dev, reviewer, QA); per-session pipeline: intake → implement → code-reviewer → senior-qa done-check → wrap (commit + PROGRESS + TASKS + READMEs). Repo-root CLAUDE.md orients fresh sessions. USER checkpoints ahead: S2 crypto lock, S6 relay publish timing, S19 launch execution. One session per sitting; USER triggers the next. **I18N (USER 2026-07-04):** launch EN/DE/FR/ES/IT — app, store listings, website (EN-default + browser-honoring switcher); ARB/l10n from first widget, zero hardcoded strings (reviewer-enforced S7+); protocol/storage locale-independent; crafted PM-reviewed translations (app pass S16; store+website+per-language honesty checks S19).
 
 **Source of truth (read before resuming):**
 - `brand-context.md` — personality (quiet luxury, calm, discreet), HARD AVOIDS (no locks/shields/spy/matrix/neon-green/fingerprints/"military-grade"/fear marketing), 6 product rituals.
