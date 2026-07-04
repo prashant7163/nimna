@@ -12,9 +12,11 @@ import (
 )
 
 // conn is one live WebSocket connection: a read loop (runs handleWS's
-// goroutine), a writer goroutine draining sendCh, and its own set of topic
-// registrations so teardown can unwind them (registrations live only as
-// long as their connection, spec §4).
+// goroutine), a writer goroutine draining sendCh, and its own sets of
+// topic and CRID registrations so teardown can unwind them (registrations
+// live only as long as their connection, spec §4). The planes coexist: a
+// connection may hold both kinds at once — an app pairing a new channel
+// while its existing channels stay knock-reachable is the normal case.
 type conn struct {
 	srv *Server
 	ws  *websocket.Conn
@@ -32,10 +34,12 @@ type conn struct {
 	// goroutine is the only code that touches ws write paths.
 	sendCh chan []byte
 
-	// mu guards topics; registrations are added on the read goroutine
-	// but unwound from whichever goroutine reaches teardown first.
+	// mu guards the registration sets; registrations are added on the
+	// read goroutine but unwound from whichever goroutine reaches
+	// teardown first.
 	mu     sync.Mutex
 	topics map[ident.Topic]struct{}
+	crids  map[ident.CRID]struct{}
 }
 
 // readLoop reads, parses, and routes frames until the connection dies.
@@ -59,9 +63,10 @@ func (c *conn) readLoop() {
 }
 
 // route dispatches one valid frame. Types without a registered handler —
-// the entire Session 4 channel plane, and relay-emitted types echoed back
-// by a client — are silently dropped: valid traffic never closes a
-// connection, and the relay never answers what it does not serve.
+// relay-emitted go-signals (0x10–0x12) echoed back by a client — are
+// silently dropped: the relay never answers what it does not serve. Valid
+// traffic closes a connection in exactly one case: a structurally
+// malformed KNOCK payload, a pure function of the received bytes (§9).
 func (c *conn) route(f wire.Frame, raw []byte) {
 	if h, ok := c.srv.handlers[f.Type]; ok {
 		h(c, f, raw)
@@ -113,30 +118,56 @@ func (c *conn) addTopic(t ident.Topic) bool {
 	return c.ctx.Err() == nil
 }
 
+// addCRID records a CRID registration for teardown unwind, mirroring
+// addTopic: add, then check ctx — on a lost race with teardown the caller
+// must unwind via DropConn itself, because teardown's sweep has already
+// run.
+func (c *conn) addCRID(id ident.CRID) bool {
+	c.mu.Lock()
+	c.crids[id] = struct{}{}
+	c.mu.Unlock()
+	return c.ctx.Err() == nil
+}
+
 // teardown ends the connection exactly once, from whichever path gets
 // there first: read error, malformed frame, write error, delivery
-// overflow, or server shutdown. It unwinds every topic registration the
-// connection holds — a bridged topic dies whole with this end; the
-// survivor gets no signal because §5.4 defines none (clients detect via
-// their own handshake timeout, fail-closed per §3.1.6) — and closes the
-// socket with a bare CloseNow. Relay code never sends a close frame
-// carrying reason text or a Nimna-state-dependent status; the only close
-// frames with text are the WebSocket library's own RFC 6455
-// transport-compliance closes (1002), whose bytes are a fixed function of
-// the sender's malformed transport input and carry no Nimna identifier or
-// state (architecture note §5.1).
+// overflow, or server shutdown. It unwinds BOTH planes' registrations:
+// a bridged topic dies whole with this end, and its survivor gets no
+// signal because §5.4 defines none for topics (clients detect via their
+// own handshake timeout, fail-closed per §3.1.6); on the CRID plane,
+// disconnection is an implicit TEARDOWN (§5.4) — a bridge survivor is
+// notified with the relay-built TEARDOWN frame, a pending knock from this
+// connection dies silently, and each CRID entry dies when its last
+// registration leaves. The socket closes with a bare CloseNow. Relay code
+// never sends a close frame carrying reason text or a
+// Nimna-state-dependent status; the only close frames with text are the
+// WebSocket library's own RFC 6455 transport-compliance closes (1002),
+// whose bytes are a fixed function of the sender's malformed transport
+// input and carry no Nimna identifier or state (architecture note §5.1).
 func (c *conn) teardown() {
 	c.once.Do(func() {
 		c.cancel()
 
 		c.mu.Lock()
-		held := make([]ident.Topic, 0, len(c.topics))
+		heldTopics := make([]ident.Topic, 0, len(c.topics))
 		for t := range c.topics {
-			held = append(held, t)
+			heldTopics = append(heldTopics, t)
+		}
+		heldCRIDs := make([]ident.CRID, 0, len(c.crids))
+		for id := range c.crids {
+			heldCRIDs = append(heldCRIDs, id)
 		}
 		c.mu.Unlock()
-		for _, t := range held {
+		for _, t := range heldTopics {
 			c.srv.topics.Drop(t, c)
+		}
+		for _, id := range heldCRIDs {
+			if survivor, notify := c.srv.channels.DropConn(id, c); notify {
+				// Implicit TEARDOWN to the bridge survivor (§3.3:
+				// the relay "notifies the peer"); freshly built,
+				// empty payload.
+				survivor.send(wire.Encode(wire.Teardown, id.WireBytes(), nil))
+			}
 		}
 
 		_ = c.ws.CloseNow()

@@ -1,6 +1,8 @@
-// Command testclient is the Session 3 done-check tool: one binary, run
-// twice, that rendezvouses two connections through the relay via the real
-// §3.1.2 code→topic derivation and exchanges raw PAIR_DATA frames.
+// Command testclient is the Session 3/4 done-check tool: one binary
+// covering both relay planes.
+//
+// Rendezvous plane (Session 3) — run twice, real §3.1.2 code→topic
+// derivation, raw PAIR_DATA exchange:
 //
 //	go run ./cmd/testclient --role create --code 7Q2-M4K-9XV
 //	go run ./cmd/testclient --role join   --code 7Q2-M4K-9XV
@@ -10,13 +12,30 @@
 // today's topic and registers; if no bridge forms after a short probe
 // window it also derives and registers yesterday's (spec §3.1.2 — two
 // candidates always cover a TTL ≤ 24 h). After the bridge, the joiner
-// initiates a demo exchange of raw PAIR_DATA frames; the payload bytes
-// are arbitrary — real Noise handshaking is app work (Sessions 8/9), and
-// the relay forwards these frames verbatim without ever parsing them.
+// initiates a demo exchange of raw PAIR_DATA frames.
 //
-// This is a TEST TOOL, not the relay: it prints its own topics and frames
-// freely. The relay side stays provably silent — it never sends anything
-// but TOPIC_BRIDGED and forwarded PAIR_DATA, and never explains failures.
+// Channel plane (Session 4) — knock → accept → SESSION_DATA chat:
+//
+//	go run ./cmd/testclient --role answer --code 7Q2-M4K-9XV
+//	go run ./cmd/testclient --role knock  --code 7Q2-M4K-9XV \
+//	    [--token <hex> --platform apns|fcm]
+//
+// Both roles register a CRID derived from the shared code by a TEST-ONLY
+// derivation (see deriveCRID; explicitly NOT spec §3.1.5) or given
+// directly via --crid. The knocker sends KNOCK (with the optional push
+// token), waits for SESSION_BRIDGED, chats as initiator (speaks first,
+// mirroring §3.3.1 S1), sends one WebSocket ping as the keepalive
+// covering check (note §12), then TEARDOWN. The answerer waits for
+// KNOCK_FWD — delivered live or on register (a knock pending at the relay
+// reaches a late-connecting answerer) — ACCEPTs, chats as responder, and
+// exits on the relay's TEARDOWN. Payload bytes are arbitrary demo content
+// in both planes — real Noise handshaking is app work (Sessions 8+), and
+// the relay forwards data frames verbatim without ever parsing them.
+//
+// This is a TEST TOOL, not the relay: it prints its own identifiers and
+// frames freely. The relay side stays provably silent — it never sends
+// anything beyond the §5.4 go-signals and forwarded data frames, and
+// never explains failures.
 //
 // Exit status: 0 on a completed exchange, non-zero on any failure, so QA
 // can script it.
@@ -24,6 +43,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"os"
@@ -44,30 +64,79 @@ func fail(format string, a ...any) int {
 }
 
 func run() int {
-	role := flag.String("role", "", "create | join (required)")
+	role := flag.String("role", "", "create | join | knock | answer (required)")
 	relayURL := flag.String("relay", "ws://127.0.0.1:9440", "relay WebSocket URL")
-	code := flag.String("code", "", "pairing code, e.g. 7Q2-M4K-9XV (required)")
+	code := flag.String("code", "", "pairing code, e.g. 7Q2-M4K-9XV (required unless --crid)")
 	date := flag.String("date", "", "creator only: code-creation date YYYY-MM-DD (default: today UTC)")
-	wait := flag.Duration("wait", 0, "max wait for TOPIC_BRIDGED (default: create 120s, join 30s)")
+	wait := flag.Duration("wait", 0, "max wait for the bridge go-signal (defaults: create 120s, join 30s, knock 75s, answer 120s)")
 	probe := flag.Duration("probe", 5*time.Second, "joiner: wait on today's topic before also registering yesterday's")
-	rounds := flag.Int("rounds", 2, "demo PAIR_DATA round trips after the bridge")
+	rounds := flag.Int("rounds", 2, "demo data round trips after the bridge (must match on both ends)")
+	cridHex := flag.String("crid", "", "knock/answer: 32-hex CRID override (skips the code derivation)")
+	tokenHex := flag.String("token", "", "knock only: push device-token hex (with --platform)")
+	platformName := flag.String("platform", "", "knock only: apns | fcm (with --token)")
 	flag.Parse()
 
-	if *role != "create" && *role != "join" {
-		return fail("--role must be create or join")
+	channelRole := *role == "knock" || *role == "answer"
+	if *role != "create" && *role != "join" && !channelRole {
+		return fail("--role must be create, join, knock or answer")
 	}
-	if *code == "" {
-		return fail("--code is required")
+	if *role != "knock" && (*tokenHex != "" || *platformName != "") {
+		return fail("--token/--platform apply to --role knock only")
 	}
-	canonical, err := canonicalize(*code)
-	if err != nil {
-		return fail("%v", err)
+	if (*tokenHex == "") != (*platformName == "") {
+		return fail("--token and --platform go together (both or neither)")
 	}
+	var token []byte
+	var platform wire.Platform
+	if *tokenHex != "" {
+		var err error
+		token, err = hex.DecodeString(*tokenHex)
+		if err != nil || len(token) == 0 {
+			return fail("--token must be non-empty hex")
+		}
+		switch *platformName {
+		case "apns":
+			platform = wire.PlatformAPNs
+		case "fcm":
+			platform = wire.PlatformFCM
+		default:
+			return fail("--platform must be apns or fcm")
+		}
+	}
+
+	// Resolve the routing identifier for the chosen plane.
+	var canonical string
+	var crid [16]byte
+	switch {
+	case channelRole && *cridHex != "":
+		b, err := hex.DecodeString(*cridHex)
+		if err != nil || len(b) != 16 {
+			return fail("--crid must be exactly 32 hex characters")
+		}
+		copy(crid[:], b)
+	case *code == "":
+		return fail("--code is required (or --crid for knock/answer)")
+	default:
+		var err error
+		canonical, err = canonicalize(*code)
+		if err != nil {
+			return fail("%v", err)
+		}
+		if channelRole {
+			crid = deriveCRID(canonical)
+		}
+	}
+
 	if *wait == 0 {
-		if *role == "create" {
+		switch *role {
+		case "create", "answer":
 			*wait = 120 * time.Second
-		} else {
+		case "join":
 			*wait = 30 * time.Second
+		case "knock":
+			// 75 s > the relay's 60 s pending-knock window: past it,
+			// silence is the answer (§3.2 — ACCEPT or nothing).
+			*wait = 75 * time.Second
 		}
 	}
 
@@ -88,8 +157,12 @@ func run() int {
 	switch *role {
 	case "create":
 		return cl.runCreate(ctx, canonical, *date, *wait, *rounds)
-	default:
+	case "join":
 		return cl.runJoin(ctx, canonical, *wait, *probe, *rounds)
+	case "knock":
+		return cl.runKnock(ctx, crid, token, platform, *wait, *rounds)
+	default:
+		return cl.runAnswer(ctx, crid, *wait, *rounds)
 	}
 }
 
@@ -121,9 +194,9 @@ func (c *client) readLoop(ctx context.Context) {
 	}
 }
 
-func (c *client) send(ctx context.Context, t wire.FrameType, topic [16]byte, payload []byte) error {
-	frame := wire.Encode(t, topic, payload)
-	fmt.Printf("[%s] send %s topic=%x payload=%s\n", c.role, frameName(t), topic, printable(payload))
+func (c *client) send(ctx context.Context, t wire.FrameType, rid [16]byte, payload []byte) error {
+	frame := wire.Encode(t, rid, payload)
+	fmt.Printf("[%s] send %s rid=%x payload=%s\n", c.role, frameName(t), rid, printable(payload))
 	return c.ws.Write(ctx, websocket.MessageBinary, frame)
 }
 
@@ -257,10 +330,24 @@ func frameName(t wire.FrameType) string {
 	switch t {
 	case wire.RegisterTopic:
 		return "REGISTER_TOPIC"
+	case wire.RegisterCRID:
+		return "REGISTER_CRID"
+	case wire.Knock:
+		return "KNOCK"
+	case wire.Accept:
+		return "ACCEPT"
+	case wire.Teardown:
+		return "TEARDOWN"
 	case wire.TopicBridged:
 		return "TOPIC_BRIDGED"
+	case wire.KnockFwd:
+		return "KNOCK_FWD"
+	case wire.SessionBridged:
+		return "SESSION_BRIDGED"
 	case wire.PairData:
 		return "PAIR_DATA"
+	case wire.SessionData:
+		return "SESSION_DATA"
 	default:
 		return fmt.Sprintf("frame(0x%02x)", byte(t))
 	}

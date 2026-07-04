@@ -13,10 +13,12 @@
 // Silence doctrine (scoped to the Nimna layer, where it is absolute —
 // architecture note §5.1): structurally malformed traffic (short frame,
 // wrong version, unknown frame type, oversize message, non-binary
-// WebSocket message) closes the connection via CloseNow, and
-// valid-but-unhandled frame types (the Session 4 channel plane) are
-// silently dropped. Relay code never sends a close frame carrying reason
-// text or a Nimna-state-dependent status; the only close frames with text
+// WebSocket message, malformed KNOCK payload) closes the connection via
+// CloseNow; valid-but-unhandled frame types (relay-emitted go-signals
+// echoed back by a client) and every state-dependent rejection are
+// silently dropped — a close that depended on registry state would leak
+// that state. Relay code never sends a close frame carrying reason text
+// or a Nimna-state-dependent status; the only close frames with text
 // are the WebSocket library's own RFC 6455 transport-compliance closes
 // (1002), whose bytes are a fixed function of the sender's malformed
 // transport input and carry no Nimna identifier or state.
@@ -37,7 +39,9 @@ import (
 
 	"github.com/coder/websocket"
 
+	"nimna.app/relay/internal/channel"
 	"nimna.app/relay/internal/ident"
+	"nimna.app/relay/internal/push"
 	"nimna.app/relay/internal/rendezvous"
 	"nimna.app/relay/internal/wire"
 )
@@ -55,6 +59,13 @@ type Config struct {
 	// TopicTTL caps a topic registration's lifetime per connection.
 	// Zero means the spec default, 24 h (spec §4).
 	TopicTTL time.Duration
+	// PendingKnockTTL is the pending-knock hold. Zero means the spec
+	// default, exactly 60 s (spec §3.2 step 3).
+	PendingKnockTTL time.Duration
+	// Push delivers content-free wakes for offline knocks that carry a
+	// token (spec §3.2.1). Nil is the spec-sanctioned push-less mode:
+	// such knocks hold their pending and nothing else happens.
+	Push push.Sender
 }
 
 // frameHandler processes one parsed frame on the receiving connection's
@@ -63,12 +74,17 @@ type Config struct {
 // router without touching the connection lifecycle.
 type frameHandler func(c *conn, f wire.Frame, raw []byte)
 
-// Server is the relay. Its complete state is in-memory: the topic
-// registry and the live connections' goroutines. Nothing is ever at rest.
+// Server is the relay. Its complete state is in-memory: the topic and
+// CRID registries and the live connections' goroutines. Nothing is ever
+// at rest.
 type Server struct {
 	cfg      Config
 	log      *slog.Logger
 	topics   *rendezvous.Registry[*conn]
+	channels *channel.Registry[*conn]
+	// push is the bounded dispatcher around cfg.Push; nil in push-less
+	// mode. Its worker runs under Serve's context.
+	push     *push.Dispatcher
 	handlers map[wire.FrameType]frameHandler
 }
 
@@ -78,22 +94,33 @@ func New(cfg Config, logger *slog.Logger) *Server {
 		logger = slog.New(slog.DiscardHandler)
 	}
 	s := &Server{
-		cfg:    cfg,
-		log:    logger,
-		topics: rendezvous.New[*conn](cfg.TopicTTL, nil),
+		cfg:      cfg,
+		log:      logger,
+		topics:   rendezvous.New[*conn](cfg.TopicTTL, nil),
+		channels: channel.New[*conn](cfg.PendingKnockTTL, nil),
 	}
-	// Session 3 router: rendezvous plane only. Any other VALID type is
-	// absent from this map and silently dropped by route(); Session 4
-	// adds the channel plane here.
+	if cfg.Push != nil {
+		s.push = push.NewDispatcher(cfg.Push)
+	}
+	// The full §5.4 router: rendezvous plane (S3) + channel plane (S4).
+	// The remaining VALID types — relay-emitted go-signals 0x10–0x12
+	// echoed back by a client — are absent from this map and silently
+	// dropped by route().
 	s.handlers = map[wire.FrameType]frameHandler{
 		wire.RegisterTopic: handleRegisterTopic,
 		wire.PairData:      handlePairData,
+		wire.RegisterCRID:  handleRegisterCRID,
+		wire.Knock:         handleKnock,
+		wire.Accept:        handleAccept,
+		wire.Teardown:      handleTeardown,
+		wire.SessionData:   handleSessionData,
 	}
 	return s
 }
 
 // Handler returns the WebSocket accept endpoint (any path). Exposed so
-// tests can mount it on ephemeral listeners.
+// tests can mount it on ephemeral listeners. Note the registry janitors
+// and the push dispatcher worker run only under Serve.
 func (s *Server) Handler() http.Handler {
 	return http.HandlerFunc(s.handleWS)
 }
@@ -126,6 +153,10 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 	}
 
 	go s.topics.RunJanitor(ctx)
+	go s.channels.RunJanitor(ctx)
+	if s.push != nil {
+		go s.push.Run(ctx)
+	}
 
 	// Lifecycle-only logging: the configured listen address is operator
 	// config, not an identifier.
@@ -176,6 +207,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		cancel: cancel,
 		sendCh: make(chan []byte, sendBuf),
 		topics: make(map[ident.Topic]struct{}),
+		crids:  make(map[ident.CRID]struct{}),
 	}
 	go c.writeLoop()
 	c.readLoop()

@@ -305,9 +305,13 @@ func TestMalformedFrameCloses(t *testing.T) {
 	}
 }
 
-// TestUnhandledValidTypeDropped: the Session 4 channel plane and
-// relay-emitted types are valid §5.4 traffic — silently dropped, never a
-// close. The connection stays fully usable.
+// TestUnhandledValidTypeDropped: valid §5.4 traffic never closes a
+// connection. Relay-emitted go-signals (0x10–0x12) echoed back by a client
+// are unhandled and silently dropped; the channel-plane frames sent here
+// are handled since Session 4 but land on state that makes each a silent
+// drop (or, for REGISTER_CRID and this conn's own KNOCK, silent
+// acceptance) — on the wire every one is identical silence, exactly as in
+// Session 3. The connection stays fully usable.
 func TestUnhandledValidTypeDropped(t *testing.T) {
 	url, _ := newRelay(t)
 	rid := topicBytes(4)
