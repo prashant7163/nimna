@@ -62,3 +62,31 @@ Deliverables:
 
 Completed: 2026-07-03
 Open items: store URLs, repo public, hello@nimna.app mailbox, Lighthouse on deployed URL (see website/launch-checklist.md)
+
+---
+
+# UPDATE LOOP — Spec v0.1.1 Sync (opened 2026-07-04)
+
+Source of truth: `nimna-protocol-spec-v0.1.1.md` + the C1–C11 changelog in the update prompt.
+Rule: work strictly from the changelog; uncovered drift → log in PROGRESS.md ("drift found") and ask, never fix silently.
+
+## Task U1 — Design System & Microcopy Sync
+**Status:** in-progress (2026-07-04)
+
+Applies C1, C3, C5, C6 (+ all C-item canonical strings).
+
+Deliverables:
+- [ ] Voice & microcopy guide: string 9 rebuilt (subscription + permanence guarantee), screenshot-policy string (C3), "Nimna code" naming sweep (C5), share-sheet briefing line, new-string additions → `/designs/brand/voice-and-microcopy.md`
+- [ ] Tokens: media bubble / blurred-state / whisper-dialog / code-entry 3-3-3 grouping additions as needed → `/designs/system/tokens.json`
+- [ ] Components: code-entry fixed to 9-char XXX-XXX-XXX (C6), media bubble + transfer progress (C2 strings), blurred sensitive-media state (C4), whisper dialog (C4), screenshot system-line (C3), knock-waiting patience state notes (C8) → `/designs/system/components.md`
+- [ ] Brand cheat sheet / color-system / typography touched only where C-item strings or code format appear
+
+## Task U2 — Wireframes & Hi-Fi Screens Sync
+**Status:** pending
+
+All C-items → F1 (C1/C3/C9 disclosures), F2/F3 (C5/C6), F5/F6/F7 (C2/C3/C4/C8), F9 (C1); regenerate only changed hi-fi screens; net-new screens: media viewer, blurred-media state, whisper dialog, knocked-waiting; annotations updated with C8 rate-limit edge cases.
+
+## Task U3 — Website Sync
+**Status:** pending
+
+Applies C1, C2, C3, C4, C7, C9, C10, C11. Pricing section rebuilt (subscription + permanence guarantee — TASTE CHECKPOINT if structure/visual concept changes), features + media, honesty section extended, /security updated (on-device sensitive content, push token design, abuse posture, AGPL-3.0, code-vs-deployment honesty), FAQ extended (lost phone, Apple/Google visibility, no trial, self-hosting). Full copy re-verification against spec v0.1.1.

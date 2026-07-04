@@ -43,3 +43,10 @@
 - Propagated: voice-and-microcopy.md string 9 · screens 09-paywall dark+light · wireframes F2.1/F4.1/F4.4/F9 (header, trigger, annotations, 3× headline) · wireframes README · website pricing cards + FAQ · press fact sheet.
 - NOT edited (user-authored prompt doc, per decision-log precedent): nimna-design-and-website-prompts.md still says "F9 Paywall: first initiated channel free" — flagged to USER to amend or leave.
 - Open item unchanged: paywall price (USER, pending).
+
+## 2026-07-04 — UPDATE LOOP opened: spec v0.1.1 sync (C1–C11)
+- Read nimna-protocol-spec-v0.1.1.md in full + C1–C11 changelog; loaded TASKS/PROGRESS/DECISIONS state.
+- Three sync tasks registered in TASKS.md (U1 system+microcopy · U2 wireframes+screens · U3 website).
+- Spec v0.1.1 closes two open items from the first loop: FLAG_SECURE is deliberately NOT used (spec §5.2, matching our 2026-07-03 recommendation), and the paywall-price question is retired — spec §10 mandates regional store pricing with NO number published anywhere (paywall renders the store's localized string; designs carry {STORE_PRICE}). C1 also supersedes the 2026-07-04 one-time-unlock correction — model is now a yearly subscription with the permanence guarantee.
+- Task U1 opened; front-loaded two USER questions: safety-phrase skip (answer: keep no-skip) and price display (answer: numberless — independently confirmed by the updated spec).
+- Mid-open, USER updated nimna-protocol-spec-v0.1.1.md and nimna-design-update-workloop-prompt.md on disk (C1 refined to the no-number doctrine); both re-read in full before any artifact edits. Root MEMORY.md source-of-truth pointer now names v0.1.1 (user edit).

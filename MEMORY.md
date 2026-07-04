@@ -4,8 +4,7 @@
 
 **Source of truth (read before resuming):**
 - `brand-context.md` — personality (quiet luxury, calm, discreet), HARD AVOIDS (no locks/shields/spy/matrix/neon-green/fingerprints/"military-grade"/fear marketing), 6 product rituals.
-- `nimna-protocol-spec-v0.1.md` — designs must never contradict it. Key constraints: no accounts/profiles/contact lists, no server storage, no history sync, synchronous-only, relay DOES see IPs/timing/CRIDs/ciphertext sizes (honesty is a brand asset), disappearing messages are honor-system (UX must say so), push is content-free + opt-in + default-off, pairing code single-use w/ TTL, knock TTL ~60s, safety phrase encouraged not enforced.
-- `nimna-design-and-website-prompts.md` — task definitions (Prompt 1 = Tasks 1–2, Prompt 2 = Task 3).
+- `nimna-protocol-spec-v0.1.1.md` — designs must never contradict it. Key constraints: no accounts/profiles/contact lists, no server storage, no history sync, synchronous-only, relay DOES see IPs/timing/CRIDs/ciphertext sizes (honesty is a brand asset), disappearing messages are honor-system (UX must say so), push is content-free + opt-in + default-off, pairing code single-use w/ TTL, knock TTL ~60s, safety phrase encouraged not enforced.
 
 **Conventions:**
 - Outputs: `/designs` (tasks 1–2), `/website` (task 3), each dir README-indexed.
