@@ -19,5 +19,65 @@
   "actionEnterCode": "Enter a code",
   "@actionEnterCode": {
     "description": "Secondary action on the empty channel list — join with a code you've been given. Never paywalled. Stub in S7."
+  },
+  "chat_messageActionReply": "Reply",
+  "@chat_messageActionReply": {
+    "description": "Message-actions card: starts a reply to the long-pressed message (voice string 21 family; components.md message actions). DS fold, consumed from S10."
+  },
+  "chat_messageActionReact": "React",
+  "@chat_messageActionReact": {
+    "description": "Message-actions card: a11y/name for the emoji quick row (voice string 21). The visible affordance is the emoji row itself. DS fold, consumed from S10."
+  },
+  "chat_messageActionDelete": "Delete",
+  "@chat_messageActionDelete": {
+    "description": "Message-actions card: the local per-message delete (spec section 6). Rides the same card as react/reply; previously long-press to delete on waiting bubbles. DS fold, consumed from S10."
+  },
+  "chat_replyingToLabel": "Replying to",
+  "@chat_replyingToLabel": {
+    "description": "Reply compose strip overline (voice string 20). Rendered as the micro uppercase style; casing is a text-style concern, not a copy concern. DS fold, consumed from S10."
+  },
+  "chat_replyCancelA11y": "Cancel reply",
+  "@chat_replyCancelA11y": {
+    "description": "A11y label for the X that abandons the reply compose strip (voice string 20). Composer text survives cancellation. DS fold, consumed from S10."
+  },
+  "chat_replyTombstone": "Message no longer available.",
+  "@chat_replyTombstone": {
+    "description": "CANONICAL, spec v0.2.1 section 5.8 verbatim. Quote-block tombstone when the referenced message is unknown, deleted, or expired - one identical string for all three causes; it never says why. Never edit outside a spec change. DS fold, consumed from S10."
+  },
+  "chat_replyPreviewPhoto": "Photo",
+  "@chat_replyPreviewPhoto": {
+    "description": "Quoted-media preview label beside the 32 px thumbnail when the referenced message is an image (voice string 20). DS fold, consumed from S10."
+  },
+  "chat_replyPreviewDocument": "Document",
+  "@chat_replyPreviewDocument": {
+    "description": "Quoted-media preview label beside the thumbnail when the referenced message is a document (voice string 20). DS fold, consumed from S10."
+  },
+  "chat_reactionOwnA11y": "You reacted {emoji}. Tap to remove.",
+  "@chat_reactionOwnA11y": {
+    "description": "A11y label for your own reaction chip (voice string 21). Tap removes unconditionally (spec section 5.8). S10 MUST bound the substitution per designs/handoff/arb-stubs-reply-reactions.md: 64-byte wire bound + C0/C1 and bidi/format-control strip — the visual chip clamp does not cover this string. DS fold, consumed from S10.",
+    "placeholders": {
+      "emoji": {
+        "type": "String",
+        "example": "👍"
+      }
+    }
+  },
+  "chat_reactionPeerA11y": "They reacted {emoji}.",
+  "@chat_reactionPeerA11y": {
+    "description": "A11y label for the peer's reaction chip (voice string 21). 'They' is deliberate - the peer has no name; the channel label is local-only. Same S10 substitution bound as chat_reactionOwnA11y. DS fold, consumed from S10.",
+    "placeholders": {
+      "emoji": {
+        "type": "String",
+        "example": "❤️"
+      }
+    }
+  },
+  "chat_reactionPickMoreA11y": "Choose another emoji",
+  "@chat_reactionPickMoreA11y": {
+    "description": "A11y label for the plus disc at the end of the emoji quick row - opens the system emoji keyboard; first emoji grapheme is taken (compose rule, spec section 5.5). DS fold, consumed from S10."
+  },
+  "pairing_selfJoinOwnCode": "This is your own Nimna code — share it with the other person.",
+  "@pairing_selfJoinOwnCode": {
+    "description": "CANONICAL, spec v0.2.1 section 3.1 verbatim (voice string 19). Self-join guard on the code-entry surface: detected locally, nothing is sent, warning-toned, no shake. Never edit outside a spec change. DS fold, consumed from S9."
   }
 }

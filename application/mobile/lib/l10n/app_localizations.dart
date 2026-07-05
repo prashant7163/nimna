@@ -133,6 +133,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a code'**
   String get actionEnterCode;
+
+  /// Message-actions card: starts a reply to the long-pressed message (voice string 21 family; components.md message actions). DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get chat_messageActionReply;
+
+  /// Message-actions card: a11y/name for the emoji quick row (voice string 21). The visible affordance is the emoji row itself. DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'React'**
+  String get chat_messageActionReact;
+
+  /// Message-actions card: the local per-message delete (spec section 6). Rides the same card as react/reply; previously long-press to delete on waiting bubbles. DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get chat_messageActionDelete;
+
+  /// Reply compose strip overline (voice string 20). Rendered as the micro uppercase style; casing is a text-style concern, not a copy concern. DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to'**
+  String get chat_replyingToLabel;
+
+  /// A11y label for the X that abandons the reply compose strip (voice string 20). Composer text survives cancellation. DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get chat_replyCancelA11y;
+
+  /// CANONICAL, spec v0.2.1 section 5.8 verbatim. Quote-block tombstone when the referenced message is unknown, deleted, or expired - one identical string for all three causes; it never says why. Never edit outside a spec change. DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Message no longer available.'**
+  String get chat_replyTombstone;
+
+  /// Quoted-media preview label beside the 32 px thumbnail when the referenced message is an image (voice string 20). DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get chat_replyPreviewPhoto;
+
+  /// Quoted-media preview label beside the thumbnail when the referenced message is a document (voice string 20). DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Document'**
+  String get chat_replyPreviewDocument;
+
+  /// A11y label for your own reaction chip (voice string 21). Tap removes unconditionally (spec section 5.8). S10 MUST bound the substitution per designs/handoff/arb-stubs-reply-reactions.md: 64-byte wire bound + C0/C1 and bidi/format-control strip — the visual chip clamp does not cover this string. DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'You reacted {emoji}. Tap to remove.'**
+  String chat_reactionOwnA11y(String emoji);
+
+  /// A11y label for the peer's reaction chip (voice string 21). 'They' is deliberate - the peer has no name; the channel label is local-only. Same S10 substitution bound as chat_reactionOwnA11y. DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'They reacted {emoji}.'**
+  String chat_reactionPeerA11y(String emoji);
+
+  /// A11y label for the plus disc at the end of the emoji quick row - opens the system emoji keyboard; first emoji grapheme is taken (compose rule, spec section 5.5). DS fold, consumed from S10.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another emoji'**
+  String get chat_reactionPickMoreA11y;
+
+  /// CANONICAL, spec v0.2.1 section 3.1 verbatim (voice string 19). Self-join guard on the code-entry surface: detected locally, nothing is sent, warning-toned, no shake. Never edit outside a spec change. DS fold, consumed from S9.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your own Nimna code — share it with the other person.'**
+  String get pairing_selfJoinOwnCode;
 }
 
 class _AppLocalizationsDelegate
