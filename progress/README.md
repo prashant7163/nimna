@@ -7,11 +7,12 @@ see CLAUDE.md "Parallel sessions" and `nimna-build-plan-v3-sessions.md`).
 running in its own worktree never edits them directly. Instead it appends
 everything it would have written — status changes, progress entries,
 decision candidates, plus its one-line app-shell route registrations and
-declared pubspec additions — to `SESSION-N.md` in this folder, in the same
+declared pubspec additions — to `SESSION-<id>.md` in this folder (id =
+session number or task id, e.g. `SESSION-8`, `SESSION-DS`), in the same
 formats the canonical files use (full `YYYY-MM-DD HH:MM +tz` stamps).
 
 At merge time (only after that session's code-review + senior-qa done-check
-pass), the orchestrator folds each `SESSION-N.md` into the canonical
+pass), the orchestrator folds each `SESSION-<id>.md` into the canonical
 tracking files **serially**, wires route registrations, union-merges
 pubspec, resolves namespaced ARB keys, and deletes the folded file. An
 empty folder means no parallel session is currently mid-flight.

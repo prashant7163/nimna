@@ -120,9 +120,10 @@ One session = one sitting = one done-check; code-reviewer + senior-qa sign-off r
 - **Session 6 — Deploy & open-source release: done** (2026-07-05 01:05 +0200) — USER checkpoint: prepare now, publish at S19 · TLS on the public listener (stdlib, TLS 1.3, hot cert reload, TCP→limits→TLS→HTTP), /healthz + version, real APNs/FCM transports (stdlib ES256/RS256 JWTs, mock-verified; live check deferred to S15, USER), deploy kit (systemd unit, relay.env.example, build.sh, certbot hook, RUNBOOK — "live on relay.nimna.app" deferred until a VPS exists, USER, logged), public-repo readiness (AGPL-3.0 "The Nimna Authors", audit-map README, CONTRIBUTING, spec copy + vendored vectors w/ CI byte-sync, public ci.yml, publish runbook) · reviewer PASS zero blockers (6 mutations, 5 caught → 7 findings applied, padding test now deterministic) · QA done-check PASS (local production-shaped TLS deploy, 9/9 boot-fatal matrix pre-bind, split-sim standalone green, silence audit clean)
 ## Phase 2 — App core (Flutter)
 - **Session 7 — Skeleton & encrypted local storage: in-progress** (2026-07-05 01:18 +0200) · i18n: ARB/l10n wiring from the first widget — zero hardcoded user-facing strings (reviewer-enforced S7 onward)
+- **Design-sync DS — reply/reaction UI, canonical strings + ARB stubs, self-join F3: in-progress** (2026-07-05 02:58 +0200) — USER-added G1 third lane; worktree `design-sync-reply-reactions`; owns designs/ + ARB stub handoff only; hard prereq for S10, self-join surface for S9
 - Session 8 — Pairing: initiator side: pending
-- Session 9 — Pairing: joiner side & handshake: pending
-- Session 10 — Live text messaging: pending
+- Session 9 — Pairing: joiner side & handshake: pending · needs DS (self-join guard surface; USER 2026-07-05)
+- Session 10 — Live text messaging: pending · needs DS (reply/reaction UI) · USER done-check addition (2026-07-05 02:58 +0200): lib/src/session decomposed per-concern (composer/bubbles vs connection-state, separate files, no shared mutable surface) — senior-qa passes/fails explicitly; gates S11 ∥ S12
 - Session 11 — Media & documents: pending
 - Session 12 — Knock, presence, offline-compose, reconnect: pending
 ## Phase 3 — Discretion features

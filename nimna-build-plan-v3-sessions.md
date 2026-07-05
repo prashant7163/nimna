@@ -53,6 +53,7 @@ content evolves, not written once and forgotten.
 | S6 Deploy & open-source release | **DONE** | `9254c7d` (wrap `39bfc59`) |
 | — Spec v0.2.1 reconciliation (mini-session) | **DONE** | `3720d59` |
 | S7 Skeleton & encrypted local storage | **in-progress** | (uncommitted; runs in the main tree — the last session to do so, predating the worktree rule) |
+| DS Design-sync — reply/reaction UI, canonical strings + ARB stubs, self-join F3 (USER, 2026-07-05) | **in-progress** | (worktree `design-sync-reply-reactions`; S7-independent; hard prereq for S10, self-join surface for S9) |
 | S8–S19 | pending | — |
 
 ---
@@ -110,11 +111,14 @@ content evolves, not written once and forgotten.
 ### Session 9 — Pairing: joiner side & handshake
 - All four join methods: manual XXX-XXX-XXX entry, paste, live QR scan, QR upload (image/PDF). Key exchange per spec (device-token included in encrypted payload when push enabled), safety-phrase derivation + comparison screen (two buttons only — match / don't match; no skip button, per DECISIONS), channel finalization, code discard, silence doctrine (no failed-attempt surfacing). Self-join blocked client-side with the §3.1 canonical copy (v0.2.1).
 - **Done when:** two devices pair end-to-end via each join method; MITM test vector rejected; phrase screen matches the design-loop artifacts.
+- *Prereq (USER, 2026-07-05):* design-sync DS supplies the self-join guard surface (F3 error state + canonical copy) before this session starts.
 
 ### Session 10 — Live text messaging
 - Session UI, encrypt/frame/send TEXT (5,000-char soft cap, transparent chunking), receive/decrypt/ACK, delivery states (waiting → sent → delivered), typing indicators, HANGUP, per-message expiry (sender-dictated) honored on both ends with the honest honor-system copy. REACTION + `reply_to` per spec v0.2.1 §5.5/§5.8 (inherit-expiry, silent-drop, quoted previews, neutral tombstone) — these are v0.2.1 envelope surface, not scope growth.
 - **Codec obligation (deferred from the v0.2.1 reconciliation, PROGRESS 2026-07-05):** this is the first envelope-codec session — extend the vector generator codec to v0.2.1 (REACTION/`reply_to` encode/decode + invalid cases in `framing.json`, a `session-handshake.json` transport case, generator `SpecRef` → v0.2.1). **This session completes the CODEC CHECKPOINT** (see Parallel groups).
 - **Done when:** two paired devices exchange E2E text live; debug relay logs show ciphertext only; expiry round-trips.
+- **Done-check ADDITION (USER, 2026-07-05):** `lib/src/session` ships decomposed per-concern — composer/bubbles and connection-state in separate files with no shared mutable surface — as the testable condition gating S11 ∥ S12. Senior-qa passes/fails this clause explicitly; a FAIL means S10 is not done (standard no-partial-credit rule).
+- *Prereq (USER, 2026-07-05):* design-sync DS supplies the reply/reaction UI artifacts (components, F5 frames, canonical strings) before this session starts.
 
 ### Session 11 — Media & documents
 - Attach flow: images + PDFs/files, 5 MB cap, client-side compression default with original-quality toggle, EXIF/metadata strip before encryption, MEDIA_CHUNK chunking with encrypted manifest (count + content hash), reassembly + integrity check + ACK, transfer progress UI, media viewer, encrypted-store quarantine (never gallery; export = deliberate act), expiry applies to media.
@@ -175,16 +179,17 @@ under `application/mobile/`.
 | Session | Prerequisites | Owns (directories / modules) | Protocol-envelope-touching? |
 |---|---|---|---|
 | **S7** (in-progress) | S1, S2 | Mobile foundations: `lib/src/app` (shell/nav), `lib/src/crypto` (at-rest), `lib/src/storage`, `lib/src/domain`, `lib/src/diag`, `lib/l10n` scaffolding, `pubspec.*`, `assets/`, `test/` foundations | No |
-| **S8** | S7 · S2 vectors · S3 relay (done) | `lib/src/transport` (WS client, §5.4 outer frame), `lib/src/protocol` (topic derivation §3.1.2, rendezvous, PAIR_DATA slice), `lib/src/pairing` (initiator flow + screens) | **Yes** (outer frame + pairing plane) |
-| **S9** | S8 | `lib/src/noise` (XXpsk2 engine, commitment, code-psk), `lib/src/pairing` (joiner + 4 join methods + safety-phrase screen; S8 is merged by then) | **Yes** (handshake messages) |
-| **S10** | S9 · S4 relay (done) | `lib/src/protocol` (complete v0.2.1 §5.5–§5.8 envelope codec incl. TEXT/ACK/CONTROL/REACTION/`reply_to`), `lib/src/session` (chat UI, delivery states) + `docs/test-vectors/` generator extension (Go) | **Yes — builds the codec (CODEC CHECKPOINT)** |
+| **DS** design-sync (USER, 2026-07-05) | — (works from spec v0.2.1 + existing design system only; S7-independent) | `designs/` (voice-guide strings, components, wireframe frames F3/F5, hi-fi where materially changed) + ARB stub handoff in `designs/handoff/` — the live `lib/l10n` files stay S7's; stub keys are folded at merge per the hotspot rules | No |
+| **S8** | S7 · S2 vectors · S3 relay (done) | `lib/src/transport` (WS client, §5.4 outer frame), `lib/src/protocol` (topic derivation §3.1.2, rendezvous, PAIR_DATA slice), `lib/src/pairing/initiator` (initiator flow + screens; the create-line action = a single call site in an initiator-side/shell file — see G2 opening condition) | **Yes** (outer frame + pairing plane) |
+| **S9** | S8 · **DS** (self-join guard F3 surface) | `lib/src/noise` (XXpsk2 engine, commitment, code-psk), `lib/src/pairing/joiner` (4 join methods + safety-phrase screen; initiator tree untouched), codec slices in `lib/src/protocol` (S8 merged by then) | **Yes** (handshake messages) |
+| **S10** | S9 · S4 relay (done) · **DS** (reply/reaction UI) | `lib/src/protocol` (complete v0.2.1 §5.5–§5.8 envelope codec incl. TEXT/ACK/CONTROL/REACTION/`reply_to`), `lib/src/session` (chat UI, delivery states) + `docs/test-vectors/` generator extension (Go) | **Yes — builds the codec (CODEC CHECKPOINT)** |
 | **S11** | S10 | `lib/src/media` (attach, compression, EXIF strip, MEDIA_CHUNK, viewer, quarantine) + composer/bubble files inside `lib/src/session` | Consumes codec only |
 | **S12** | S10 | `lib/src/presence` (knock UX, outbox, reconnect, background grace, token-refresh CONTROL usage, push opt-in) + connection-state files inside `lib/src/session` | Consumes codec only |
 | **S13** | S7 | `lib/src/lock` (PIN/biometric, lock-on-background), `lib/src/wipe`, settings lock/wipe screens | No |
 | **S14** | S10, S11 | `lib/src/screenshot` (detect + CONTROL notice + system line), `lib/src/sensitive` (blur, whisper), platform-channel shims | Consumes codec only |
 | **S15** | S9 (token in pairing payload), S12 (refresh + knock→push flow) | `lib/src/push` (FCM/APNs client, token lifecycle), platform push config; live APNs/FCM verification (S6 deferral) | Consumes codec only |
 | **S16** | S8–S15 (all merged) | Cross-cutting: whole `lib/` (onboarding, states, dark mode, a11y, microcopy, DE/FR/ES/IT translation pass) | No |
-| **S17** | S7, S8 (creation flow to gate) | `lib/src/billing` (StoreKit 2 / Play Billing, entitlement), paywall screen, creation-gate wiring into the (merged) pairing flow | No |
+| **S17** | S7, S8 (creation flow to gate) | `lib/src/billing` (StoreKit 2 / Play Billing, entitlement), paywall screen, creation-gate wiring confined to the initiator entry call site (S8's merged files — untouched by S9's joiner lane) | No |
 | **S18** | S7–S17 (all merged) | Test suites both stacks, fuzz harnesses, Noise test-oracle harness (test-only), threat-model docs | Tests everything — frozen surface |
 | **S19** | S18 · USER checkpoints (publish, launch copy) | `website/` ×5 languages, store-listing docs, launch checklist, publish execution | No |
 
@@ -197,7 +202,10 @@ S7 ──┬── S8 ──┬── S9 ──── S10 ──┬── S11 �
      (S13 and S17 are floating non-protocol sessions: S13 slots anywhere
       after S7, S17 anywhere after S8 — wherever a concurrency slot is free.
       S16 requires S8–S15; S17 must also be merged before S16 so the polish
-      sweep covers the paywall.)
+      sweep covers the paywall.
+      DS design-sync (USER, 2026-07-05) is G1's third lane: S7-independent,
+      so it starts immediately; it feeds S9 (self-join guard surface) and
+      S10 (reply/reaction UI) as a hard prerequisite edge.)
 ```
 
 ### CODEC CHECKPOINT (hard serialization rule)
@@ -227,7 +235,9 @@ both stacks.
 
 Groups are concurrency sets, not lockstep phases: sessions run at
 different speeds, and a still-running session simply keeps occupying one
-of the 3 slots when the next group opens. Every session runs in its own
+of the 3 slots when the next group opens. **Three is a ceiling, never a
+quota (USER, 2026-07-05):** a group is as wide as the graph safely allows,
+no wider — a slot is filled by a legitimate lane or left empty. Every session runs in its own
 worktree/branch and merges to main only after code-review + QA pass
 (CLAUDE.md parallel rules). QA runs the full cross-stack suite on main
 after every merge.
@@ -235,10 +245,10 @@ after every merge.
 | Group | Sessions (≤3) | Why safe / why not wider |
 |---|---|---|
 | **G0** (active) | S7 solo | Shared foundation (storage, at-rest crypto, l10n scaffolding, app shell) — prerequisite to every mobile session, never a parallel peer. |
-| **G1** | S8 ∥ S13 | Disjoint ownership: S8 = transport/protocol/pairing; S13 = lock/wipe/settings (consumes S7's merged storage API read-only). **Deliberately 2-wide** — no eligible third exists: S9–S12/S14/S15 are blocked by the S8→S9→S10 chain, S17 is blocked by S8 (creation gate), S16/S18/S19 by nearly everything. |
-| **G2** | S9 ∥ S17 (∥ S13 if still running) | S9 = noise/pairing-joiner (protocol; solo-in-class under the checkpoint). S17 = billing/paywall — disjoint from both. |
+| **G1** | S8 ∥ S13 ∥ **DS** | Disjoint ownership: S8 = transport/protocol/pairing-initiator; S13 = lock/wipe/settings (consumes S7's merged storage API read-only); DS = `designs/` + ARB stub handoff — zero code-tree overlap (USER, 2026-07-05: the legitimate third lane). DS is S7-independent and starts immediately, ahead of G1 formally opening. No fourth candidate exists and none is owed — ceiling, not quota. S9–S12/S14/S15 stay blocked by the S8→S9→S10 chain, S17 by S8 (creation gate), S16/S18/S19 by nearly everything. |
+| **G2** | S9 ∥ S17 (∥ S13 if still running) | **Ownership proof:** S9 writes `lib/src/pairing/joiner` + `lib/src/noise` + codec slices in `lib/src/protocol` (protocol; solo-in-class under the checkpoint). S17 writes `lib/src/billing` + the paywall screen + gate wiring at the initiator entry call site — inside S8's **merged** initiator files, which S9's joiner lane never touches. File-disjoint by construction; receivers-never-see-a-paywall (§10) means the gate has no joiner-side surface at all. **Opening condition, verified at S8 wrap:** (a) the pairing tree is actually split `initiator/` vs `joiner/` with no shared mutable pairing scaffolding both sessions would edit; (b) the create-line action is a single call site in an initiator-side/shell file. If either fails: split the scaffolding first, else serialize S17 behind S9 (USER, 2026-07-05: "if shared, split or serialize"). |
 | **G3** | S10 (∥ S13/S17 stragglers) | S10 builds the codec — no other protocol-touching work beside it; non-protocol stragglers may finish alongside. |
-| **G4** | S11 ∥ S12 — **CONDITIONAL** | Both consume the frozen codec, but both add files inside `lib/src/session`. Parallel ONLY if S10 leaves the chat surface decomposed into per-concern files (composer / bubbles / connection banner) and each session's edits stay in disjoint files — S11 owns composer+bubbles, S12 owns connection-state. If that split isn't clean at S10 wrap, or on the first same-file conflict, serialize S11 → S12. Churn rule applies. |
+| **G4** | S11 ∥ S12 — **CONDITIONAL** | Both consume the frozen codec, but both add files inside `lib/src/session`. The split is now a TESTABLE S10 done-check clause (USER, 2026-07-05): composer/bubbles and connection-state in separate files, no shared mutable surface — senior-qa passes/fails it explicitly, so G4's condition is decided at S10's done-check, not by judgment at wrap. S11 owns composer+bubbles, S12 owns connection-state. On the first same-file conflict anyway, serialize S11 → S12. Churn rule applies. |
 | **G5** | S14 ∥ S15 (∥ S17 if not yet run) | S14 = screenshot/sensitive; S15 = push client — disjoint modules, both codec consumers only. |
 | **G6** | S16 solo | Cross-cutting polish + translation sweep writes across the whole app — no disjointness possible. |
 | **G7** | S18 solo | Adversarial pass needs a frozen full surface; its findings can reopen anything. |
@@ -258,8 +268,9 @@ after every merge.
   session.
 - **S19** — serial behind S18 (copy-honesty checks must reflect the final
   adversarial results) and behind two USER checkpoints.
-- **S11 ∥ S12** — allowed only under the G4 file-split condition; treated
-  as unsafe by default until S10's wrap proves the split.
+- **S11 ∥ S12** — allowed only under the G4 file-split condition, which is
+  now S10's explicit done-check clause (USER, 2026-07-05): unsafe by
+  default until senior-qa PASSES that clause at S10.
 
 ### Merge hotspots (orchestrator-folded, serially, at merge time)
 

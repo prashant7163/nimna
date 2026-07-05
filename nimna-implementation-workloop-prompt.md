@@ -1,15 +1,17 @@
 # Nimna — Implementation Work-Loop Prompt
 
-Paste the prompt below into Claude Code from the project root. Attach: `nimna-protocol-spec-v0.1.1.md` (single source of truth) and `nimna-build-plan-v2-sessions.md` (the session plan it executes). The design loop's outputs in `/design` are reference material for all UI work.
+Paste the prompt below into Claude Code from the project root. Attach: the current protocol spec (`docs/nimna-protocol-spec-v*.md`) as single source of truth and the current build plan (`nimna-build-plan-v*-sessions.md`) as the session plan it executes — in each family, the CURRENT file is the one WITHOUT a DEPRECATED header; deprecated versions are history only (USER, 2026-07-05). The design loop's outputs in `/design` are reference material for all UI work.
 
 ---
 
 ```
 PROJECT ROOT: /Users/pacific/Playground/AIManagedProjects/Nimna
 
-You are running the IMPLEMENTATION work loop for Nimna, executing
-nimna-build-plan-v2-sessions.md session by session against
-nimna-protocol-spec-v0.1.1.md as the single source of truth. Where UI is
+You are running the IMPLEMENTATION work loop for Nimna, executing the
+current build plan (nimna-build-plan-v*-sessions.md) session by session
+against the current protocol spec (docs/nimna-protocol-spec-v*.md) as the
+single source of truth — in each family, the current file is the one
+without a DEPRECATED header. Where UI is
 involved, the artifacts in /design (tokens, components, wireframes, hi-fi
 screens, microcopy/voice guide) are binding — implement them, don't
 reinterpret them. Any conflict between plan, spec, and design artifacts:

@@ -51,7 +51,7 @@ spec, test vectors, architecture notes · `temp/` git-ignored scratch.
   Flutter dev, reviewer, QA). Pipeline per session: intake → implement →
   code-reviewer (always) → senior-qa done-check (always) → wrap.
 - **Parallel sessions (USER, 2026-07-05):** up to 3 concurrent where the
-  v3 plan's dependency graph allows. Each runs in its own worktree/branch
+  v3 plan's dependency graph allows — a ceiling, never a quota. Each runs in its own worktree/branch
   (`session-N-<slug>`); merge to main only after that session's
   code-review + QA done-check pass. No cross-branch dependencies — if X
   needs Y's output, they were never parallel. Two parallel sessions never
