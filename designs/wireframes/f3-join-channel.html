@@ -26,7 +26,7 @@
 
 <div class="flow-head">
   <h1>F3 — Join a channel (code-holder side)</h1>
-  <p>Type, paste, scan, or upload the code (the four join methods, spec §3.1.3) → handshake → safety phrase → ready. Joining is always free (F9 never intercepts here). Edge frames (dashed): wrong code · expired code — see the honesty note on F3.7 about what the relay can and cannot distinguish.</p>
+  <p>Type, paste, scan, or upload the code (the four join methods, spec §3.1.3) → handshake → safety phrase → ready. Joining is always free (F9 never intercepts here). Edge frames (dashed): wrong code · expired code — see the honesty note on F3.7 about what the relay can and cannot distinguish — and, new in v0.2.1, the self-join guard (F3.8): your OWN code is caught locally, before anything is sent.</p>
 </div>
 
 <main class="strip">
@@ -218,6 +218,36 @@
       <div class="r"><span class="k">Entry points</span><span>Joining with a code that is expired, spent, or was never real — indistinguishable by design, on the wire and on the screen.</span></div>
       <div class="r"><span class="k">Exit points</span><span>Clear → empty field. Back → F4.</span></div>
       <div class="r"><span class="k">Edge cases</span><span><b>Why no distinct “expired” state:</b> differing responses would let a prober confirm a code once existed — this extends the §3.1 silence doctrine. The earlier idea of a QR-carried expiry hint (a distinct local “expired” rendering) is withdrawn with this decision. The generic copy already tells the honest user what to do: ask for a fresh code.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F3.8 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F3.8 · EDGE — your own code (self-join guard, spec §3.1 — v0.2.1)</div>
+    <div class="frame">
+      <div class="chathead"><span class="cap">‹ Back</span><span></span></div>
+      <div style="height:24px"></div>
+      <p class="h">Enter a code</p>
+      <div style="height:12px"></div>
+      <div class="segs">
+        <span class="seg own">T</span><span class="seg own">V</span><span class="seg own">9</span><span class="segdot">-</span>
+        <span class="seg own">C</span><span class="seg own">D</span><span class="seg own">8</span><span class="segdot">-</span>
+        <span class="seg own">H</span><span class="seg own">J</span><span class="seg own">1</span>
+      </div>
+      <p class="cap">This is your own Nimna code — share it with the other person.</p>
+      <p class="meta center">[string 19, canonical verbatim (spec §3.1). Detected LOCALLY on completion: the canonicalized input — typed, pasted, scanned, or uploaded, all four normalize first — is compared against this device's own outstanding codes. NOTHING is sent; the relay is never contacted. Warning-toned in hi-fi (dashed here), never danger; NO shake — the one permitted shake stays with wrong-code: this is guidance, not failure. Join stays disabled]</p>
+      <div class="grow"></div>
+      <div class="box" style="height:160px">[keyboard]</div>
+      <div style="height:8px"></div>
+      <div class="btn ghost">Clear</div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The restored §3.1 doctrine, made visible: a device that enters its own active code is blocked client-side, before anything reaches the wire, with copy that says exactly what to do instead — share it. Likeliest arrivals: scanning your own QR to “test” it, or a copy/paste roundtrip of your own share.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Completing entry (any of the four methods) with a code this device created and still holds — the creator keeps its outstanding codes until finalization (spec §3.1 step 3).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Clear → F3.1, empty field. Back → F4. The natural next act lives on the create side: the share sheet on F2.2 (this frame never re-opens it for you — no flow shortcut, just honest words).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Doctrine-safe distinctness:</b> the silence doctrine's ONE generic response (F3.6/F3.7) covers foreign codes — the relay-facing failed/expired/used cases. Your own code is local knowledge; this distinct rendering leaks nothing to anyone, and no prober learns anything they didn't already hold. The guard matches only this device's own OUTSTANDING codes: it never detects “a code from someone you already have a line with” — duplicate channels between the same two people are legitimate and structurally undetectable, by design (spec §3.1). Once a code finalizes or expires it leaves the guard set; entering it then gets the ordinary generic response.</span></div>
     </div>
   </section>
 
