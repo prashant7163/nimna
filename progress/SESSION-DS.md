@@ -183,3 +183,65 @@ only. Binding inputs for S9 (self-join surface) and S10 (reply/reaction UI).
 - Re-render evidence refreshed in worktree `temp/ds-render/` (screen 16 + both 05
   variants + F5/F3 strips). Commit: **947fc5d** (designs) + this progress update.
   Still not claiming done — senior-qa runs next.
+
+## Senior-QA sign-off — 2026-07-05 03:59 +0200
+
+done-check: PASS + evidence — every clause executed independently (own greps, own
+JSON parse, own arithmetic, own headless-Chrome renders; scripts + renders in
+worktree `temp/qa_ds/`, git-ignored):
+
+- **A FENCE:** `git diff 604f767..HEAD --name-only` = 17 paths, all under
+  `designs/` or `progress/SESSION-DS.md`; worktree clean; 8 commits
+  fbb961a..faec434. No stray path.
+- **B CANONICAL STRINGS:** both strings grep byte-exact (em dash included,
+  verified by `grep -F` + Python equality) at voice guide, components.md
+  (:102/:30), F5.19 (f5-chat-session.html:698), F3.8 (f3-join-channel.html:239),
+  ARB stub (:39/:75); byte-identical to spec v0.2.1 lines 38/163 in this
+  worktree. Paraphrase hunt ("no longer available"/"isn't available"/"your own"/
+  "share it with" variants): zero drifting variants.
+- **C SPEC SEMANTICS:** own reading of spec §5.8/§5.5/§3.1 vs components.md —
+  one-per-sender (:65), add-replaces/remove-clears-unconditionally (:65,:74),
+  adjunct-dies-with-referent (:75), never-ACKed/zero-delivery-chrome (:80),
+  tombstone identical for unknown/deleted/expired + never says why (:102),
+  local-render-only/never-resurrect (:94,:103), compose-side-only grapheme rule
+  + never receiver-validated/parsed (:78,:86). No contradiction found.
+- **D COMPLETENESS:** frame-tag counts machine-counted — base 57 (F5=15, F3=7),
+  HEAD 62 (F5=19, F3=8); diff shows only added frame-tag lines, F5.1–F5.15 and
+  F3.1–F3.7 IDs untouched; README states 57→62 appended. Hi-fi:
+  16-message-actions.html added in 0ce56e0; 05 dark+light both carry
+  chip+quote markup; screens.css +37 lines. All six changed-folder READMEs in
+  the diff.
+- **E ARB STUBS:** JSON parsed programmatically — 12 value keys (11 `chat_`,
+  1 `pairing_selfJoinOwnCode`), zero foreign namespaces, all keys carry
+  @meta+description, placeholder declarations exactly match `{emoji}` usage,
+  both canonical values byte-exact. All voice strings 19–21 map to keys
+  (mapping block verified). Fold note explicitly denies visual-clamp coverage
+  and instructs S10: 64-byte wire bound + strip C0/C1 and bidi/format controls
+  before announcement substitution.
+- **F FINDINGS:** S1 measured in headless Chrome — 7 discs at 40.0 px,
+  cell pitch 44.0, row 308, card 332, action rows 44 h, card spans x 75–407
+  inside the 350 px column (75–425), row/card scroll-overflow 0; arithmetic
+  cross-check 7×44=308, +24=332, counterexample 7×44+6×6+24=368>350 confirmed.
+  N4: clearance 14 in components.md (:67), screens.css (margin-bottom:14px),
+  wf.css (margin-bottom:14px). N2: two-chip rule word-identical in
+  components.md and F5.17 meta; F5.17 drawing matches (theirs at corner,
+  own inward at left:52). N3: compose-strip paragraph contains zero
+  left/right (reading/trailing edge only). N6: string-21 "React" glossed
+  a11y-name-only, matching the ARB description.
+- **G USER CONFIRM:** zero `pending USER`/`proposed default` variants in
+  designs/ (grep exit 1); exactly four citation sites for USER, 2026-07-05
+  03:30 +0200: components.md:86, F5.16 meta (f5:587), wireframes/README:43,
+  screens/README:30.
+- **H RENDER:** own renders (never the dev's PNGs) — 16-message-actions.html
+  and 05-live-chat.html at 438×900, F5.16–F5.18 strip and F5.19 alone via
+  trimmed copies: no squeeze, no overflow; chips 24 h / 34–36 w (≤60 max);
+  all four new F5 frames 390 w, zero horizontal overflow, no descendant
+  escapes its frame. The docScrollW=500 seen at a 438 window reproduces
+  identically on untouched base screens (04, 05 @604f767 with base CSS) —
+  pre-existing render characteristic, not a DS regression.
+- **I FOLD-READY:** all stamps full datetime, disposition list S1/S2/N1–N6
+  present, 7 CODE candidates carry alternatives+rationale, candidate 3
+  reclassified as operationalization of the DECISIONS 2026-07-05 02:20
+  render note, USER question marked RESOLVED with stamp.
+
+DS is done pending merge-time fold. Sign-off covers branch state at faec434.
