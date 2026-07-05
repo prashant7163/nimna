@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# gen_l10n scratch output (regenerated on every build)
+/l10n-untranslated.json

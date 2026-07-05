@@ -1,8 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Backup exclusion (spec §6): allowBackup=false kills auto-backup and
+         the legacy transport everywhere; dataExtractionRules (API 31+)
+         additionally excludes every domain from cloud-backup AND
+         device-transfer. Verified by temp/verify-android-backup-flags.sh
+         (merged-manifest dump) and the bmgr probe in the done-check. -->
     <application
         android:label="nimna"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
             android:name=".MainActivity"
             android:exported="true"

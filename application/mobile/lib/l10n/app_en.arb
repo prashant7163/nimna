@@ -1,0 +1,23 @@
+{
+  "@@locale": "en",
+  "appTitle": "nimna",
+  "@appTitle": {
+    "description": "App title / wordmark. Always lowercase per the locked brand; identical in every locale."
+  },
+  "channelListEmptyHeadline": "No lines yet.",
+  "@channelListEmptyHeadline": {
+    "description": "Voice guide string 4, line 1 — empty channel list headline. Canonical copy, verbatim."
+  },
+  "channelListEmptyBody": "Create a Nimna code, or enter one you've been given.",
+  "@channelListEmptyBody": {
+    "description": "Voice guide string 4, line 2 — empty channel list body. Canonical copy, verbatim. 'Nimna code' is the code's only UI name (spec §2)."
+  },
+  "actionCreateCode": "Create a code",
+  "@actionCreateCode": {
+    "description": "Primary action on the empty channel list (voice guide register notes: buttons are verbs, one or two words). Gated by subscription from S12; stub in S7."
+  },
+  "actionEnterCode": "Enter a code",
+  "@actionEnterCode": {
+    "description": "Secondary action on the empty channel list — join with a code you've been given. Never paywalled. Stub in S7."
+  }
+}
