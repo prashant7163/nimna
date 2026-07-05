@@ -2,12 +2,17 @@
 
 Protocol truth and build-loop reference material.
 
-- [`nimna-protocol-spec-v0.2.md`](nimna-protocol-spec-v0.2.md) — **THE
+- [`nimna-protocol-spec-v0.2.1.md`](nimna-protocol-spec-v0.2.1.md) — **THE
   spec: single source of truth** for all implementation work. Complete and
-  self-contained; locks the Session-2 crypto decisions (primitives,
-  handshakes, derivations, exact wire framing) and carries both 2026-07-04
-  RESOLVED USER protocol flags normatively. Protocol changes from here
-  require a USER decision.
+  self-contained; carries all of v0.2 verbatim (the Session-2 crypto locks,
+  exact wire framing, both 2026-07-04 RESOLVED USER protocol flags) and
+  adds the 2026-07-05 reconciliation: REACTION envelope, `reply_to`, and
+  the restored §3.1 duplicate-channels/self-join doctrines (USER decision,
+  DECISIONS.md). Protocol changes from here require a USER decision.
+- [`nimna-protocol-spec-v0.2.md`](nimna-protocol-spec-v0.2.md) —
+  superseded by v0.2.1; kept in place as history (do not edit). Authored
+  at Session 2 from a v0.1.1 snapshot that predated the reaction/reply
+  scope additions — the drift v0.2.1 reconciles.
 - [`nimna-protocol-spec-v0.1.1.md`](nimna-protocol-spec-v0.1.1.md) —
   superseded by v0.2; kept in place as history (do not edit). It was the
   synced copy of the root user-editable original through Session 1.

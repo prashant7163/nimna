@@ -1,3 +1,6 @@
+> **DEPRECATED — historical record only. The sole normative spec is
+> [`nimna-protocol-spec-v0.2.1.md`](nimna-protocol-spec-v0.2.1.md).**
+
 # Nimna Protocol Specification — v0.2
 
 **Status:** Locked, normative. **This document supersedes v0.1.1** and is

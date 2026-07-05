@@ -107,7 +107,7 @@ Deliverables:
 
 # IMPLEMENTATION LOOP — Build Plan v2 (opened 2026-07-04 06:03 +0200)
 
-Plan: `nimna-build-plan-v2-sessions.md` · Rules: `nimna-implementation-workloop-prompt.md` · Spec: `docs/nimna-protocol-spec-v0.2.md` (locked at S2, 2026-07-04; v0.1.1 kept as history).
+Plan: `nimna-build-plan-v2-sessions.md` · Rules: `nimna-implementation-workloop-prompt.md` · Spec: `docs/nimna-protocol-spec-v0.2.1.md` (v0.2 locked at S2, 2026-07-04; v0.2.1 reconciliation 2026-07-05 02:20 +0200 — REACTION, reply_to, restored §3.1 doctrines; v0.2 and v0.1.1 kept as history).
 One session = one sitting = one done-check; code-reviewer + senior-qa sign-off required before done. Statuses: pending / in-progress / blocked-on-user / done.
 
 ## Phase 0 — Foundations
@@ -119,7 +119,7 @@ One session = one sitting = one done-check; code-reviewer + senior-qa sign-off r
 - **Session 5 — Hardening, rate limits & observability: done** (2026-07-04 21:28 +0200) — spec §4 limits as config with spec-verbatim defaults (per-IP conns 64, frame 50/s burst 100, max frame 128 KiB, rendezvous 6/min/IP, knock 10 s collapse, push 60 s/6 hr/20 day per CRID in a bounded evicting table, reg cap 256/plane, idle 90 s), silence-preserving enforcement (over-cap connect = zero-byte refusal, new class beside §5.1, empty-vs-loaded covering test; all shared-state limits silent), liveness via last-inbound-byte listener wrapper (pings count structurally), identifier-free Prometheus-text metrics on 127.0.0.1:9441 ops listener, recover-and-scrub, CI log-scrub + x/crypto-free assertions, cmd/soak · reviewer PASS zero blockers (5 mutations caught; 4 nits applied) · QA done-check PASS (accelerated 20-min soak: heap ratio 0.992, post-drain gauges zero; overnight deviation reported per note §21)
 - **Session 6 — Deploy & open-source release: done** (2026-07-05 01:05 +0200) — USER checkpoint: prepare now, publish at S19 · TLS on the public listener (stdlib, TLS 1.3, hot cert reload, TCP→limits→TLS→HTTP), /healthz + version, real APNs/FCM transports (stdlib ES256/RS256 JWTs, mock-verified; live check deferred to S15, USER), deploy kit (systemd unit, relay.env.example, build.sh, certbot hook, RUNBOOK — "live on relay.nimna.app" deferred until a VPS exists, USER, logged), public-repo readiness (AGPL-3.0 "The Nimna Authors", audit-map README, CONTRIBUTING, spec copy + vendored vectors w/ CI byte-sync, public ci.yml, publish runbook) · reviewer PASS zero blockers (6 mutations, 5 caught → 7 findings applied, padding test now deterministic) · QA done-check PASS (local production-shaped TLS deploy, 9/9 boot-fatal matrix pre-bind, split-sim standalone green, silence audit clean)
 ## Phase 2 — App core (Flutter)
-- Session 7 — Skeleton & encrypted local storage: pending · i18n: ARB/l10n wiring from the first widget — zero hardcoded user-facing strings (reviewer-enforced S7 onward)
+- **Session 7 — Skeleton & encrypted local storage: in-progress** (2026-07-05 01:18 +0200) · i18n: ARB/l10n wiring from the first widget — zero hardcoded user-facing strings (reviewer-enforced S7 onward)
 - Session 8 — Pairing: initiator side: pending
 - Session 9 — Pairing: joiner side & handshake: pending
 - Session 10 — Live text messaging: pending
@@ -132,7 +132,7 @@ One session = one sitting = one done-check; code-reviewer + senior-qa sign-off r
 ## Phase 4 — Ship
 - Session 16 — Polish & first-run: pending · i18n: crafted DE/FR/ES/IT app translation pass vs voice guide (PM-reviewed; disputed renderings → USER)
 - Session 17 — Subscription & paywall: pending
-- Session 18 — Adversarial pass & test suite: pending
+- Session 18 — Adversarial pass & test suite: pending · USER scope addition (2026-07-05 02:20 +0200): hand-implemented Noise engine cross-verified against an established Go Noise library (e.g. flynn/noise) as a TEST ORACLE — test-only, never a runtime dependency, in addition to the committed vector sets
 - Session 19 — Store prep & launch assets: pending · USER checkpoints: publish execution, launch copy sign-off · i18n: store listings ×5 languages, localized text-bearing screenshots, website in all five (EN default + language switcher), launch-checklist copy-honesty verification run per language
 
 Milestones: M1 relay live (post-S6) · M2 two phones talking (post-S12) · M3 honest product (post-S18) · M4 launch-ready (post-S19). Terminal deliverable: `PUBLISH_READY.md`.

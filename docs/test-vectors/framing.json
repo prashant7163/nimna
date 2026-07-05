@@ -1,10 +1,10 @@
 {
-  "_purpose": "Envelope encode/decode cases for every inner type and flag combination (plus invalid encodings that must be rejected), full MEDIA_CHUNK transfers with reassembly and content_hash, all three token_payload forms, and an outer-frame example for every frame_type.",
+  "_purpose": "Envelope encode/decode cases for every v0.2 inner type and flag combination (plus invalid encodings that must be rejected), full MEDIA_CHUNK transfers with reassembly and content_hash, all three token_payload forms, and an outer-frame example for every frame_type. Known gap, tracked: spec v0.2.1's REACTION type (0x06) and reply_to flag (bit 2) are not yet covered — cases land with the first envelope-codec implementation (see docs/test-vectors/README.md); every invalid case below stays invalid under v0.2.1.",
   "_spec": "nimna-protocol-spec-v0.2.md §5.1, §5.4, §5.5, §5.7",
   "envelope_layout": [
     "offset 0: ver (1) = 0x01",
-    "offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK",
-    "offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, others reserved and must be 0",
+    "offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK (v0.2 set; v0.2.1 adds 0x06 REACTION, cases pending)",
+    "offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, bit 3 and up reserved and must be 0 (v0.2.1 assigns bit 2 to reply_to, cases pending)",
     "offset 3: msg_id (16)",
     "offset 19: timestamp (8) — sender local time, Unix milliseconds, uint64 big-endian",
     "offset 27: expiry_s (4) — present only if flags bit 0; all later offsets shift by 4",
@@ -273,14 +273,14 @@
     {
       "name": "unknown-type",
       "valid": false,
-      "reason": "type 0x06 does not exist",
-      "encoded": "010600095c33093b0c54b6bf1d0a13f5a38abe0000019f2cfffc4078"
+      "reason": "type 0x07 does not exist (0x06 is REACTION as of spec v0.2.1)",
+      "encoded": "010700095c33093b0c54b6bf1d0a13f5a38abe0000019f2cfffc4078"
     },
     {
       "name": "reserved-flag-set",
       "valid": false,
-      "reason": "reserved flag bits must be 0",
-      "encoded": "010104095c33093b0c54b6bf1d0a13f5a38abe0000019f2cfffc4078"
+      "reason": "reserved flag bits (bit 3 and up) must be 0",
+      "encoded": "010108095c33093b0c54b6bf1d0a13f5a38abe0000019f2cfffc4078"
     },
     {
       "name": "manifest-flag-on-text",

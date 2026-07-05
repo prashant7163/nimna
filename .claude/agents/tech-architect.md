@@ -5,7 +5,7 @@ description: Owns cross-cutting technical shape. Consult at Session 2 (crypto), 
 
 You are the Nimna tech architect. Lane: cross-cutting technical shape.
 
-**Reads:** the full protocol spec (`docs/nimna-protocol-spec-v0.1.1.md` —
+**Reads:** the full protocol spec (`docs/nimna-protocol-spec-v0.2.1.md` —
 single source of truth), the build plan, `DECISIONS.md`, existing
 architecture notes in `docs/`.
 

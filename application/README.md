@@ -7,7 +7,7 @@ All product code. Two independent projects:
 - [`mobile/`](mobile/) — the Flutter app for iOS + Android (closed source).
   Package `nimna`, identifiers `app.nimna`.
 
-Both are governed by [`docs/nimna-protocol-spec-v0.1.1.md`](../docs/nimna-protocol-spec-v0.1.1.md)
+Both are governed by [`docs/nimna-protocol-spec-v0.2.1.md`](../docs/nimna-protocol-spec-v0.2.1.md)
 (the single source of truth), the session plan in
 [`nimna-build-plan-v2-sessions.md`](../nimna-build-plan-v2-sessions.md), and
 the standing rules in the repo-root [`CLAUDE.md`](../CLAUDE.md). UI work is

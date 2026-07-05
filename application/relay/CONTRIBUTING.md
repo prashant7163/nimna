@@ -13,7 +13,7 @@ first for anything larger than a screenful so effort isn't wasted.
 **Protocol behavior is spec-governed.** Wire formats, frame semantics,
 limits, TTLs, and the silence doctrine (the relay never explains itself
 on the wire) are defined by the Nimna protocol specification
-(`docs/nimna-protocol-spec-v0.2.md`, vendored byte-identical in this
+(`docs/nimna-protocol-spec-v0.2.1.md`, vendored byte-identical in this
 repo) — they change only via the spec, never via a relay PR. The same
 holds for the repository's standing invariants:
 

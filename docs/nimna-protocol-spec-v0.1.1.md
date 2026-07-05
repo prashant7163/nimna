@@ -1,3 +1,6 @@
+> **DEPRECATED — historical record only. The sole normative spec is
+> [`nimna-protocol-spec-v0.2.1.md`](nimna-protocol-spec-v0.2.1.md).**
+
 # Nimna Protocol Specification — v0.1.1 (Draft)
 
 **Status:** Draft for discussion. Crypto primitives intentionally unspecified; to be selected in Session 2 (see Build Plan). v0.1.1 adds: media & documents in v1, screenshot policy, on-device sensitive-content handling, pairing/join methods, platform-honest keepalive, device-loss doctrine, and monetization doctrine.

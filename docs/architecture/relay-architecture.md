@@ -1329,6 +1329,11 @@ rework. Everything the public repo needs must therefore live **inside**
   offline — self-containment wins. Provenance lives in the relay tree's
   `docs/README.md` (keeping the spec copy itself byte-identical);
   drift is prevented by a monorepo CI `cmp` step (below).
+  *[Amended 2026-07-05, spec reconciliation: the vendored copy is now
+  `application/relay/docs/nimna-protocol-spec-v0.2.1.md` — the sole
+  normative spec after the v0.2.1 supersession; the cmp guard and all
+  references were re-pointed in the same commit. The pin's rationale is
+  unchanged. DECISIONS.md 2026-07-05 02:20.]*
 - **Test vectors vendored:** `docs/test-vectors/framing.json` →
   `internal/wire/testdata/framing.json`;
   `docs/test-vectors/topic-derivation.json` →

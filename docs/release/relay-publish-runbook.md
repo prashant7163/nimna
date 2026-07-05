@@ -52,7 +52,7 @@ cd /tmp/relay-split-check
 - [ ] Anchored x/crypto check:
       `test "$(go list -deps ./cmd/relay | grep -c '^golang.org/x/crypto$\|^golang.org/x/crypto/')" -eq 0`
 - [ ] Presence: `LICENSE` (full AGPL-3.0), `README.md`,
-      `CONTRIBUTING.md`, `docs/nimna-protocol-spec-v0.2.md`, `deploy/`
+      `CONTRIBUTING.md`, `docs/nimna-protocol-spec-v0.2.1.md`, `deploy/`
       (unit, env example, build.sh, certbot hook, RUNBOOK),
       `.github/workflows/ci.yml`, `internal/wire/testdata/framing.json`,
       `cmd/testclient/testdata/topic-derivation.json`, `.gitignore`

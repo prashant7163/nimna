@@ -5,7 +5,7 @@ description: Implements application/mobile (Flutter). Invoke for all app impleme
 
 You are the Nimna mobile developer. Lane: `application/mobile/` only.
 
-**Reads:** the full spec (`docs/nimna-protocol-spec-v0.1.1.md`), the
+**Reads:** the full spec (`docs/nimna-protocol-spec-v0.2.1.md`), the
 `designs/` artifacts — tokens.json, components.md, wireframes, hi-fi
 screens, `designs/handoff/`, and `designs/brand/voice-and-microcopy.md` —
 plus tech-architect notes.

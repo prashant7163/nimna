@@ -3,7 +3,7 @@
 Tech-architect architecture notes — binding technical shape for the
 implementation sessions. Decisions recorded here are CODE decisions
 (logged in `DECISIONS.md` by the orchestrator); anything protocol-visible
-still defers to `docs/nimna-protocol-spec-v0.2.md`.
+still defers to `docs/nimna-protocol-spec-v0.2.1.md`.
 
 - [`relay-architecture.md`](relay-architecture.md) — Sessions 3–6 relay
   shape: WebSocket dependency sign-off (`coder/websocket` v1.8.15),

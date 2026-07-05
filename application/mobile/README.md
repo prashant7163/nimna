@@ -1,7 +1,7 @@
 # nimna — mobile app (Flutter)
 
 The Nimna client for iOS and Android. **Closed source.** Implements the
-protocol in [`docs/nimna-protocol-spec-v0.1.1.md`](../../docs/nimna-protocol-spec-v0.1.1.md);
+protocol in [`docs/nimna-protocol-spec-v0.2.1.md`](../../docs/nimna-protocol-spec-v0.2.1.md);
 all UI is bound by the artifacts in [`designs/`](../../designs/) (tokens,
 components, wireframes, hi-fi screens, voice guide) — implemented, never
 reinterpreted.

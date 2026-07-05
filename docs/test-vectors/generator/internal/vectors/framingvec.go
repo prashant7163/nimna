@@ -118,15 +118,20 @@ func envJSON(e framing.Envelope, text, acked, controlType, note string) (envelop
 
 func genFraming() (*framingFileJSON, error) {
 	file := &framingFileJSON{
-		Purpose: "Envelope encode/decode cases for every inner type and flag " +
-			"combination (plus invalid encodings that must be rejected), full " +
-			"MEDIA_CHUNK transfers with reassembly and content_hash, all three " +
-			"token_payload forms, and an outer-frame example for every frame_type.",
+		Purpose: "Envelope encode/decode cases for every v0.2 inner type and " +
+			"flag combination (plus invalid encodings that must be rejected), " +
+			"full MEDIA_CHUNK transfers with reassembly and content_hash, all " +
+			"three token_payload forms, and an outer-frame example for every " +
+			"frame_type. Known gap, tracked: spec v0.2.1's REACTION type " +
+			"(0x06) and reply_to flag (bit 2) are not yet covered — cases land " +
+			"with the first envelope-codec implementation (see " +
+			"docs/test-vectors/README.md); every invalid case below stays " +
+			"invalid under v0.2.1.",
 		Spec: SpecRef + " §5.1, §5.4, §5.5, §5.7",
 		EnvelopeLayout: []string{
 			"offset 0: ver (1) = 0x01",
-			"offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK",
-			"offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, others reserved and must be 0",
+			"offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK (v0.2 set; v0.2.1 adds 0x06 REACTION, cases pending)",
+			"offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, bit 3 and up reserved and must be 0 (v0.2.1 assigns bit 2 to reply_to, cases pending)",
 			"offset 3: msg_id (16)",
 			"offset 19: timestamp (8) — sender local time, Unix milliseconds, uint64 big-endian",
 			"offset 27: expiry_s (4) — present only if flags bit 0; all later offsets shift by 4",
@@ -298,10 +303,10 @@ func addEnvelopeCases(file *framingFileJSON) error {
 	invalid := []struct{ name, encoded, reason string }{
 		{"bad-version", mutate(func(b []byte) { b[0] = 0x02 }),
 			"ver must be 0x01"},
-		{"unknown-type", mutate(func(b []byte) { b[1] = 0x06 }),
-			"type 0x06 does not exist"},
-		{"reserved-flag-set", mutate(func(b []byte) { b[2] = 0x04 }),
-			"reserved flag bits must be 0"},
+		{"unknown-type", mutate(func(b []byte) { b[1] = 0x07 }),
+			"type 0x07 does not exist (0x06 is REACTION as of spec v0.2.1)"},
+		{"reserved-flag-set", mutate(func(b []byte) { b[2] = 0x08 }),
+			"reserved flag bits (bit 3 and up) must be 0"},
 		{"manifest-flag-on-text", mutate(func(b []byte) { b[2] = framing.FlagManifest }),
 			"flags bit 1 is only valid on MEDIA_CHUNK"},
 		{"expiry-flag-on-ack", func() string {

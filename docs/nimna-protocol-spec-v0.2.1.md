@@ -1,18 +1,56 @@
-# Nimna Protocol Specification — v0.2
+# Nimna Protocol Specification — v0.2.1
 
-**Status:** Locked, normative. **This document supersedes v0.1.1** and is
-the single source of truth for all implementation work. It is complete and
-self-contained — v0.1.1 remains in the repository as history only. The
-cryptographic design was evaluated in `docs/crypto-evaluation.md` (the
-reasoning record) and locked by USER decision on 2026-07-04 (DECISIONS.md,
-seven Session-2 entries). Protocol changes from here require a USER
-decision.
+**Status:** Locked, normative. **This document supersedes v0.2** (which
+superseded v0.1.1) and is the single source of truth for all
+implementation work. It is complete and self-contained — v0.2 and v0.1.1
+remain in the repository as history only. The cryptographic design was
+evaluated in `docs/crypto-evaluation.md` (the reasoning record) and locked
+by USER decision on 2026-07-04 (DECISIONS.md, seven Session-2 entries).
+Protocol changes from here require a USER decision.
 
 **One-line summary:** Nimna is a synchronous, end-to-end encrypted,
 account-less 1:1 messaging protocol in which a stateless relay routes
 ciphertext between two live device connections and never stores anything.
 
-**Changelog — what v0.2 adds over v0.1.1** (nothing doctrinal was removed):
+**Changelog — what v0.2.1 adds over v0.2** (nothing else changes; every
+other byte of v0.2's normative content is carried verbatim):
+
+Provenance: v0.2 was authored from a v0.1.1 snapshot that predated two
+later v0.1.1 scope additions — reactions/replies, and two §3.1 doctrines.
+v0.2.1 reconciles them (USER decision, 2026-07-05, DECISIONS.md) before
+any envelope-parser code exists in either product stack. Note for
+auditors: these additions postdate the v0.1.1 file committed in this
+repository, so they appear in no earlier committed spec text — this
+changelog and the 2026-07-05 DECISIONS.md entries are their normative
+record.
+
+- **REACTION envelope (§5.5, §5.8):** sixth inner-envelope type (`0x06`) —
+  references a `msg_id` (16), carries a single emoji (length-prefixed
+  UTF-8) and an add/remove op. Restated normatively from v0.1.1's rules:
+  reactions inherit the referenced message's expiry and die with it; a
+  REACTION referencing an unknown, deleted, or expired `msg_id` is
+  silently dropped (silence doctrine).
+- **`reply_to` (§5.5, §5.8):** optional `msg_id` (16) on TEXT and on the
+  MEDIA_CHUNK manifest, signaled via flags bit 2 — the same optional-field
+  mechanism as expiry's bit 0. Restated normatively from v0.1.1's rules:
+  the quoted preview renders from the LOCAL copy of the referenced
+  message, never from content embedded in the frame; an expired/deleted
+  parent renders a neutral "Message no longer available." — replies never
+  resurrect removed content.
+- **Duplicate-channels doctrine (§3.1 failure modes, restored):** multiple
+  channels between the same two people are legitimate, undetectable by
+  design (fresh keypairs, no device identity), and supported as
+  compartmentalization. No detection, no warning.
+- **Self-join guard (§3.1 step 3, restored):** a device joining its OWN
+  active code is blocked client-side — copy: *"This is your own Nimna
+  code — share it with the other person."*
+- **Test-vector note:** the committed vectors
+  (`docs/test-vectors/framing.json`) cover the v0.2 envelope surface;
+  REACTION and `reply_to` cases must be added no later than the first
+  envelope-codec implementation, restoring the vectors' every-type,
+  every-flag coverage claim.
+
+**Changelog — what v0.2 added over v0.1.1** (nothing doctrinal was removed):
 
 - **Primitives locked (§7):** X25519 · ChaCha20-Poly1305 (IETF) ·
   SHA-256 / HKDF-SHA-256 · Argon2id. No other cryptography exists in the
@@ -120,7 +158,13 @@ ciphertext between two live device connections and never stores anything.
    the topic. B may supply the code by any of four methods: (i) manual
    entry, (ii) paste from clipboard, (iii) live QR scan, (iv) upload of a
    QR image or PDF. All four canonicalize to the same bytes and therefore
-   the same topic.
+   the same topic. **Self-join guard:** a device that enters its *own*
+   active code is blocked client-side, before anything is sent — canonical
+   copy: *"This is your own Nimna code — share it with the other person."*
+   The check is purely local (the canonicalized input is compared against
+   the device's own outstanding codes, which the creator holds until
+   finalization); nothing reaches the relay, so the silence doctrine is
+   untouched.
 4. **Key exchange.** When both are present on the topic, the relay bridges
    them. **First-come-wins:** the topic bridges its first two registrants
    and closes to further joiners; it dies when either bridged connection
@@ -155,6 +199,14 @@ rendezvous topic that no longer exists and receive silence. Any failure
 failed-attempt notifications** are ever surfaced to the user — there is
 nothing actionable to report, and a discretion product does not manufacture
 anxiety.
+
+**Duplicate channels are legitimate.** Multiple channels between the same
+two people are undetectable by design: every pairing mints fresh static
+keypairs and no device identity exists, so two channels between the same
+two humans are structurally unrelatable — by the relay and by the clients
+alike. This is supported as deliberate compartmentalization (a work line
+and a personal line between the same two people), never detected, never
+warned about.
 
 ### 3.1.1 Code format, canonicalization & QR payload
 
@@ -564,25 +616,27 @@ indistinguishable from live typing.
 
 Every frame the relay forwards is `[routing_id][opaque ciphertext blob]`,
 carried in a fixed 18-byte outer header (§5.4). Inside the encrypted blob,
-clients use a fixed binary envelope (§5.5) with five types:
+clients use a fixed binary envelope (§5.5) with six types:
 
 ```
-type: TEXT | ACK | CONTROL | HANGUP | MEDIA_CHUNK
-      + msg_id, timestamp, optional expiry, body per type
+type: TEXT | ACK | CONTROL | HANGUP | MEDIA_CHUNK | REACTION
+      + msg_id, timestamp, optional expiry, optional reply_to, body per type
 ```
 
 All integers everywhere are **big-endian**. All layouts are fixed and
 hand-specified; there is no serialization library in either stack.
 Subsections: §5.1 media rules, §5.2 screenshot policy, §5.3
 sensitive-content handling (doctrine, carried from v0.1.1 with their
-numbering intact); §5.4–§5.7 exact byte layouts (new in v0.2).
+numbering intact); §5.4–§5.7 exact byte layouts (new in v0.2); §5.8
+reaction and reply rules (new in v0.2.1).
 
 - **TEXT:** UTF-8 message body, soft cap 5,000 characters per message
   (frame discipline, not stinginess; longer text chunks transparently
   across messages). Optional per-message `expiry_s` field — the sender's
   disappearing-message instruction ("delete after read + N seconds").
   Enforcement is client-side and honor-system by nature; the UX must say
-  so honestly.
+  so honestly. Optional `reply_to` field (flags bit 2, §5.5) marks the
+  message as a reply to an earlier message (§5.8).
 - **ACK:** references a `msg_id`; confirms decryption and display on the
   peer device. For media, ACK references the manifest's `msg_id` after
   successful reassembly and hash verification (§5.1).
@@ -593,6 +647,10 @@ numbering intact); §5.4–§5.7 exact byte layouts (new in v0.2).
 - **MEDIA_CHUNK (v1):** chunked live transfer of attachments through the
   same pipe (§5.1). No relay-side reassembly ever; to the relay these are
   indistinguishable opaque frames.
+- **REACTION (v0.2.1):** adds or removes a single-emoji reaction on a
+  previously displayed message (§5.8). An adjunct, not a message: it
+  inherits the referenced message's lifetime, never carries its own
+  expiry, and is never ACKed.
 
 ### 5.1 Media & documents (v1)
 
@@ -621,7 +679,9 @@ whiteboard, a screenshot, a document. Rules:
     body = `chunk_count (4) ‖ total_len (8) ‖ content_hash (32) ‖
     mime_len (1) ‖ mime (UTF-8)`. `content_hash` = SHA-256 of the complete
     attachment plaintext (post-compression, post-strip — the bytes that
-    will be reassembled). The manifest's `msg_id` names the transfer.
+    will be reassembled). The manifest's `msg_id` names the transfer. A
+    manifest may carry `reply_to` in its envelope header (flags bit 2,
+    §5.5) — an attachment sent as a reply (§5.8); chunks never do.
   - **Chunk** (flags bit 1 clear):
     body = `manifest_msg_id (16) ‖ chunk_index (4, 0-based) ‖ chunk_data`.
     Chunk plaintext size is **65,536 bytes** for every chunk except the
@@ -713,11 +773,12 @@ connection closed — the relay never explains itself to an abuser.
 | Offset | Size | Field | Semantics |
 |---|---|---|---|
 | 0 | 1 | `ver` | `0x01`. |
-| 1 | 1 | `type` | `0x01` TEXT · `0x02` ACK · `0x03` CONTROL · `0x04` HANGUP · `0x05` MEDIA_CHUNK. |
-| 2 | 1 | `flags` | bit 0: expiry present (TEXT and MEDIA_CHUNK-manifest only; must be 0 otherwise). bit 1: MEDIA_CHUNK manifest (MEDIA_CHUNK only). Others reserved, must be 0. |
+| 1 | 1 | `type` | `0x01` TEXT · `0x02` ACK · `0x03` CONTROL · `0x04` HANGUP · `0x05` MEDIA_CHUNK · `0x06` REACTION (v0.2.1). |
+| 2 | 1 | `flags` | bit 0: expiry present (TEXT and MEDIA_CHUNK-manifest only; must be 0 otherwise). bit 1: MEDIA_CHUNK manifest (MEDIA_CHUNK only). bit 2 (v0.2.1): reply_to present (TEXT and MEDIA_CHUNK-manifest only; must be 0 otherwise). Others reserved, must be 0. |
 | 3 | 16 | `msg_id` | Client-generated, 16 random bytes, unique per message. |
 | 19 | 8 | `timestamp` | Sender local time, Unix milliseconds, uint64. |
 | 27 | 4 | `expiry_s` | **Present only if flags bit 0.** Disappearing instruction: seconds after read (§5.1: applies to media identically). |
+| — | 16 | `reply_to` | **Present only if flags bit 2** (v0.2.1). The `msg_id` this message replies to (§5.8). Optional header fields appear in flag-bit order: `reply_to` immediately follows `expiry_s` when both are present, else immediately follows `timestamp` (offset 31 or 27). |
 | — | … | `body` | Per type: |
 
 - **TEXT:** body = the UTF-8 text (§5 rules).
@@ -729,6 +790,14 @@ connection closed — the relay never explains itself to an abuser.
   control types are ignored (forward compatibility), never errors.
 - **HANGUP:** body empty.
 - **MEDIA_CHUNK:** manifest and chunk bodies per §5.1.
+- **REACTION (v0.2.1):** body =
+  `ref_msg_id (16) ‖ op (1: 0x01 add · 0x00 remove) ‖ emoji_len (1) ‖
+  emoji (emoji_len bytes)`. `emoji` is 1–64 bytes of valid UTF-8;
+  `emoji_len` is its exact byte length; any other `op` value is
+  malformed. Senders send exactly one emoji grapheme cluster — a
+  compose-time rule; receivers never grapheme-segment (protocol behavior
+  must not depend on Unicode segmentation tables, which vary by Unicode
+  version). Semantics, lifetime, and drop rules: §5.8.
 
 ### 5.6 Nonce & key discipline (restated normatively)
 
@@ -750,6 +819,64 @@ post-handshake pairing frame.
 Used in pairing payloads M2/M3 (§3.1.3) and CONTROL token-refresh (§5.5).
 The relay-plane KNOCK carries `platform ‖ token_len ‖ token` without the
 presence byte (§5.4) — presence there is signaled by a non-empty payload.
+
+### 5.8 Reactions & replies (v0.2.1; rules restated normatively from v0.1.1)
+
+**Reactions.**
+
+- `ref_msg_id` names a message the recipient displays — a TEXT or a
+  MEDIA_CHUNK manifest. Only those are reactable referents: nothing else
+  (REACTION, ACK, CONTROL, HANGUP, non-manifest MEDIA_CHUNK chunks) is
+  ever indexed as a referent, so a reaction naming one is "unknown" by
+  construction.
+- **Silent drop.** A well-formed REACTION whose `ref_msg_id` is unknown,
+  deleted, or expired is silently dropped — no error, no notice to either
+  user, no resurrection of anything. The drop is the *only* tolerated
+  outcome class, and it is state-dependent by nature (only the recipient
+  knows what it still holds). Deterministic byte-level violations —
+  truncated body, `emoji_len` disagreeing with the remaining length,
+  `emoji_len` outside 1–64, invalid UTF-8, an undefined `op` value — are
+  *structural* malformation: a protocol error, exactly as §3.3.1 treats
+  any malformed frame. The sender-side single-grapheme rule is not
+  receiver-validated (§5.5).
+- **State.** A sender holds at most one reaction per message: `add` sets
+  or replaces that sender's reaction on `ref_msg_id`; `remove` clears
+  that sender's reaction unconditionally, whatever emoji it carries (the
+  carried emoji keeps the body shape uniform; it is not compared).
+  Repeats are idempotent. Unconditional remove is deliberate: reactions
+  are fire-and-forget over ordered, at-most-once delivery, so a `remove`
+  that survives a lost earlier `add` must still land the sender's true
+  intent — "no reaction" — rather than strand stale state behind an
+  equality check.
+- **Lifetime.** A reaction is an adjunct of its referent, never an
+  independent message: it inherits the referent's expiry (a REACTION
+  never carries flags bit 0) and is destroyed with the referent — expiry,
+  per-message delete, channel wipe, all identically. Reactions are never
+  independently retained, exported, or resurrected.
+- **Delivery.** Fire-and-forget, like CONTROL: a REACTION is never ACKed
+  and never read-receipted. One composed while the peer is offline rides
+  §3.4 like any envelope. To the relay it is opaque ciphertext like
+  everything else; the only observable is frame size, already disclosed
+  metadata (§1.6, §9).
+
+**Replies.**
+
+- `reply_to` may name a TEXT or a MEDIA_CHUNK manifest. It is legal on
+  TEXT and manifest envelopes only (flags bit 2, §5.5); on a manifest it
+  marks the attachment as sent-in-reply; chunks never carry it.
+- **The quoted preview renders from the LOCAL copy** of the referenced
+  message — the wire carries only the 16-byte `msg_id`. There is no
+  quoted-content field, so a reply structurally cannot leak, re-send, or
+  resurrect content the recipient no longer holds.
+- **Neutral tombstone.** If the referenced message is unknown, deleted,
+  or expired, the reply itself still displays; its quote block renders
+  one neutral placeholder — canonical copy: *"Message no longer
+  available."* — identical for all three cases (the §3.1.6
+  indistinguishability posture, applied locally). Replies never resurrect
+  removed content, and the tombstone never says why the content is gone.
+- A reply is an ordinary message in every other respect: it is ACKed,
+  read-receipted, expired, and retained exactly as its type dictates;
+  `reply_to` and `expiry_s` compose freely (flag-bit field order, §5.5).
 
 ## 6. Local storage (on-device)
 

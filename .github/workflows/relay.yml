@@ -7,13 +7,13 @@ on:
       - "application/relay/**"
       - ".github/workflows/relay.yml"
       - "docs/test-vectors/**"
-      - "docs/nimna-protocol-spec-v0.2.md"
+      - "docs/nimna-protocol-spec-v0.2.1.md"
   pull_request:
     paths:
       - "application/relay/**"
       - ".github/workflows/relay.yml"
       - "docs/test-vectors/**"
-      - "docs/nimna-protocol-spec-v0.2.md"
+      - "docs/nimna-protocol-spec-v0.2.1.md"
 
 defaults:
   run:
@@ -46,7 +46,7 @@ jobs:
         # so the split repo is auditable offline; the monorepo copy stays
         # canonical and drift cannot land silently.
         working-directory: .
-        run: cmp docs/nimna-protocol-spec-v0.2.md application/relay/docs/nimna-protocol-spec-v0.2.md
+        run: cmp docs/nimna-protocol-spec-v0.2.1.md application/relay/docs/nimna-protocol-spec-v0.2.1.md
       - name: vendored test vectors are byte-identical to docs/test-vectors (note §29)
         working-directory: .
         run: |

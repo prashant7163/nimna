@@ -1,9 +1,14 @@
 # docs/test-vectors/
 
 Committed protocol test vectors for
-[`nimna-protocol-spec-v0.2.md`](../nimna-protocol-spec-v0.2.md). **Both
+[`nimna-protocol-spec-v0.2.1.md`](../nimna-protocol-spec-v0.2.1.md). **Both
 implementations (Go relay-side tooling and the Dart/Flutter app) must
-reproduce these byte-for-byte** (spec §7, "Engine requirements"). All
+reproduce these byte-for-byte** (spec §7, "Engine requirements"). Known
+coverage gap, tracked: the vectors were authored at v0.2 and do not yet
+carry v0.2.1's REACTION type or `reply_to` flag — those cases must be
+added (generator + `framing.json` + a `session-handshake.json` transport
+case) no later than the first envelope-codec implementation (spec v0.2.1
+changelog; PROGRESS.md 2026-07-05). All
 byte fields are lowercase hex; every input — keys, ephemerals, msg_ids,
 timestamps, codes, dates, push tokens — is a fixed constant spelled out in
 the files (no randomness, no clock).
@@ -55,8 +60,9 @@ source.
   words mapping, including boundaries: n = 0 (word[0] ×3), 1296³−1,
   1296³ (modulo wrap on word0), and 2^64−1.
 - **`framing.json`** (§5.1, §5.4, §5.5, §5.7) — inner-envelope
-  encode/decode cases for every type and flag combination plus invalid
-  encodings that must be rejected; two complete MEDIA_CHUNK transfers
+  encode/decode cases for every v0.2 type and flag combination plus
+  invalid encodings that must be rejected (v0.2.1's REACTION/`reply_to`
+  cases pending, see above); two complete MEDIA_CHUNK transfers
   (single-chunk, and a 65537-byte two-chunk boundary case) with
   content_hash and full reassembly data; token_payload in all three forms
   (absent/revoke, present, prefix-less KNOCK form); and an outer-frame

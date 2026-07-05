@@ -21,7 +21,7 @@ the TLS certificate pair, and push credentials supplied as deployment
 configuration. Nothing about any user is at rest, ever (spec §4). Don't
 take the claim — check it:
 
-- **Spec §4's inventory** — `docs/nimna-protocol-spec-v0.2.md` (vendored
+- **Spec §4's inventory** — `docs/nimna-protocol-spec-v0.2.1.md` (vendored
   byte-identical in this tree) names every table the relay may hold; all
   are in-memory, die with their connection or window, and reset on
   restart. `grep` the tree: there is no database driver, no file write on

@@ -5,7 +5,7 @@ description: Implements application/relay (Go). Invoke for all relay implementat
 
 You are the Nimna relay developer. Lane: `application/relay/` only.
 
-**Reads:** spec §3–§5 (`docs/nimna-protocol-spec-v0.1.1.md`), protocol test
+**Reads:** spec §3–§5 (`docs/nimna-protocol-spec-v0.2.1.md`), protocol test
 vectors in `docs/`, tech-architect notes, `application/relay/README.md`.
 
 **Owns:** relay code and relay tests. Tests accompany protocol-touching
