@@ -1,6 +1,6 @@
 # Nimna — Voice & Microcopy Guide (1.4)
 
-*Synced to protocol spec v0.1.1 (2026-07-04): pricing model, screenshot policy, sensitive-content handling, media, pairing enrichments, push, device-loss doctrine.*
+*Synced to protocol spec v0.1.1 (2026-07-04): pricing model, screenshot policy, sensitive-content handling, media, pairing enrichments, push, device-loss doctrine. Design-sync 2026-07-05 to spec v0.2.1: reactions, replies, the self-join guard — strings 19–21.*
 
 ## The voice
 
@@ -19,7 +19,7 @@ Nimna speaks like someone who has nothing to prove and nothing to hide. Plain wo
 
 ## The strings
 
-Strings 1–10 keep their original numbers (wireframe and screen annotations reference them); 11–18 are new with spec v0.1.1.
+Strings 1–10 keep their original numbers (wireframe and screen annotations reference them); 11–18 are new with spec v0.1.1; 19–21 are new with spec v0.2.1 (self-join guard, replies, reactions).
 
 **1 · Onboarding — what it is**
 > A private line between two people.
@@ -99,6 +99,21 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 > Off: nothing about this line ever touches Apple or Google.
 > On: a knock can wake this phone through their notification service, carrying two words — "New activity." No line, no name, no message — and the relay forgets the address the moment it's used.
 
+**19 · Self-join guard — your own code** *(canonical from spec §3.1 step 3, verbatim; detected locally at code entry, before anything is sent — the generic wrong-code response in the register notes below is untouched)*
+> This is your own Nimna code — share it with the other person.
+
+**20 · Replies — the compose strip & the tombstone** *(spec §5.8: the quoted preview renders from the local copy only — the wire carries just a message id; the tombstone is canonical, verbatim, identical for unknown, deleted, and expired referents, and it never says why)*
+> *(compose-strip overline, above the quoted excerpt)* Replying to
+> *(the ✕ that abandons the reply — a11y label)* Cancel reply
+> *(tombstone, inside the quote block when the message is gone)* Message no longer available.
+> *(quoted media renders a thumbnail plus one word)* Photo · Document
+
+**21 · Reactions** *(spec §5.5/§5.8: one emoji per person per message — picking another replaces it, picking your own again takes it back. Never ACKed: the UI never claims a reaction arrived)*
+> *(action label, message-actions card)* React
+> *(a11y, your chip)* You reacted {emoji}. Tap to remove.
+> *(a11y, their chip)* They reacted {emoji}.
+> *(a11y, the open-any-emoji affordance)* Choose another emoji
+
 ## Register notes
 
 - **Safety phrase is the closing ritual of pairing** (spec §3.1): "Call them and compare. Read these three words to each other. If they match, the line is yours alone." Two buttons only — *They match* / *They don't* — no skip affordance (USER 2026-07-04); the spec's "not enforced" is honored by the soft skip of tapping match.
@@ -108,6 +123,9 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 - **Knock-lapse copy is exactly "No answer."** — never "they didn't pick up", "they're offline", or anything that attributes the silence. Offline vs saw-and-ignored stays indistinguishable to the knocker: the receiver's plausible deniability outranks the knocker's closure (USER 2026-07-04, spec v0.2).
 - **System lines** (screenshot notices, string 12) are bare centered captions in the thread — events, not speech; no bubble, no icon.
 - The wipe pair `[Wipe now] [Keep]` is deliberate: the safe choice is a warm word, not "Cancel" — calm, not bureaucratic.
+- **Reactions are adjuncts, not messages** (spec §5.8): no ✓ ever attaches to a reaction, no "pending", no "sent" — a REACTION is never ACKed, so any delivery chrome would be a claim the protocol can't back. The chip simply is.
+- **The tombstone never explains.** "Message no longer available." covers unknown, deleted, and expired identically — the §3.1.6 indistinguishability posture applied locally. Never "deleted", never "expired", never a reason, and never a resurrected excerpt.
+- **Self-join is guidance, not failure** (string 19): warning-toned, never danger-styled, no shake — nothing was sent and nothing was rejected. The one generic wrong-code response and its silence doctrine cover foreign codes only and are untouched; your own code is local knowledge.
 
 ## Protocol honesty checklist (copy must never claim)
 
@@ -121,3 +139,5 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 - ✗ "Your lines come back when you resubscribe / reinstall" → only the subscription restores, via the store; lines die with the device, permanently, by design (spec §6.1).
 - ✗ "We scan content" ambiguity → sensitive-content checks run on-device, after decryption, and can never phone home — nothing is blocked, logged, reported, or transmitted (spec §5.3).
 - ✗ "We'll tell them you're waiting" or any presence promise → push is per-line opt-in, content-free ("New activity"), knock-triggered only; the relay keeps no token registry (spec §3.2).
+- ✗ "Your reaction was delivered/seen" or any reaction state chrome → reactions are fire-and-forget, never ACKed or read-receipted (spec §5.8).
+- ✗ A tombstone that says why ("deleted", "expired") → unknown, deleted, and expired are one indistinguishable state by design, and replies never resurrect removed content (spec §5.8).
