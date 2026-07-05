@@ -80,9 +80,13 @@ only. Binding inputs for S9 (self-join surface) and S10 (reply/reaction UI).
   says amber = session state/primary action only, and a reaction is neither ·
   alternative: amber-tint own chip (violates the rationing rule outright).
 - **2026-07-05 03:25 +0200 · Hostile-UTF-8 clamp specced as a hard component rule ·
-  CODE** — chip renders one line, bidi-isolated, content max-width 40 / chip max 60,
-  clipped, never parsed (operationalizes the DECISIONS 2026-07-05 render-side note;
-  the sender-side single-grapheme rule is never receiver-validated, spec §5.5/§5.8).
+  CODE (operationalization, not a new decision — reclassified per review N5)** — chip
+  renders one line, bidi-isolated, content max-width 40 / chip max 60, clipped, never
+  parsed. This carries the DECISIONS 2026-07-05 02:20 render-side note ("reaction
+  chips clamp to one line/bounded width") into binding component numbers; no
+  alternative space exists because the parent decision already closed it (the
+  sender-side single-grapheme rule is never receiver-validated, spec §5.5/§5.8).
+  Recorded for traceability; fold as an operationalization note, not a fresh entry.
 - **2026-07-05 03:25 +0200 · Quote block re-renders from live local state — swaps to
   the tombstone the moment its referent dies · CODE** — a cached excerpt would let
   quoted content outlive expiry/delete inside the quote, defeating §5.8's
@@ -113,6 +117,10 @@ only. Binding inputs for S9 (self-join surface) and S10 (reply/reaction UI).
    proposed default 👍 ❤️ 😂 😮 😢 🙏. Any single emoji remains reachable via the
    system keyboard "+", so the presets are pure convenience — taste, not doctrine.
    Confirm or replace before S10 freezes the composer surfaces.
+   **RESOLVED — CONFIRMED as proposed (USER, 2026-07-05 03:30 +0200; entry lives on
+   main's DECISIONS.md).** All four "proposed default pending USER confirm" markers
+   updated to confirmed-with-stamp: components.md message-actions, F5.16 meta,
+   wireframes README decisions bullet, screens README design-sync note.
 
 ## Spec/design conflicts found
 
@@ -130,3 +138,48 @@ only. Binding inputs for S9 (self-join surface) and S10 (reply/reaction UI).
   DS touches no code.
 - Render-verification scripts live in worktree `temp/ds-render/` (git-ignored),
   per the scripts-in-temp rule.
+
+## Code-review wrap — 2026-07-05 03:47 +0200 (PASS, zero blocking; 2 SHOULD-FIX + 6 NITs applied in 947fc5d + this update)
+
+- **USER decision applied:** emoji quick-row preset set 👍 ❤️ 😂 😮 😢 🙏 CONFIRMED
+  as proposed (USER, 2026-07-05 03:30 +0200 — entry on main's DECISIONS.md; cited by
+  stamp). All four "proposed default" markers → confirmed: components.md
+  message-actions bullet, F5.16 meta note, wireframes README decisions bullet,
+  screens README design-sync note. USER-questions section above marked RESOLVED.
+- **S1 (geometry):** screen 16's 310 px card could not hold seven 44 px discs + 6 px
+  gaps (needs 344 content); discs squeezed to ~36, breaking the components.md 44×44
+  guarantee. Resolution — new binding geometry in BOTH artifacts: **40 px discs
+  centered in 44×44 touch cells, cells tile edge-to-edge** (visible gap 4, row 308,
+  card 332 at padding 12, fits the 350 content column; a 44-disc/6-gap row needs 368
+  and structurally cannot fit). Touch-target floor 44×44 holds — abutting targets.
+  screens.css `.emo`/`.emorow` + 16-message-actions.html card width updated;
+  re-render-verified at 438×900 (seven full discs, even gaps).
+- **S2 (a11y substitution):** ARB fold-note claim "already clamped by the chip render
+  rule" was false — the clamp bounds the visual box only. Rewritten as an explicit
+  S10 instruction: enforce the wire's 64-byte bound (longer = §3.3.1 structural
+  violation, never reaches render) and strip C0/C1 control characters + Unicode
+  bidi/format controls from the announcement copy before substituting into
+  `chat_reactionOwnA11y`/`chat_reactionPeerA11y`; never feed raw wire bytes into
+  anything that formats or parses.
+- **N1:** F5.18 edge note now says the referent is always *sent* before the reply
+  (ordering guaranteed) but delivery is at-most-once — a referent lost to a session
+  drop can still be unknown on the far side; the reply tombstones there (→ F5.19).
+- **N2:** two-chip rule made unambiguous, stated as the corner: **the peer's chip
+  takes the center-facing corner slot; yours sits one slot further toward the
+  bubble's authored edge** — one rule, both directions. components.md + F5.17 meta
+  now say the same thing; the F5.17 drawing already matched (theirs at the corner).
+- **N3:** reply compose strip reworded from Left/Right to reading edge / trailing
+  edge (standing rule: left/right never hardcoded).
+- **N4:** chip bottom clearance reconciled to **14** everywhere (components.md was
+  12; wf.css/screens.css were 14). Pick: 14 — the chip protrudes 12 below the
+  bubble, so 12 would leave it flush against the next element; 14 = protrusion + 2
+  air, and it is what both CSS files already rendered.
+- **N5:** DECISIONS candidate 3 (hostile-UTF-8 clamp) reclassified in place as
+  operationalization of the DECISIONS 2026-07-05 02:20 render-side note — no
+  alternative space exists; fold as a traceability note, not a fresh entry.
+- **N6:** voice-guide string 21 "React" gloss corrected to a11y-name-only (the
+  visible affordance is the emoji row itself) — now matches the ARB description of
+  `chat_messageActionReact`.
+- Re-render evidence refreshed in worktree `temp/ds-render/` (screen 16 + both 05
+  variants + F5/F3 strips). Commit: **947fc5d** (designs) + this progress update.
+  Still not claiming done — senior-qa runs next.
