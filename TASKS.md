@@ -107,8 +107,8 @@ Deliverables:
 
 # IMPLEMENTATION LOOP — Build Plan v2 (opened 2026-07-04 06:03 +0200)
 
-Plan: `nimna-build-plan-v2-sessions.md` · Rules: `nimna-implementation-workloop-prompt.md` · Spec: `docs/nimna-protocol-spec-v0.2.1.md` (v0.2 locked at S2, 2026-07-04; v0.2.1 reconciliation 2026-07-05 02:20 +0200 — REACTION, reply_to, restored §3.1 doctrines; v0.2 and v0.1.1 kept as history).
-One session = one sitting = one done-check; code-reviewer + senior-qa sign-off required before done. Statuses: pending / in-progress / blocked-on-user / done.
+Plan: `nimna-build-plan-v3-sessions.md` (v3 2026-07-05 02:43 +0200 — structure only, USER: dependency graph + parallel groups, normative source v0.2.1, DONE commit refs; v2 deprecated as history) · Rules: `nimna-implementation-workloop-prompt.md` + CLAUDE.md "Parallel sessions" (USER, 2026-07-05) · Spec: `docs/nimna-protocol-spec-v0.2.1.md` (v0.2 locked at S2, 2026-07-04; v0.2.1 reconciliation 2026-07-05 02:20 +0200 — REACTION, reply_to, restored §3.1 doctrines; v0.2 and v0.1.1 kept as history).
+One session = one sitting = one done-check; code-reviewer + senior-qa sign-off required before done; up to 3 sessions concurrent per the v3 parallel groups (worktree per session, fold-in at merge). Statuses: pending / in-progress / blocked-on-user / done.
 
 ## Phase 0 — Foundations
 - **Session 1 — Scaffolding & conventions: done** (2026-07-04 06:03 +0200) — skeletons (Go relay + Flutter app, all checks clean) · agent fleet ×6 · CI ×2 · CLAUDE.md · spec copied to docs/ · reviewer blockers fixed · QA done-check PASS · i18n scope addition (USER) logged & propagated

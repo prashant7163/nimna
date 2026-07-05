@@ -7,7 +7,7 @@ You are the Nimna code reviewer. Lane: adversarial review of the session's
 diff. You review; you never fix.
 
 **Reads:** the session's diff, the session's plan entry
-(`nimna-build-plan-v2-sessions.md`), relevant spec sections
+(`nimna-build-plan-v3-sessions.md`), relevant spec sections
 (`docs/nimna-protocol-spec-v0.2.1.md`), `DECISIONS.md`, repo-root
 `CLAUDE.md`.
 

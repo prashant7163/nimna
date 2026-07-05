@@ -7,7 +7,8 @@ history sync, no server-side anything.
 
 **Protocol:** [`docs/nimna-protocol-spec-v0.2.1.md`](docs/nimna-protocol-spec-v0.2.1.md)
 (single source of truth; v0.2 and v0.1.1 remain as history). **Build plan:**
-[`nimna-build-plan-v2-sessions.md`](nimna-build-plan-v2-sessions.md).
+[`nimna-build-plan-v3-sessions.md`](nimna-build-plan-v3-sessions.md)
+(dependency graph + parallel groups; v2 remains as history).
 
 ## Layout
 
@@ -18,6 +19,7 @@ history sync, no server-side anything.
 | [`website/`](website/) | nimna.app static site |
 | [`docs/`](docs/) | Spec copy, test vectors (S2+), architecture notes, archive |
 | `TASKS.md` / `PROGRESS.md` / `DECISIONS.md` | Work-loop tracking: status board, append-only log, decision record |
+| [`progress/`](progress/) | Per-session progress files for parallel sessions, folded into the tracking files at merge |
 
 Working conventions for build sessions live in [`CLAUDE.md`](CLAUDE.md).
 CI (relay + mobile lint/test) lives in `.github/workflows/`.

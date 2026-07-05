@@ -8,8 +8,9 @@ between two live **Flutter** clients and never stores anything.
 1. `docs/nimna-protocol-spec-v0.2.1.md` — THE spec (supersedes v0.2 and
    v0.1.1, kept as history). Wire formats, limits, TTLs, doctrines
    verbatim; no silent protocol "improvements."
-2. `nimna-build-plan-v2-sessions.md` — 19 atomic sessions; one session =
-   one sitting = one done-check. Governed by
+2. `nimna-build-plan-v3-sessions.md` — 19 atomic sessions; one session =
+   one sitting = one done-check; dependency graph + parallel groups
+   (v2 deprecated, kept as history). Governed by
    `nimna-implementation-workloop-prompt.md`.
 3. `designs/` — tokens, components, wireframes, hi-fi screens, voice guide.
    BINDING for all UI: implement, don't reinterpret. Canonical microcopy
@@ -49,6 +50,25 @@ spec, test vectors, architecture notes · `temp/` git-ignored scratch.
 - **Agents:** six roles in `.claude/agents/` (PM, architect, Go dev,
   Flutter dev, reviewer, QA). Pipeline per session: intake → implement →
   code-reviewer (always) → senior-qa done-check (always) → wrap.
+- **Parallel sessions (USER, 2026-07-05):** up to 3 concurrent where the
+  v3 plan's dependency graph allows. Each runs in its own worktree/branch
+  (`session-N-<slug>`); merge to main only after that session's
+  code-review + QA done-check pass. No cross-branch dependencies — if X
+  needs Y's output, they were never parallel. Two parallel sessions never
+  write the same directory/module; protocol-envelope work serializes
+  until the v0.2.1 codec layer's tests pass in both stacks (checkpoint:
+  S10); shared foundations (l10n scaffolding, storage, codec) are
+  prerequisites, never peers. TASKS/PROGRESS/DECISIONS are merge
+  hotspots: parallel sessions append to `progress/SESSION-N.md`; the
+  orchestrator folds into the canonical files serially at merge (same
+  fold treatment for ARB keys — namespaced per session — pubspec unions,
+  route registrations). Full agent pipeline still applies per session
+  before merge; QA also runs the full cross-stack suite on main after
+  every merge. USER questions stay consolidated per session; conflicting
+  needs across parallel sessions are serialized to USER once by the
+  orchestrator. Merge conflicts twice in a row on the same files → drop
+  that track to serial, note it in PROGRESS.md — throughput never
+  outranks correctness.
 
 ## Conventions
 - Commits: clear scoped messages, **no Co-Authored-By trailer**. Remote:

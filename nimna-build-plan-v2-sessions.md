@@ -1,3 +1,6 @@
+> **DEPRECATED — historical record only. The active plan is
+> [`nimna-build-plan-v3-sessions.md`](nimna-build-plan-v3-sessions.md).**
+
 # Nimna Build Plan v2 — Atomic Claude Code Sessions (synced to spec v0.1.1)
 
 **Supersedes** the original session plan. Deltas absorbed: Go relay (decided), media & docs in v1 (§5.1), screenshot detect-and-notify (§5.2), sensitive-content handling (§5.3), token-in-knock push design (§3.2.1), 30s background grace (§3.3), 9-char XXX-XXX-XXX Nimna code (§4), knock/push rate limits (§4), device-loss doctrine (§6.1), regional subscription pricing via store tiers with the permanence guarantee (§10), AGPL-3.0 relay licensing with credentials-as-config (§4).

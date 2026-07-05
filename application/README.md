@@ -9,7 +9,7 @@ All product code. Two independent projects:
 
 Both are governed by [`docs/nimna-protocol-spec-v0.2.1.md`](../docs/nimna-protocol-spec-v0.2.1.md)
 (the single source of truth), the session plan in
-[`nimna-build-plan-v2-sessions.md`](../nimna-build-plan-v2-sessions.md), and
+[`nimna-build-plan-v3-sessions.md`](../nimna-build-plan-v3-sessions.md), and
 the standing rules in the repo-root [`CLAUDE.md`](../CLAUDE.md). UI work is
 additionally bound by the design artifacts in [`designs/`](../designs/).
 
