@@ -40,7 +40,7 @@ Total: 62 frames. The six edge cases the design-spec §4 mandates (code expired 
 - **Simultaneous knock banners queue** one at a time, oldest first (F6.1).
 - **PIN length** shown as 6 digits, accepts 4–8 (F8.2).
 - **Empty channel labels allowed**; row renders "—" plus the line (F4.3).
-- **React and reply share one entry — the long-press message-actions card** (F5.16); the per-message local Delete (previously long-press → Delete on waiting bubbles, F5.1) moves into the same card everywhere. Quick row of six preset emoji + a "+" that opens the system emoji keyboard; **the preset set (👍 ❤️ 😂 😮 😢 🙏) is a proposed default pending USER confirmation** — a taste choice, not doctrine.
+- **React and reply share one entry — the long-press message-actions card** (F5.16); the per-message local Delete (previously long-press → Delete on waiting bubbles, F5.1) moves into the same card everywhere. Quick row of six preset emoji + a "+" that opens the system emoji keyboard; **the preset set (👍 ❤️ 😂 😮 😢 🙏) is confirmed (USER, 2026-07-05 03:30 +0200)**.
 - **Reaction chips carry zero delivery chrome** (F5.16/F5.17): REACTION is never ACKed (spec §5.8), so no ✓, no pending, no dashed-waiting variant exists — offline reactions ride the outbox silently. Chip ownership is a stroke weight, never a color; amber never appears on chips.
 - **Chips clamp to one line and a bounded width** (F5.17) — the wire guarantees only "valid UTF-8" from a possibly hostile peer (DECISIONS 2026-07-05); the chip's window is the blast radius, never the thread.
 - **The self-join guard renders warning-toned and shake-free** (F3.8) — deliberately distinct from the danger-toned wrong-code state: guidance, not failure; detection is purely local and nothing is sent.

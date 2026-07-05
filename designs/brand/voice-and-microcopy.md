@@ -109,7 +109,7 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 > *(quoted media renders a thumbnail plus one word)* Photo · Document
 
 **21 · Reactions** *(spec §5.5/§5.8: one emoji per person per message — picking another replaces it, picking your own again takes it back. Never ACKed: the UI never claims a reaction arrived)*
-> *(action label, message-actions card)* React
+> *(a11y name for the emoji quick row — the visible affordance is the row itself, never a text button)* React
 > *(a11y, your chip)* You reacted {emoji}. Tap to remove.
 > *(a11y, their chip)* They reacted {emoji}.
 > *(a11y, the open-any-emoji affordance)* Choose another emoji

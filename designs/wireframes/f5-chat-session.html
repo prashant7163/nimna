@@ -584,7 +584,7 @@
         <div class="actrow">Reply</div>
         <div class="actrow danger">Delete</div>
       </div>
-      <p class="meta">[one reaction per person per message — picking another replaces it; your current pick renders selected, and tapping it takes it back (spec §5.8). “+” opens the system emoji keyboard: any single emoji — the one-grapheme compose rule, spec §5.5. Delete is the local per-message delete (spec §6) — the same act F5.1 documented as long-press → Delete, now living here everywhere. Preset set is a proposed default, pending USER confirm]</p>
+      <p class="meta">[one reaction per person per message — picking another replaces it; your current pick renders selected, and tapping it takes it back (spec §5.8). “+” opens the system emoji keyboard: any single emoji — the one-grapheme compose rule, spec §5.5. Delete is the local per-message delete (spec §6) — the same act F5.1 documented as long-press → Delete, now living here everywhere. Preset set 👍 ❤️ 😂 😮 😢 🙏 confirmed (USER, 2026-07-05 03:30 +0200)]</p>
       <div class="grow"></div>
       <div class="composer">
         <div class="icon">+</div>
@@ -622,7 +622,7 @@
         <div class="bubble sent reacted">Third paragraph. That's the one.<span class="rchip">😮</span><span class="rchip own" style="left:52px">😂</span></div>
         <span class="bub-meta">21:07 ✓</span>
       </div>
-      <p class="meta">[chip anchors to the bubble's center-facing corner, overlapping the bottom edge by half its height; yours = heavier stroke, theirs = hairline — ownership is a stroke, never a color, and amber never appears (a reaction is not a session event). Both reacted → two chips, yours outermost. The ✓ belongs to the message only — chips carry NO delivery state (never ACKed, spec §5.8)]</p>
+      <p class="meta">[chip anchors to the bubble's center-facing corner, overlapping the bottom edge by half its height; yours = heavier stroke, theirs = hairline — ownership is a stroke, never a color, and amber never appears (a reaction is not a session event). Both reacted → two chips: the peer's chip takes the center-facing corner slot, yours sits beside it, one slot further toward the bubble's authored edge — one rule, both directions (as drawn on the sent bubble below: theirs at the corner, yours inward). The ✓ belongs to the message only — chips carry NO delivery state (never ACKed, spec §5.8)]</p>
       <p class="meta">[hostile-input clamp (DECISIONS 2026-07-05): the wire guarantees only “valid UTF-8” — a modified client can send control characters or ZWJ chains. Chips render one line, bidi-isolated, bounded width, clipped: the chip's window is the blast radius, never the thread]</p>
       <div class="grow"></div>
       <div class="composer">
@@ -679,7 +679,7 @@
       <div class="r"><span class="k">Purpose</span><span>Reply with context, without a resurrection machine: the wire carries only the 16-byte msg_id (spec §5.8) — the quoted preview renders from THIS phone's local copy. There is no quoted-content field, so a reply structurally cannot leak, re-send, or resurrect anything.</span></div>
       <div class="r"><span class="k">Entry points</span><span>Reply from the long-press card (F5.16), on a text bubble or a media bubble (an attachment sent as a reply carries reply_to on its manifest — spec §5.5; a quoted media referent renders a 32 px thumb + “Photo” / “Document”, string 20).</span></div>
       <div class="r"><span class="k">Exit points</span><span>Send → strip clears, the bubble carries the quote block; the reply is an ordinary message — ✓ on ACK, read-receipt if opted in, timer composes freely with reply_to (spec §5.8). ✕ → strip drops, text survives in the composer. Works offline: the reply waits in the outbox, dashed, like any text.</span></div>
-      <div class="r"><span class="k">Edge cases</span><span><b>Referent gone → tombstone, F5.19.</b> Replying to a still-waiting (unsent) bubble is fine — the outbox drains in order, so the referent always arrives before the reply. The strip survives session-state changes mid-compose (drop, reconnect, hangup).</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Referent gone → tombstone, F5.19.</b> Replying to a still-waiting (unsent) bubble is fine — the outbox drains in order, so the referent is always SENT before the reply; but delivery is at-most-once, so a referent lost to a session drop can still be unknown on the far side — the reply then tombstones there, exactly F5.19. The strip survives session-state changes mid-compose (drop, reconnect, hangup).</span></div>
     </div>
   </section>
 

@@ -81,9 +81,17 @@ project's untranslated-key tracker until then** — do not machine-fill.
 
 ## Notes for the fold
 
-- **Placeholders:** only the two chip-a11y keys carry one (`{emoji}`, `String`). The
-  substituted value is the raw wire emoji field — already clamped by the chip render
-  rule (components.md); no formatting, no plural, no gender anywhere in this set.
+- **Placeholders:** only the two chip-a11y keys carry one (`{emoji}`, `String`).
+  **S10 instruction — bound the substitution; the visual clamp does NOT cover it.**
+  The chip render rule (components.md) bounds only the chip's visual box; nothing
+  about it bounds the string substituted into these a11y labels, and the wire
+  guarantees only 1–64 bytes of valid UTF-8 (spec §5.5) — a hostile field would
+  otherwise flow unclamped into screen-reader announcements. Before substituting:
+  enforce the wire's own 64-byte bound (a longer field is a §3.3.1 structural
+  violation and never reaches render), and strip control characters (C0/C1) and
+  Unicode bidi/format controls from the announcement copy of the string. Substitute
+  that sanitized run only; never feed raw wire bytes into anything that formats or
+  parses. No formatting, no plural, no gender anywhere in this set.
 - **Plurals:** none needed. Reactions are at most one per sender per message (spec §5.8),
   and a 1:1 line means at most two chips.
 - **Key casing/shape** may be normalized to S7's established ARB conventions at fold
