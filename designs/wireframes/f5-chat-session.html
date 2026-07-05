@@ -26,7 +26,7 @@
 
 <div class="flow-head">
   <h1>F5 — Chat session (offline → knock → live → media → hangup)</h1>
-  <p>The session line under the header is never absent — its state IS the screen's truth. Dotted = not on the line, solid = knocking/live, always with a text label. New in v0.1.1: attachments — photos &amp; files (spec §5.1), the sensitive-content whisper and blur (§5.3), the screenshot system line (§5.2), and the stale-knock hint (§6.1). Edge frames (dashed): sensitive whisper at attach · blurred received media · knock lapses · stale knock · line drops mid-session. “Peer never accepts” is covered in F5.1/F5.13 annotations.</p>
+  <p>The session line under the header is never absent — its state IS the screen's truth. Dotted = not on the line, solid = knocking/live, always with a text label. New in v0.1.1: attachments — photos &amp; files (spec §5.1), the sensitive-content whisper and blur (§5.3), the screenshot system line (§5.2), and the stale-knock hint (§6.1). New in v0.2.1: reactions &amp; replies (spec §5.5, §5.8) — the long-press react/reply entry (F5.16), chips on text and media bubbles (F5.17), reply compose with the quoted preview (F5.18), and the tombstone EDGE (F5.19). Edge frames (dashed): sensitive whisper at attach · blurred received media · knock lapses · stale knock · line drops mid-session · reply tombstone. “Peer never accepts” is covered in F5.1/F5.13 annotations.</p>
 </div>
 
 <main class="strip">
@@ -555,6 +555,166 @@
       <div class="r"><span class="k">Entry points</span><span>Missed keepalive window during F5.4 (either side's network, or the relay).</span></div>
       <div class="r"><span class="k">Exit points</span><span>Recovery → F5.4, pending messages transmit in order. No recovery (peer stayed gone) → settles into F5.1's offline state; a fresh knock is offered, not fired automatically.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>Drop during the peer's reply → their message simply never arrived here; no “message lost” alarm is possible or honest (this phone can't know). Repeated flapping → reconnect backs off quietly; the label never counts attempts.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.16 -->
+  <section class="cell">
+    <div class="frame-tag">F5.16 · React &amp; reply — the long-press card</div>
+    <div class="frame">
+      <div class="dimmed">
+        <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+        <div class="line"></div>
+        <p class="line-lbl">On the line</p>
+        <div style="height:8px"></div>
+        <div class="msgs">
+          <div class="bubble sent">Good flight?</div>
+        </div>
+      </div>
+      <div class="msgs">
+        <div class="bubble recv">Long. Tell you tonight.</div>
+      </div>
+      <p class="meta">[the pressed bubble stays at full opacity; the rest of the thread dims. The card rises near it — whisper-card family, never a modal]</p>
+      <div class="banner">
+        <div class="emorow">
+          <span class="emo">👍</span><span class="emo">❤️</span><span class="emo">😂</span><span class="emo">😮</span><span class="emo">😢</span><span class="emo">🙏</span><span class="emo">+</span>
+        </div>
+        <div class="actrow">Reply</div>
+        <div class="actrow danger">Delete</div>
+      </div>
+      <p class="meta">[one reaction per person per message — picking another replaces it; your current pick renders selected, and tapping it takes it back (spec §5.8). “+” opens the system emoji keyboard: any single emoji — the one-grapheme compose rule, spec §5.5. Delete is the local per-message delete (spec §6) — the same act F5.1 documented as long-press → Delete, now living here everywhere. Preset set 👍 ❤️ 😂 😮 😢 🙏 confirmed (USER, 2026-07-05 03:30 +0200)]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>One entry for both v0.2.1 surfaces (spec §5.8): react and reply live behind the same long-press, on the only legal referents — text and media bubbles, sent or received. System lines, in-flight chunks, and the composer never respond.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Long-press any text or media bubble, in any session state — offline included (a reaction or reply composes to the outbox exactly like text, spec §3.4).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Pick an emoji → REACTION sends, card dismisses, chip appears (F5.17). Reply → compose strip rises (F5.18). Delete → local delete. Tap outside / swipe down → nothing sent, nothing changes.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>No delivery chrome, ever:</b> a REACTION is never ACKed (spec §5.8) — no ✓, no “pending”, no waiting variant exists for the chip; sent offline it rides the outbox silently. Re-picking your current emoji is the remove; an add of the same emoji on the wire is idempotent. The relay sees none of this — a reaction is opaque ciphertext like everything else.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.17 -->
+  <section class="cell">
+    <div class="frame-tag">F5.17 · Reactions on the thread — chips on text &amp; media</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble recv reacted">Long. Tell you tonight.<span class="rchip own">👍</span></div>
+        <span class="bub-meta l">21:05</span>
+        <div class="bubble sent media reacted">
+          <div class="mimg">[photo — contract, page 3]</div>
+          <span class="rchip">❤️</span>
+        </div>
+        <span class="bub-meta">21:06 ✓</span>
+        <div class="bubble sent reacted">Third paragraph. That's the one.<span class="rchip">😮</span><span class="rchip own" style="left:52px">😂</span></div>
+        <span class="bub-meta">21:07 ✓</span>
+      </div>
+      <p class="meta">[chip anchors to the bubble's center-facing corner, overlapping the bottom edge by half its height; yours = heavier stroke, theirs = hairline — ownership is a stroke, never a color, and amber never appears (a reaction is not a session event). Both reacted → two chips: the peer's chip takes the center-facing corner slot, yours sits beside it, one slot further toward the bubble's authored edge — one rule, both directions (as drawn on the sent bubble below: theirs at the corner, yours inward). The ✓ belongs to the message only — chips carry NO delivery state (never ACKed, spec §5.8)]</p>
+      <p class="meta">[hostile-input clamp (DECISIONS 2026-07-05): the wire guarantees only “valid UTF-8” — a modified client can send control characters or ZWJ chains. Chips render one line, bidi-isolated, bounded width, clipped: the chip's window is the blast radius, never the thread]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Reactions displayed, both directions, on both referent kinds (text and media manifest — spec §5.8). An adjunct, not a message: the chip lives on its bubble and dies with it.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Own pick from F5.16 renders immediately; the peer's REACTION frame renders on arrival — silently, no banner, no sound.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Tap your own chip → removes it (a11y: “You reacted {emoji}. Tap to remove.” — string 21). Long-press the bubble → F5.16 to replace. Tapping their chip does nothing.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Inherit-expiry (spec §5.8):</b> a disappearing message takes its chips with it — same fade, same moment, nothing separate to mourn. A REACTION naming a message this phone no longer holds (expired, deleted, never seen) is silently dropped — no error, no notice, nothing resurrected. Per-message delete and channel wipe destroy chips with their referents identically.</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.18 -->
+  <section class="cell">
+    <div class="frame-tag">F5.18 · Reply — compose strip &amp; the quoted bubble</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble recv">Send me the signature page.</div>
+        <span class="bub-meta l">21:05</span>
+        <div class="bubble sent">
+          <div class="quote"><span class="qrule"></span><span class="qtxt">Send me the signature page.</span></div>
+          Third paragraph. That's the one.
+        </div>
+        <span class="bub-meta">21:07 ✓</span>
+      </div>
+      <p class="meta">[the sent reply carries its quote block in-bubble: 2 px rule + excerpt, max 2 lines, ellipsized — no fill, no border. Tap the quote → thread scrolls to the referent with a brief highlight. Shown together with the strip below for economy; in reality the strip precedes the send]</p>
+      <div class="grow"></div>
+      <div class="replybar">
+        <span class="txt">
+          <span class="micro">Replying to</span>
+          <span class="cap" style="display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Send me the signature page.</span>
+        </span>
+        <span class="x">✕</span>
+      </div>
+      <div class="composer" style="border-top:none; padding-top:0">
+        <div class="icon">+</div>
+        <div class="field">Third paragraph. That's the one.</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>Reply with context, without a resurrection machine: the wire carries only the 16-byte msg_id (spec §5.8) — the quoted preview renders from THIS phone's local copy. There is no quoted-content field, so a reply structurally cannot leak, re-send, or resurrect anything.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>Reply from the long-press card (F5.16), on a text bubble or a media bubble (an attachment sent as a reply carries reply_to on its manifest — spec §5.5; a quoted media referent renders a 32 px thumb + “Photo” / “Document”, string 20).</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Send → strip clears, the bubble carries the quote block; the reply is an ordinary message — ✓ on ACK, read-receipt if opted in, timer composes freely with reply_to (spec §5.8). ✕ → strip drops, text survives in the composer. Works offline: the reply waits in the outbox, dashed, like any text.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Referent gone → tombstone, F5.19.</b> Replying to a still-waiting (unsent) bubble is fine — the outbox drains in order, so the referent is always SENT before the reply; but delivery is at-most-once, so a referent lost to a session drop can still be unknown on the far side — the reply then tombstones there, exactly F5.19. The strip survives session-state changes mid-compose (drop, reconnect, hangup).</span></div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- F5.19 EDGE -->
+  <section class="cell edge">
+    <div class="frame-tag">F5.19 · EDGE — the tombstone: quoted message is gone</div>
+    <div class="frame">
+      <div class="chathead"><span><span class="cap">‹</span> <span class="h">Marlowe</span></span><span class="btn ghost small">Hang up</span></div>
+      <div class="line"></div>
+      <p class="line-lbl">On the line</p>
+      <div style="height:8px"></div>
+      <div class="msgs">
+        <div class="bubble recv">
+          <div class="quote"><span class="qrule"></span><span class="qtxt tomb">Message no longer available.</span></div>
+          Still fine for tonight?
+        </div>
+        <span class="bub-meta l">23:40</span>
+      </div>
+      <p class="meta">[the reply itself always displays; only its quote block renders the tombstone — string 20, canonical verbatim, in tertiary text. Identical for unknown, deleted, and expired referents (the §3.1.6 indistinguishability posture applied locally): the tombstone NEVER says why. Not tappable — history, not an affordance]</p>
+      <p class="meta">[a quote of a still-present referent swaps to this the moment the referent dies — expiry, per-message delete, wipe — quiet cross-fade, never a cached excerpt: the preview's only source is the local copy, and it died with the message (spec §5.8: never resurrect)]</p>
+      <div class="grow"></div>
+      <div class="composer">
+        <div class="icon">+</div>
+        <div class="field">Write…</div>
+        <div class="icon">◷</div>
+        <div class="icon">↑</div>
+      </div>
+    </div>
+    <div class="anno">
+      <div class="r"><span class="k">Purpose</span><span>The honest failure shape of local-render replies (spec §5.8): when this phone no longer holds the referenced message, the reply still lands and the quote says only that the message is unavailable — one neutral placeholder for all three causes.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>A reply arrives naming a msg_id this phone never displayed, already deleted, or already expired — or an existing quote's referent dies later.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>None special — the reply behaves like any message (ACKed, retained per settings). The tombstone never resolves back: removed content stays removed.</span></div>
+      <div class="r"><span class="k">Edge cases</span><span><b>Never a reason:</b> “deleted”, “expired”, and “unknown” must stay indistinguishable — a differentiated tombstone would disclose local retention choices to the other side of a screenshot, and the honesty checklist forbids it. Disappearing replies: the reply's own timer governs the whole bubble, tombstone included. A REACTION referencing this reply works normally — the reply is a first-class referent; its dead quote is not.</span></div>
     </div>
   </section>
 

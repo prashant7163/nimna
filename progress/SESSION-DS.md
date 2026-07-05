@@ -1,0 +1,247 @@
+# SESSION-DS — design-sync: reply/reaction UI, self-join surface, canonical strings (spec v0.2.1)
+
+Branch `design-sync-reply-reactions` (worktree, based on main @ 604f767). USER-mandated
+G1 third lane (DECISIONS 2026-07-05 02:58). Ownership: `designs/` + ARB stub handoff
+only. Binding inputs for S9 (self-join surface) and S10 (reply/reaction UI).
+
+## TASKS.md candidate line (fold at merge)
+
+- **DS — design-sync reply/reactions/self-join** · implemented, ready for
+  code-review + senior-qa · 2026-07-05 03:25 +0200 · designs/ synced v0.1.1 → v0.2.1;
+  ARB stubs in designs/handoff/; hard prereq for S9 + S10 intake.
+
+## PROGRESS.md candidate entries (fold at merge)
+
+- **2026-07-05 03:25 +0200 · DS design-sync — implementation complete, pending review/QA.**
+  Closed the four zero-coverage drift items from the v0.2.1 reconciliation
+  (PROGRESS "SPEC RECONCILIATION", DECISIONS 2026-07-05 02:20): reactions, replies/quoting,
+  the two canonical strings, the self-join guard. All additions reuse locked tokens/
+  components verbatim — no new colors, no new type styles, no new icons (plus/close reused);
+  amber appears nowhere in the new surfaces (a reaction is not a session event).
+  Artifacts (all paths relative to repo root):
+  - `designs/brand/voice-and-microcopy.md` — strings **19** (self-join canonical, spec §3.1
+    verbatim), **20** (reply: "Replying to" overline, "Cancel reply" a11y, tombstone
+    "Message no longer available." canonical verbatim, "Photo"/"Document" quoted-media
+    labels), **21** (reactions: "React", chip a11y pair with {emoji}, "Choose another
+    emoji"); 3 register notes (reactions are adjuncts — no delivery chrome ever; the
+    tombstone never explains; self-join is guidance, not failure); 2 honesty-checklist
+    items (no reaction delivered/seen claims; no tombstone reasons).
+  - `designs/system/components.md` — new: **reaction chip** (geometry off the bubble's
+    center-facing corner, ownership = stroke weight never color, add-replaces/
+    remove-clears-unconditionally, adjunct lifetime — dies with referent, one-line
+    clamp + bounded width vs hostile UTF-8 per the DECISIONS render note, zero delivery
+    chrome — never ACKed), **message-actions card** (single long-press entry for
+    react/reply/local-delete; six-preset emoji quick row + system-keyboard "+";
+    one-grapheme compose rule enforced at entry), **quoted-reply preview** (local-render
+    doctrine, in-bubble quote block + compose strip, tombstone state identical for
+    unknown/deleted/expired, live-swap to tombstone when a referent dies later — never
+    a cached excerpt), **code-entry own-code state** (self-join guard: warning-toned,
+    no shake, Join disabled, relay never contacted; explicitly argued non-violation of
+    the silence doctrine; guard scope = own outstanding codes only, so duplicate
+    channels stay undetectable).
+  - `designs/wireframes/f5-chat-session.html` — frames **F5.16** (long-press card),
+    **F5.17** (chips on text + media, clamp + no-delivery-chrome annotations),
+    **F5.18** (reply compose strip + quoted bubble), **F5.19 EDGE** (tombstone).
+    `designs/wireframes/f3-join-channel.html` — **F3.8 EDGE** (self-join guard).
+    All frames appended — existing numbering untouched. `wf.css` v0.2.1 block;
+    README index 57 → 62 frames + new decisions/honesty notes. Chrome-render-verified.
+  - `designs/screens/05-live-chat.html` + `.light.html` — reaction chip (theirs, ❤️ on
+    the media bubble) + quoted reply composing with the disappearing timer (reply_to +
+    expiry_s compose freely, spec §5.8); light sed-regenerated from dark per the
+    established method. Net-new `designs/screens/16-message-actions.html` (long-press
+    card state). `screens.css` v0.2.1 styles, token-exact. All three
+    Chrome-render-verified at 438×900 (existing README method; script in worktree
+    `temp/ds-render/`, git-ignored).
+  - `designs/handoff/arb-stubs-reply-reactions.md` — 12 EN keys, namespaced `chat_…`/
+    `pairing_…`, exact JSON incl. @-metadata + {emoji} placeholders; fold notes
+    (no plurals needed; canonical values byte-locked; DE/FR/ES/IT ride S16 + the
+    untranslated-key tracker). Live `lib/l10n` untouched (S7's, in flight).
+  - READMEs updated: `designs/README.md`, `designs/brand/README.md`,
+    `designs/system/README.md`, `designs/wireframes/README.md`,
+    `designs/screens/README.md`, `designs/handoff/README.md`.
+  Commits on this branch: fbb961a (voice guide) · 3494d66 (components) ·
+  4a57399 (wireframes) · 0ce56e0 (hi-fi) · 9607b24 (ARB stubs + READMEs) ·
+  + this progress file. Not claiming done — pending code-reviewer + senior-qa per
+  the parallel-session pipeline.
+
+## DECISIONS.md candidate entries (fold at merge; all CODE unless marked)
+
+- **2026-07-05 03:25 +0200 · Reaction chips carry zero delivery chrome, including no
+  waiting state · CODE** — a REACTION is never ACKed (spec §5.8), so ✓/pending would be
+  unbackable claims; deliberately extended to the offline case: a reaction composed
+  while the peer is offline rides the outbox silently with NO dashed-waiting variant —
+  the chip is an adjunct on an existing bubble, not a message of its own, and "not yet
+  sent" chrome on a chip would read as delivery state the instant it cleared ·
+  alternatives: dashed chip while queued (honest about local state but manufactures a
+  delivery-state vocabulary for a surface the protocol keeps stateless); suppress the
+  chip until bridged (the sender's own act should render when made, like every compose).
+- **2026-07-05 03:25 +0200 · Chip ownership = stroke weight, never color; chips never
+  amber · CODE** — yours `textSecondary` stroke, theirs `hairline`; amber rationing
+  says amber = session state/primary action only, and a reaction is neither ·
+  alternative: amber-tint own chip (violates the rationing rule outright).
+- **2026-07-05 03:25 +0200 · Hostile-UTF-8 clamp specced as a hard component rule ·
+  CODE (operationalization, not a new decision — reclassified per review N5)** — chip
+  renders one line, bidi-isolated, content max-width 40 / chip max 60, clipped, never
+  parsed. This carries the DECISIONS 2026-07-05 02:20 render-side note ("reaction
+  chips clamp to one line/bounded width") into binding component numbers; no
+  alternative space exists because the parent decision already closed it (the
+  sender-side single-grapheme rule is never receiver-validated, spec §5.5/§5.8).
+  Recorded for traceability; fold as an operationalization note, not a fresh entry.
+- **2026-07-05 03:25 +0200 · Quote block re-renders from live local state — swaps to
+  the tombstone the moment its referent dies · CODE** — a cached excerpt would let
+  quoted content outlive expiry/delete inside the quote, defeating §5.8's
+  never-resurrect rule; the preview's only legitimate source is the local copy ·
+  alternative: freeze the excerpt at receive time (violates inherit-expiry intent).
+- **2026-07-05 03:25 +0200 · Self-join guard renders warning-toned, shake-free,
+  distinct from wrong-code by design · CODE** — first product use of the `warning`
+  token (color-system: "rare — code-TTL expiring notice" family; WCAG-verified both
+  modes); danger styling would call the user's own code a failure, and the "one
+  permitted shake" stays with wrong-code. Doctrine-safe distinctness: the silence
+  doctrine's single generic response covers relay-facing foreign codes; self-join is
+  local knowledge, nothing is sent · alternative: reuse the danger error state with
+  different copy (misreads guidance as failure; also blurs the two states S9 must keep
+  separate).
+- **2026-07-05 03:25 +0200 · React/reply/delete share one long-press message-actions
+  card · CODE** — single entry on the only legal referents (text + media manifest,
+  spec §5.8); consolidates the previously documented long-press → Delete (F5.1) into
+  the same card so long-press has one meaning product-wide · alternative: separate
+  gestures per action (gesture inflation; double-tap-to-react conflicts with nothing
+  today but spends a gesture budget v1 doesn't need).
+- **2026-07-05 03:25 +0200 · v0.2.1 wireframe frames appended, never renumbered ·
+  CODE** — F5.16–F5.19 + F3.8; existing frame IDs are referenced by annotations,
+  READMEs, and prior PROGRESS entries — renumbering would corrupt the record.
+
+## USER questions (consolidated — none blocking; proposed defaults shipped)
+
+1. **Emoji quick-row preset set** (F5.16 / screen 16 / components message-actions):
+   proposed default 👍 ❤️ 😂 😮 😢 🙏. Any single emoji remains reachable via the
+   system keyboard "+", so the presets are pure convenience — taste, not doctrine.
+   Confirm or replace before S10 freezes the composer surfaces.
+   **RESOLVED — CONFIRMED as proposed (USER, 2026-07-05 03:30 +0200; entry lives on
+   main's DECISIONS.md).** All four "proposed default pending USER confirm" markers
+   updated to confirmed-with-stamp: components.md message-actions, F5.16 meta,
+   wireframes README decisions bullet, screens README design-sync note.
+
+## Spec/design conflicts found
+
+- None. The v0.2.1 additions slotted into the existing system without contradicting
+  any locked decision (silence doctrine, amber rationing, no-skip safety phrase,
+  honor-system expiry language, numberless pricing all untouched). The one judgment
+  call with doctrine texture — self-join rendering distinct from wrong-code — is
+  argued above and in the F3.8 annotation; flagging for reviewer attention rather
+  than as a conflict.
+
+## Notes for the orchestrator
+
+- ARB fold: `designs/handoff/arb-stubs-reply-reactions.md` → `lib/l10n` at merge
+  (12 keys; two values byte-locked canonical). No pubspec additions, no routes —
+  DS touches no code.
+- Render-verification scripts live in worktree `temp/ds-render/` (git-ignored),
+  per the scripts-in-temp rule.
+
+## Code-review wrap — 2026-07-05 03:47 +0200 (PASS, zero blocking; 2 SHOULD-FIX + 6 NITs applied in 947fc5d + this update)
+
+- **USER decision applied:** emoji quick-row preset set 👍 ❤️ 😂 😮 😢 🙏 CONFIRMED
+  as proposed (USER, 2026-07-05 03:30 +0200 — entry on main's DECISIONS.md; cited by
+  stamp). All four "proposed default" markers → confirmed: components.md
+  message-actions bullet, F5.16 meta note, wireframes README decisions bullet,
+  screens README design-sync note. USER-questions section above marked RESOLVED.
+- **S1 (geometry):** screen 16's 310 px card could not hold seven 44 px discs + 6 px
+  gaps (needs 344 content); discs squeezed to ~36, breaking the components.md 44×44
+  guarantee. Resolution — new binding geometry in BOTH artifacts: **40 px discs
+  centered in 44×44 touch cells, cells tile edge-to-edge** (visible gap 4, row 308,
+  card 332 at padding 12, fits the 350 content column; a 44-disc/6-gap row needs 368
+  and structurally cannot fit). Touch-target floor 44×44 holds — abutting targets.
+  screens.css `.emo`/`.emorow` + 16-message-actions.html card width updated;
+  re-render-verified at 438×900 (seven full discs, even gaps).
+- **S2 (a11y substitution):** ARB fold-note claim "already clamped by the chip render
+  rule" was false — the clamp bounds the visual box only. Rewritten as an explicit
+  S10 instruction: enforce the wire's 64-byte bound (longer = §3.3.1 structural
+  violation, never reaches render) and strip C0/C1 control characters + Unicode
+  bidi/format controls from the announcement copy before substituting into
+  `chat_reactionOwnA11y`/`chat_reactionPeerA11y`; never feed raw wire bytes into
+  anything that formats or parses.
+- **N1:** F5.18 edge note now says the referent is always *sent* before the reply
+  (ordering guaranteed) but delivery is at-most-once — a referent lost to a session
+  drop can still be unknown on the far side; the reply tombstones there (→ F5.19).
+- **N2:** two-chip rule made unambiguous, stated as the corner: **the peer's chip
+  takes the center-facing corner slot; yours sits one slot further toward the
+  bubble's authored edge** — one rule, both directions. components.md + F5.17 meta
+  now say the same thing; the F5.17 drawing already matched (theirs at the corner).
+- **N3:** reply compose strip reworded from Left/Right to reading edge / trailing
+  edge (standing rule: left/right never hardcoded).
+- **N4:** chip bottom clearance reconciled to **14** everywhere (components.md was
+  12; wf.css/screens.css were 14). Pick: 14 — the chip protrudes 12 below the
+  bubble, so 12 would leave it flush against the next element; 14 = protrusion + 2
+  air, and it is what both CSS files already rendered.
+- **N5:** DECISIONS candidate 3 (hostile-UTF-8 clamp) reclassified in place as
+  operationalization of the DECISIONS 2026-07-05 02:20 render-side note — no
+  alternative space exists; fold as a traceability note, not a fresh entry.
+- **N6:** voice-guide string 21 "React" gloss corrected to a11y-name-only (the
+  visible affordance is the emoji row itself) — now matches the ARB description of
+  `chat_messageActionReact`.
+- Re-render evidence refreshed in worktree `temp/ds-render/` (screen 16 + both 05
+  variants + F5/F3 strips). Commit: **947fc5d** (designs) + this progress update.
+  Still not claiming done — senior-qa runs next.
+
+## Senior-QA sign-off — 2026-07-05 03:59 +0200
+
+done-check: PASS + evidence — every clause executed independently (own greps, own
+JSON parse, own arithmetic, own headless-Chrome renders; scripts + renders in
+worktree `temp/qa_ds/`, git-ignored):
+
+- **A FENCE:** `git diff 604f767..HEAD --name-only` = 17 paths, all under
+  `designs/` or `progress/SESSION-DS.md`; worktree clean; 8 commits
+  fbb961a..faec434. No stray path.
+- **B CANONICAL STRINGS:** both strings grep byte-exact (em dash included,
+  verified by `grep -F` + Python equality) at voice guide, components.md
+  (:102/:30), F5.19 (f5-chat-session.html:698), F3.8 (f3-join-channel.html:239),
+  ARB stub (:39/:75); byte-identical to spec v0.2.1 lines 38/163 in this
+  worktree. Paraphrase hunt ("no longer available"/"isn't available"/"your own"/
+  "share it with" variants): zero drifting variants.
+- **C SPEC SEMANTICS:** own reading of spec §5.8/§5.5/§3.1 vs components.md —
+  one-per-sender (:65), add-replaces/remove-clears-unconditionally (:65,:74),
+  adjunct-dies-with-referent (:75), never-ACKed/zero-delivery-chrome (:80),
+  tombstone identical for unknown/deleted/expired + never says why (:102),
+  local-render-only/never-resurrect (:94,:103), compose-side-only grapheme rule
+  + never receiver-validated/parsed (:78,:86). No contradiction found.
+- **D COMPLETENESS:** frame-tag counts machine-counted — base 57 (F5=15, F3=7),
+  HEAD 62 (F5=19, F3=8); diff shows only added frame-tag lines, F5.1–F5.15 and
+  F3.1–F3.7 IDs untouched; README states 57→62 appended. Hi-fi:
+  16-message-actions.html added in 0ce56e0; 05 dark+light both carry
+  chip+quote markup; screens.css +37 lines. All six changed-folder READMEs in
+  the diff.
+- **E ARB STUBS:** JSON parsed programmatically — 12 value keys (11 `chat_`,
+  1 `pairing_selfJoinOwnCode`), zero foreign namespaces, all keys carry
+  @meta+description, placeholder declarations exactly match `{emoji}` usage,
+  both canonical values byte-exact. All voice strings 19–21 map to keys
+  (mapping block verified). Fold note explicitly denies visual-clamp coverage
+  and instructs S10: 64-byte wire bound + strip C0/C1 and bidi/format controls
+  before announcement substitution.
+- **F FINDINGS:** S1 measured in headless Chrome — 7 discs at 40.0 px,
+  cell pitch 44.0, row 308, card 332, action rows 44 h, card spans x 75–407
+  inside the 350 px column (75–425), row/card scroll-overflow 0; arithmetic
+  cross-check 7×44=308, +24=332, counterexample 7×44+6×6+24=368>350 confirmed.
+  N4: clearance 14 in components.md (:67), screens.css (margin-bottom:14px),
+  wf.css (margin-bottom:14px). N2: two-chip rule word-identical in
+  components.md and F5.17 meta; F5.17 drawing matches (theirs at corner,
+  own inward at left:52). N3: compose-strip paragraph contains zero
+  left/right (reading/trailing edge only). N6: string-21 "React" glossed
+  a11y-name-only, matching the ARB description.
+- **G USER CONFIRM:** zero `pending USER`/`proposed default` variants in
+  designs/ (grep exit 1); exactly four citation sites for USER, 2026-07-05
+  03:30 +0200: components.md:86, F5.16 meta (f5:587), wireframes/README:43,
+  screens/README:30.
+- **H RENDER:** own renders (never the dev's PNGs) — 16-message-actions.html
+  and 05-live-chat.html at 438×900, F5.16–F5.18 strip and F5.19 alone via
+  trimmed copies: no squeeze, no overflow; chips 24 h / 34–36 w (≤60 max);
+  all four new F5 frames 390 w, zero horizontal overflow, no descendant
+  escapes its frame. The docScrollW=500 seen at a 438 window reproduces
+  identically on untouched base screens (04, 05 @604f767 with base CSS) —
+  pre-existing render characteristic, not a DS regression.
+- **I FOLD-READY:** all stamps full datetime, disposition list S1/S2/N1–N6
+  present, 7 CODE candidates carry alternatives+rationale, candidate 3
+  reclassified as operationalization of the DECISIONS 2026-07-05 02:20
+  render note, USER question marked RESOLVED with stamp.
+
+DS is done pending merge-time fold. Sign-off covers branch state at faec434.
