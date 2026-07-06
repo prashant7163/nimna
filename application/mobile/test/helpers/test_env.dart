@@ -6,9 +6,11 @@ import 'package:nimna/src/app/bootstrap.dart';
 import 'package:nimna/src/crypto/at_rest_aead.dart';
 import 'package:nimna/src/crypto/record_cipher.dart';
 import 'package:nimna/src/crypto/sodium_instance.dart';
+import 'package:nimna/src/lock/biometric_gate.dart';
+import 'package:nimna/src/lock/lock_config_store.dart';
 import 'package:nimna/src/storage/keys/master_key_store.dart';
 import 'package:nimna/src/storage/store_root.dart';
-import 'package:sodium/sodium.dart';
+import 'package:sodium/sodium_sumo.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Shared host-test environment: real libsodium (build-hook native asset),
@@ -16,7 +18,13 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 /// Everything the app persists in production is exercised for real; only
 /// the platform seams (keystore, path_provider) are faked.
 
-Future<Sodium> testSodium() => SodiumInstance.init();
+Future<SodiumSumo> testSodium() => SodiumInstance.init();
+
+/// Reduced-cost Argon2id lane for fast CI verifier round-trips. The
+/// production-parameter lane is the tagged `production_cost` test
+/// (dart_test.yaml) — the pinned spec constants are asserted separately.
+const int testPinOpsLimit = 1;
+const int testPinMemLimit = 8 * 1024 * 1024;
 
 Future<AtRestAead> testAead() async => AtRestAead(await testSodium());
 
@@ -41,9 +49,47 @@ class FakeMasterKeyStore implements MasterKeyStore {
   }
 }
 
-/// One simulated device: a stable store root + keystore across
-/// "relaunches". [boot] builds a fresh service graph each call — calling
-/// it again after [shutdown] is the storage-layer kill-and-relaunch.
+/// In-memory LockConfigStore — the second secure-storage item's fake.
+class FakeLockConfigStore implements LockConfigStore {
+  Uint8List? stored;
+
+  @override
+  Future<LockConfig?> read() async =>
+      stored == null ? null : LockConfig.decode(Uint8List.fromList(stored!));
+
+  @override
+  Future<void> write(LockConfig config) async {
+    stored = config.encode();
+  }
+
+  @override
+  Future<void> delete() async {
+    stored = null;
+  }
+}
+
+/// Scriptable biometric fake: [available] gates the F8.2 row;
+/// [nextResult] is what the "OS prompt" answers; [prompts] records the
+/// reasons shown.
+class FakeBiometricGate implements BiometricGate {
+  bool available = false;
+  bool nextResult = false;
+  final List<String> prompts = [];
+
+  @override
+  Future<bool> isAvailable() async => available;
+
+  @override
+  Future<bool> authenticate({required String reason}) async {
+    prompts.add(reason);
+    return nextResult;
+  }
+}
+
+/// One simulated device: a stable store root + keystore + lock config
+/// across "relaunches". [boot] builds a fresh service graph each call —
+/// calling it again after [shutdown] is the storage-layer
+/// kill-and-relaunch.
 class TestDevice {
   TestDevice(this.rootDir);
 
@@ -51,7 +97,16 @@ class TestDevice {
 
   final Directory rootDir;
   final FakeMasterKeyStore keyStore = FakeMasterKeyStore();
+  final FakeLockConfigStore lockStore = FakeLockConfigStore();
+  final FakeBiometricGate biometricGate = FakeBiometricGate();
   DateTime Function()? clock;
+
+  /// Injectable escalating-delay scheduler (default: real timers).
+  void Function(Duration delay, void Function() callback)? lockScheduler;
+
+  /// Storage-layer tests run without a WidgetsBinding; widget tests that
+  /// need seal-on-hidden flip this before [boot].
+  bool observeLifecycle = false;
 
   NimnaServices? _services;
 
@@ -62,7 +117,7 @@ class TestDevice {
 
   StoreRoot get storeRoot => StoreRoot.at(rootDir);
 
-  Future<NimnaServices> boot() async {
+  Future<NimnaServices> boot({MasterKeyStore? masterKeyStore}) async {
     if (!_ffiInitialized) {
       sqfliteFfiInit();
       _ffiInitialized = true;
@@ -70,8 +125,14 @@ class TestDevice {
     final services = await bootstrapNimna(
       dbFactory: databaseFactoryFfi,
       storeRoot: storeRoot,
-      masterKeyStore: keyStore,
+      masterKeyStore: masterKeyStore ?? keyStore,
+      lockConfigStore: lockStore,
+      biometricGate: biometricGate,
       clock: clock,
+      pinOpsLimit: testPinOpsLimit,
+      pinMemLimit: testPinMemLimit,
+      lockScheduler: lockScheduler,
+      observeLifecycle: observeLifecycle,
     );
     _services = services;
     return services;

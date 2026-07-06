@@ -1,0 +1,7 @@
+# Test tags (S13). `production_cost` marks the Argon2id lane that runs the
+# spec §7 parameters verbatim (t=3, m=64 MiB) — slower than the reduced-cost
+# default lane but still CI-run; the tag exists so it can be selected or
+# excluded explicitly (`--tags` / `--exclude-tags`).
+tags:
+  production_cost:
+    timeout: 2x
