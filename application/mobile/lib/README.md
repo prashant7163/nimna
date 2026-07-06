@@ -25,6 +25,37 @@ src/ui/              screens + widgets (S7: placeholder shell; S8+ real)
                             designs/system/tokens.json v1.1.0
   screens/channel_list_screen.dart  S7 empty-state shell (voice string 4
                                     verbatim, two disabled stub actions)
+                                    + the F4 footer Settings entry (S13)
+  screens/settings/    S13: settings_root_screen.dart (F8.1) and
+                       app_lock_setup_screen.dart (F8.2 choose→confirm→
+                       enroll; current-PIN gate → manage/turn-off)
+  widgets/             shared design-system widgets (S13): glyphs.dart
+                       (CustomPainter icons, RTL-mirrored), nav_bar.dart,
+                       nimna_symbol.dart (dot·line·dot), pin_pad.dart
+                       (PinDots + PinPad), nimna_toggle.dart,
+                       destructive_hold_button.dart (hold-to-wipe: burn,
+                       release-cancels, fires exactly once),
+                       wipe_sheet.dart (full F8.3/string 8 + per-channel
+                       F7.2 variants over one body)
+src/lock/            S13 — the app-lock domain tier (imports storage/keys +
+                     crypto, never ui):
+  lock_controller.dart   state machine over KeyService: the only path to
+                         open() once lock is enabled; seal on lifecycle
+                         `hidden` (never `inactive`); in-memory escalating
+                         retry delay (5 free, 1 s doubling, 30 s cap)
+  lock_config_store.dart LockConfig blob (ver‖flags‖pin_len‖salt‖verifier)
+                         + the SECOND (and last) flutter_secure_storage
+                         call site — scope amendment, intake §3
+  pin_verifier.dart      Argon2id verifier (spec §7 locked params, sodium
+                         sumo pwhash) — gate-not-key; no byte-returning
+                         API (test-enforced)
+  biometric_gate.dart    the ONE local_auth call site; biometricOnly, PIN
+                         pad is the fallback, never the OS credential
+src/wipe/            S13 — wipe_service.dart: thin orchestration over the
+                     S7 key-destruction-first primitives (zero new
+                     destruction logic); full wipe also deletes the lock
+                     config + reopens fresh; pre-channel-wipe hook seam
+                     for the future session layer
 src/domain/          models + repositories (record (de)serialization,
                      CRID index built at unlock, per-channel seq counter)
 src/storage/         everything persistent
