@@ -35,6 +35,7 @@ class NimnaApp extends StatelessWidget {
         // is replaced (zero-leak rule), never a route stacked above.
         builder: (context, navigator) => LockGate(
           keyService: services.keyService,
+          lockController: services.lockController,
           child: navigator ?? const SizedBox.shrink(),
         ),
       ),

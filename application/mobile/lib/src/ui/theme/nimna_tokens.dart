@@ -340,6 +340,15 @@ abstract final class NimnaCode {
   static const double entryGroupGap = 8;
 }
 
+/// Interaction effects not carried in tokens.json — values sourced from
+/// the hi-fi mockups' shared stylesheet (`designs/screens/screens.css`).
+/// This file remains the only home for color literals.
+abstract final class NimnaEffects {
+  /// screens.css `.btn.hold .burn` — the destructive-hold burn overlay:
+  /// black at 28% over `dangerFill`.
+  static const Color holdBurnOverlay = Color(0x47000000);
+}
+
 /// tokens.json `media`.
 abstract final class NimnaMedia {
   static const int attachmentCapMB = 5;

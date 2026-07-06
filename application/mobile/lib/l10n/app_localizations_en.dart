@@ -64,4 +64,119 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pairing_selfJoinOwnCode =>
       'This is your own Nimna code — share it with the other person.';
+
+  @override
+  String get settings_title => 'Settings';
+
+  @override
+  String get settings_rowAppLock => 'App lock';
+
+  @override
+  String get settings_rowAppLockOff =>
+      'Off — a PIN or your face, before anything shows';
+
+  @override
+  String get settings_rowAppLockOn => 'On';
+
+  @override
+  String get settings_rowAppLockOnBiometric => 'On — PIN + Face ID';
+
+  @override
+  String get settings_rowNotifications => 'Notifications';
+
+  @override
+  String get settings_rowNotificationsCaption =>
+      'Per line, off unless you turn them on';
+
+  @override
+  String get settings_rowRelay => 'Relay';
+
+  @override
+  String get settings_rowRelayCaption => 'relay.nimna.app';
+
+  @override
+  String get settings_rowLicenses => 'Licenses';
+
+  @override
+  String get settings_rowWipeEverything => 'Wipe everything';
+
+  @override
+  String get settings_rowWipeEverythingCaption =>
+      'Every line, every message — this phone.';
+
+  @override
+  String get lock_choosePinTitle => 'Choose a PIN';
+
+  @override
+  String get lock_choosePinCaption =>
+      'When locked, the screen shows only the symbol and this pad. Nothing else — not even how many lines you have.';
+
+  @override
+  String get lock_confirmPinTitle => 'Enter it again';
+
+  @override
+  String get lock_confirmPinMismatch => 'Those didn\'t match — start again.';
+
+  @override
+  String get lock_actionNext => 'Next';
+
+  @override
+  String get lock_enterPinTitle => 'Enter your PIN';
+
+  @override
+  String get lock_actionTurnOff => 'Turn off';
+
+  @override
+  String get lock_biometricToggleLabel => 'Unlock with Face ID';
+
+  @override
+  String get lock_biometricToggleCaption =>
+      'Recommended. Falls back to your PIN.';
+
+  @override
+  String get lock_noRecoveryCaption =>
+      'There\'s no way to recover a forgotten PIN — there\'s no account to prove you\'re you. Forgetting it means reinstalling, which wipes this phone\'s lines.';
+
+  @override
+  String get lock_biometricPromptReason => 'Unlock your lines.';
+
+  @override
+  String get lock_keypadDeleteA11y => 'Delete';
+
+  @override
+  String get wipe_fullTitle => 'Wipe everything?';
+
+  @override
+  String get wipe_fullTitleEmphasis => 'everything';
+
+  @override
+  String get wipe_fullBody =>
+      'Keys and messages are destroyed on this phone. There is no backup, anywhere, by design — nothing can bring them back.';
+
+  @override
+  String get wipe_holdToWipe => 'Hold to wipe';
+
+  @override
+  String get wipe_fullHoldCaption => 'Hold for 2½ seconds. Release to cancel.';
+
+  @override
+  String get wipe_actionKeep => 'Keep';
+
+  @override
+  String get wipe_channelTitle => 'Wipe this line?';
+
+  @override
+  String get wipe_channelBody =>
+      'Keys and messages for this line are destroyed on this phone. Nothing can bring them back.';
+
+  @override
+  String get wipe_channelPeerNote =>
+      'Their phone keeps its side unless they wipe too.';
+
+  @override
+  String get wipe_channelHoldCaption =>
+      'Hold for 1.5 seconds. Let go to keep everything.';
+
+  @override
+  String get wipe_channelWipedToast => 'Channel wiped.';
 }
