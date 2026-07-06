@@ -19,12 +19,36 @@ src/app/             composition + app root
   theme.dart           two ThemeData from the token map; button themes
   transitions.dart     fade + 8px drift, 320 ms decelerate; honors
                        MediaQuery.disableAnimations
-src/ui/              screens + widgets (S7: placeholder shell; S8+ real)
+src/ui/              screens + widgets
   theme/nimna_tokens.dart   NimnaTokens ThemeExtension — THE only file with
                             color literals; drift-guarded against
                             designs/system/tokens.json v1.1.0
-  screens/channel_list_screen.dart  S7 empty-state shell (voice string 4
-                                    verbatim, two disabled stub actions)
+  screens/channel_list_screen.dart  empty-state shell (voice string 4
+                                    verbatim); S8: Create a code live via
+                                    the G2 single entry, Enter a code still
+                                    an S9 stub, boot-time pending-pairing
+                                    resume on first frame
+  screens/pairing/          the F2 initiator flow surfaces (S8):
+                            create_line_flow.dart (phase-switching host +
+                            lifecycle forwarding), create_code_setup_screen
+                            (F2.1 + TTL sheet), share_code_screen
+                            (F2.2/F2.4 one surface: QR + code simultaneous,
+                            F2.3 share sheet w/ string 13, back-confirm,
+                            waiting/bridged hold), code_ended_screen
+                            (F2.8 expired · spent)
+  widgets/                  qr_card (CustomPainter over the qr matrix,
+                            true-white card), idle_line (dotted line
+                            motif), nimna_toast (custom overlay toast),
+                            nimna_back_button (painter chevron)
+src/pairing/         pairing flows — S8: initiator/ only (controller,
+                     pending-pairings record, single-entry
+                     create_line_entry, share + qr fenced call sites);
+                     see src/pairing/README.md
+src/protocol/        PURE §3.1.1/§3.1.2/§5.4 codec & derivation,
+                     vector-locked; S10 owns §5.5+ (checkpoint fence);
+                     see src/protocol/README.md
+src/transport/       dart:io WebSocket relay transport + no-hammer
+                     backoff policy; see src/transport/README.md
 src/domain/          models + repositories (record (de)serialization,
                      CRID index built at unlock, per-channel seq counter)
 src/storage/         everything persistent
@@ -33,6 +57,8 @@ src/storage/         everything persistent
                        call site (pinned Keychain accessibility)
   db/                  nimna.db open/schema/destructive-reset + row stores
                        (ciphertext blobs + the plaintext-column budget only)
+                       + meta_records.dart (encrypted meta values under
+                       k_meta; S8: the pending-pairings record)
   media/               encrypted blob files under <root>/media/
   backup/              iOS isExcludedFromBackup platform-channel client
   store_root.dart      <ApplicationSupport>/nimna-store/ — one root, one

@@ -1,15 +1,36 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../pairing/initiator/create_line_entry.dart';
 import '../theme/nimna_tokens.dart';
 
-/// S7 placeholder shell: the channel-list scaffold in its empty state
-/// (wireframe F4.4), rendering voice-guide string 4 VERBATIM from the EN
-/// ARB. Its two actions are present but disabled stubs — Create a code is
-/// the S8/S12 flow, Enter a code is S9. Real screens implement `designs/`
-/// verbatim from S8 on; nothing here is invented copy.
-class ChannelListScreen extends StatelessWidget {
+/// The channel-list scaffold in its empty state (wireframe F4.4),
+/// rendering voice-guide string 4 VERBATIM from the EN ARB. From S8,
+/// "Create a code" is live — it enters the F2 initiator flow through
+/// [startCreateLine], the G2 single entry point (S17 gates exactly that
+/// function). "Enter a code" remains an S9 stub. On first frame the
+/// screen also adopts a pending pairing surviving from a previous run
+/// (read at boot; F2.4 edge: the wait resumes inside the TTL, F2.8 if it
+/// lapsed while away).
+class ChannelListScreen extends StatefulWidget {
   const ChannelListScreen({super.key});
+
+  @override
+  State<ChannelListScreen> createState() => _ChannelListScreenState();
+}
+
+class _ChannelListScreenState extends State<ChannelListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(resumeCreateLineIfPending(context));
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +68,12 @@ class ChannelListScreen extends StatelessWidget {
               ),
               const SizedBox(height: NimnaSpacing.base * 6),
               FilledButton(
-                onPressed: null, // S8/S12 flow — stub in S7.
+                onPressed: () => unawaited(startCreateLine(context)),
                 child: Text(l10n.actionCreateCode),
               ),
               const SizedBox(height: NimnaSpacing.base * 2),
               OutlinedButton(
-                onPressed: null, // S9 flow — stub in S7.
+                onPressed: null, // S9 flow — stub until then.
                 child: Text(l10n.actionEnterCode),
               ),
               const Spacer(flex: 3),

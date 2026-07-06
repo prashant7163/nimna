@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../diag/diag.dart';
+import '../pairing/initiator/pairing_initiator_service.dart';
 import '../storage/keys/key_service.dart';
 import '../storage/storage_service.dart';
 
@@ -12,11 +13,13 @@ class NimnaServices {
     required this.keyService,
     required this.storage,
     required this.diag,
+    required this.pairing,
   });
 
   final KeyService keyService;
   final StorageService storage;
   final Diag diag;
+  final PairingInitiatorService pairing;
 }
 
 /// The one DI surface. `AppScope.of(context)` anywhere below the app root.
