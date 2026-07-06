@@ -8,7 +8,7 @@ import 'package:nimna/src/crypto/record_cipher.dart';
 import 'package:nimna/src/crypto/sodium_instance.dart';
 import 'package:nimna/src/storage/keys/master_key_store.dart';
 import 'package:nimna/src/storage/store_root.dart';
-import 'package:sodium/sodium.dart';
+import 'package:sodium/sodium_sumo.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Shared host-test environment: real libsodium (build-hook native asset),
@@ -16,7 +16,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 /// Everything the app persists in production is exercised for real; only
 /// the platform seams (keystore, path_provider) are faked.
 
-Future<Sodium> testSodium() => SodiumInstance.init();
+Future<SodiumSumo> testSodium() => SodiumInstance.init();
 
 Future<AtRestAead> testAead() async => AtRestAead(await testSodium());
 

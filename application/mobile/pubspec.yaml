@@ -29,6 +29,22 @@ dependencies:
   path: ^1.9.1
   # Version dictated by the Flutter SDK pin, per Flutter guidance.
   intl: any
+  # Dart-team static annotations only (@visibleForTesting on the reduced
+  # Argon2id test cost, protocol layer — no Flutter import allowed there).
+  # Already transitive via sodium/qr; imported directly, zero runtime code.
+  meta: ^1.16.0
+  # Pure-Dart QR encoder (kevmoo; zero runtime deps beyond meta). Rendering
+  # is an in-repo CustomPainter over its module matrix; correctness pinned by
+  # a committed expected-matrix fixture. Sign-off: S8 intake (SESSION-8.md
+  # §7); hand-rolled Reed–Solomon and qr_flutter both rejected there.
+  qr: ^3.0.2
+  # Platform share sheet only (code text + QR PNG). Scoped sign-off: S8
+  # intake (SESSION-8.md §7) — ONE call-site module
+  # (lib/src/pairing/initiator/share.dart), decrypt-to-temp cleanup after
+  # handoff, zero telemetry/network verified at pin time (the url_launcher_*
+  # transitives serve desktop/web mailto fallbacks; mobile is a platform
+  # channel).
+  share_plus: ^13.2.0
 
 dev_dependencies:
   flutter_test:
