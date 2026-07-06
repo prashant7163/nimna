@@ -9,6 +9,7 @@ import '../domain/channel_repository.dart';
 import '../domain/media_repository.dart';
 import '../domain/message_repository.dart';
 import 'backup/backup_exclusion.dart';
+import 'db/meta_records.dart';
 import 'db/nimna_database.dart';
 import 'db/row_stores.dart';
 import 'keys/key_service.dart';
@@ -38,6 +39,7 @@ class StorageService {
   ChannelRepository? _channels;
   MessageRepository? _messages;
   MediaRepository? _media;
+  MetaRecords? _metaRecords;
 
   bool get isOpen => _db != null;
 
@@ -46,6 +48,10 @@ class StorageService {
   MessageRepository get messages =>
       _messages ?? (throw StateError('storage not open'));
   MediaRepository get media => _media ?? (throw StateError('storage not open'));
+
+  /// Encrypted meta values (S8+: the pending-pairings record).
+  MetaRecords get metaRecords =>
+      _metaRecords ?? (throw StateError('storage not open'));
 
   /// Boot/open sequence. Diag events raised before the log attaches queue
   /// in memory and flush at attach — order is deliberate.
@@ -91,6 +97,11 @@ class StorageService {
       cipher: cipher,
       keyService: keyService,
     );
+    _metaRecords = MetaRecords(
+      db: result.db,
+      keyService: keyService,
+      cipher: cipher,
+    );
     diag.log(DiagEvent.storeOpened);
   }
 
@@ -106,6 +117,7 @@ class StorageService {
     _channels = null;
     _messages = null;
     _media = null;
+    _metaRecords = null;
     await _db?.close();
     _db = null;
     keyService.seal();
@@ -126,6 +138,7 @@ class StorageService {
     _channels = null;
     _messages = null;
     _media = null;
+    _metaRecords = null;
     await _db?.close();
     _db = null;
     keyService.seal();
