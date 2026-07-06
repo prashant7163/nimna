@@ -166,6 +166,37 @@ class AtRestAead {
     }
   }
 
+  /// Constant-time equality via libsodium `sodium_memcmp` (S13 append to
+  /// the adjudicated FFI fence — SESSION-13 intake §2/§10: the PIN
+  /// verifier's compare must be constant-time and sodium-computed; this is
+  /// pointer marshalling only, zero crypto arithmetic, same adjudication
+  /// as the AEAD glue above).
+  bool constantTimeEquals(Uint8List a, Uint8List b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    if (a.isEmpty) {
+      return true;
+    }
+    SodiumPointer<UnsignedChar>? aPtr;
+    SodiumPointer<UnsignedChar>? bPtr;
+    try {
+      aPtr = a.toSodiumPointer(
+        _ffi,
+        memoryProtection: MemoryProtection.readOnly,
+      );
+      bPtr = b.toSodiumPointer(
+        _ffi,
+        memoryProtection: MemoryProtection.readOnly,
+      );
+      return _ffi.sodium_memcmp(aPtr.ptr.cast(), bPtr.ptr.cast(), a.length) ==
+          0;
+    } finally {
+      aPtr?.dispose();
+      bPtr?.dispose();
+    }
+  }
+
   /// Runs [body] with the key material copied into sodium-guarded native
   /// memory (read-only), zeroed and freed afterwards.
   int _withKeyPointer(

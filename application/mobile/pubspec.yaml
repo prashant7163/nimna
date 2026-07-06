@@ -27,6 +27,10 @@ dependencies:
   path_provider: ^2.1.6
   # Path joins (already transitive via sqflite; imported directly).
   path: ^1.9.1
+  # OS biometric prompt only (S13 app lock). Sign-off: SESSION-13 intake §4.
+  # Fence: ONE call site (lib/src/lock/biometric_gate.dart), biometricOnly —
+  # the fallback is Nimna's own PIN pad, never the OS device credential.
+  local_auth: ^3.0.1
   # Version dictated by the Flutter SDK pin, per Flutter guidance.
   intl: any
 
