@@ -86,7 +86,18 @@ void main() {
           env.knocker.channelId,
         ),
       );
-      await settle();
+      // Wait on the ACTUAL end state — all three received AND every one ACKed
+      // back to `delivered` — not a fixed number of event-loop turns. Under
+      // full-suite CPU load the trailing ACK round-trip can land many turns
+      // later; a fixed settle() fired the assertion (and teardown) early.
+      await pumpUntil(
+        () =>
+            accepter.messages.length == 3 &&
+            knocker.messages.length == 3 &&
+            knocker.messages.every(
+              (m) => m.deliveryState == DeliveryState.delivered,
+            ),
+      );
 
       // The accepter received exactly the three, in seq order.
       expect(accepter.messages.map((m) => m.text).toList(), [
@@ -112,17 +123,16 @@ void main() {
     _autoAccept(accepter);
     await accepter.start();
     await knocker.start();
-    await settle();
+    await pumpUntil(() => knocker.isLive);
     await knocker.sendText('the referent');
-    await settle();
+    await pumpUntil(() => accepter.messages.length == 1);
     final referent = accepter.messages.single;
     expect(referent.text, 'the referent');
 
     // Drop the knocker's line, then react while NOT live → the reaction rides
     // the outbox (pending marker), not the wire.
     await env.bridge.killKnocker();
-    await settle();
-    expect(knocker.isLive, isFalse);
+    await pumpUntil(() => !knocker.isLive);
     final ownMsgId = knocker.messages.single.msgId!;
     await knocker.sendReaction(ownMsgId, '🔥');
     expect(knocker.pendingReactions, hasLength(1));
@@ -140,7 +150,9 @@ void main() {
       seedPendingReactions: pending,
     );
     await fresh.start();
-    await settle();
+    await pumpUntil(
+      () => fresh.isLive && freshAccepter.messages.single.peerReaction == '🔥',
+    );
     expect(fresh.isLive, isTrue);
     expect(freshAccepter.messages.single.peerReaction, '🔥');
   });
@@ -159,7 +171,7 @@ void main() {
       accepter.events.listen(events.add);
       await accepter.start();
       await knocker.start();
-      await settle();
+      await pumpUntil(() => accepter.incomingKnockPending);
 
       // The knock surfaced as an IncomingKnock — NOT auto-answered.
       expect(events.whereType<IncomingKnock>(), isNotEmpty);
@@ -173,7 +185,7 @@ void main() {
 
       // Pick up → ACCEPT → bridge → both live.
       await accepter.acceptKnock();
-      await settle();
+      await pumpUntil(() => knocker.isLive && accepter.isLive);
       expect(
         env.bridge.accepterSent.any((f) => f.type == FrameType.accept),
         isTrue,
@@ -191,11 +203,10 @@ void main() {
     final knocker = env.knocker.build(SessionRole.knocker);
     await accepter.start();
     await knocker.start();
-    await settle();
+    await pumpUntil(() => accepter.incomingKnockPending);
     expect(accepter.incomingKnockPending, isTrue);
 
     await accepter.ignoreKnock();
-    await settle();
     expect(accepter.incomingKnockPending, isFalse);
     // No ACCEPT and no other frame beyond the initial REGISTER_CRID.
     expect(
@@ -218,7 +229,7 @@ void main() {
       _autoAccept(accepter);
       await accepter.start();
       await knocker.start();
-      await settle();
+      await pumpUntil(() => knocker.isLive);
 
       // Accepter rotates its token → knocker persists the present-form bytes.
       final rotated = TokenPayload.present(
@@ -226,7 +237,11 @@ void main() {
         token: Uint8List.fromList(utf8.encode('rotated-token')),
       );
       accepter.sendTokenRefresh(rotated);
-      await settle();
+      await pumpUntil(
+        () =>
+            env.knocker.channels.byId(env.knocker.channelId)!.peerDeviceToken !=
+            null,
+      );
       expect(
         env.knocker.channels.byId(env.knocker.channelId)!.peerDeviceToken,
         rotated.encode(),
@@ -241,7 +256,11 @@ void main() {
 
       // Accepter revokes (absent) → knocker clears the stored token.
       accepter.sendTokenRefresh(const TokenPayload.absent());
-      await settle();
+      await pumpUntil(
+        () =>
+            env.knocker.channels.byId(env.knocker.channelId)!.peerDeviceToken ==
+            null,
+      );
       expect(
         env.knocker.channels.byId(env.knocker.channelId)!.peerDeviceToken,
         isNull,
@@ -271,7 +290,9 @@ void main() {
         env.knocker.channelId,
       ),
     );
-    await settle();
+    await pumpUntil(
+      () => env.bridge.knockerSent.any((f) => f.type == FrameType.knock),
+    );
     final knock = env.bridge.knockerSent.firstWhere(
       (f) => f.type == FrameType.knock,
     );
@@ -295,7 +316,9 @@ void main() {
         env.knocker.channelId,
       ),
     );
-    await settle();
+    await pumpUntil(
+      () => env.bridge.knockerSent.any((f) => f.type == FrameType.knock),
+    );
     final knock = env.bridge.knockerSent.firstWhere(
       (f) => f.type == FrameType.knock,
     );
@@ -315,7 +338,7 @@ void main() {
     _autoAccept(accepter0);
     await accepter0.start();
     await knocker0.start();
-    await settle();
+    await pumpUntil(() => knocker0.isLive);
     expect(knocker0.isLive, isTrue);
 
     // A standing accepter that will pick up the re-knock.
@@ -357,7 +380,7 @@ void main() {
     _autoAccept(accepter0);
     await accepter0.start();
     await knocker0.start();
-    await settle();
+    await pumpUntil(() => knocker0.isLive);
     expect(knocker0.isLive, isTrue);
 
     final coordinator = ReconnectCoordinator(
@@ -393,7 +416,7 @@ void main() {
     final knocker = env.knocker.build(SessionRole.knocker);
     addTearDown(knocker.dispose);
     await knocker.start();
-    await settle();
+    await pumpUntil(() => knocker.lineState == SessionLineState.waiting);
     expect(knocker.lineState, SessionLineState.waiting);
     expect(knocker.isLive, isFalse);
 
@@ -414,6 +437,9 @@ void main() {
 
     // The socket dies mid-knock → connectionLost, but the line was NEVER live.
     await env.bridge.killKnocker();
+    await pumpUntil(() => knocker.lineState == SessionLineState.connectionLost);
+    // Give the coordinator's listener turns to (not) react before asserting
+    // absence of a reconnect.
     await settle();
 
     expect(knocker.lineState, SessionLineState.connectionLost);
@@ -475,6 +501,19 @@ class _Env {
   }
 
   Future<void> dispose() async {
+    // Drain trailing fire-and-forget persistence before the sqflite DBs close.
+    // Production persists received messages, delivery-state advances, reaction
+    // updates, and token refreshes via `unawaited(...)`; closing the DB while
+    // one is in flight throws `database has already been closed`. First pump the
+    // event loop so any multi-step write progresses through its awaits, then a
+    // serialized DB read per party flushes anything still queued (sqflite runs
+    // one op at a time, FIFO — a read completes only behind prior writes). This
+    // is TEARDOWN hygiene only; assertions wait on real state via `pumpUntil`.
+    for (var i = 0; i < 200; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    await knocker.drainWrites();
+    await accepter.drainWrites();
     await knocker.dispose();
     await accepter.dispose();
   }
@@ -572,6 +611,13 @@ class _Party {
 
   Future<void> storePeerToken(TokenPayload token) =>
       peerTokenStore.onPeerTokenRefresh(channelId, token);
+
+  /// Flushes this party's DB op queue: a serialized read completes only behind
+  /// every write enqueued before it (sqflite runs one op at a time), so any
+  /// fire-and-forget append/update/persist has committed once this returns.
+  Future<void> drainWrites() async {
+    await messages.byChannel(channelId);
+  }
 
   Future<void> dispose() => device.dispose();
 }
