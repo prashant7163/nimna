@@ -61,7 +61,21 @@ enum DiagEvent {
   pairingExpired(14),
 
   /// The user cancelled the code; code and keypair were discarded.
-  pairingCancelled(15);
+  pairingCancelled(15),
+
+  /// S9 pairing (joiner + handshake) events — events ONLY: the code, topic,
+  /// keys, CRID, safety phrase, and device-tokens are structurally
+  /// unloggable (no String/bytes parameter exists).
+
+  /// A channel was finalized (valid handshake completed on this device):
+  /// the joiner after "They match" + naming, or the creator's responder.
+  pairingFinalized(16),
+
+  /// A pairing handshake failed and everything was discarded fail-closed
+  /// (§3.1.6) — a commitment/AEAD/transcript failure or a mid-handshake
+  /// bridge loss. Never surfaced to the user (silence doctrine); a local
+  /// diagnostic only.
+  pairingHandshakeFailed(17);
 
   const DiagEvent(this.id);
 

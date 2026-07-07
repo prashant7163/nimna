@@ -3,11 +3,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sodium/sodium_sumo.dart';
 
+import '../../crypto/at_rest_aead.dart';
 import '../../diag/diag.dart';
 import '../../diag/diag_events.dart';
+import '../../noise/dh.dart';
+import '../../noise/xxpsk2.dart';
 import '../../protocol/outer_frame.dart';
 import '../../protocol/pairing_code.dart';
 import '../../protocol/rendezvous.dart';
+import '../../protocol/token_payload.dart';
 import '../../transport/relay_socket.dart';
 import 'pending_pairing.dart';
 
@@ -110,10 +114,45 @@ class CreateLineController extends ChangeNotifier {
   /// The pending record (own static keypair) for the S9 responder engine.
   PendingPairing? get pending => _pending;
 
-  /// Opaque PAIR_DATA payloads received since the bridge, in order — the
-  /// S9 responder engine consumes exactly this (S8 never interprets them
-  /// and never replies).
+  /// Opaque PAIR_DATA payloads received since the bridge, in order. Used
+  /// only when NO responder is attached (the S8 hold-and-buffer behavior).
+  /// When a responder is attached (S9 write-seam), inbound PAIR_DATA is
+  /// driven through the engine instead and never buffered here.
   final List<Uint8List> pairDataFrames = [];
+
+  // ---- S9 responder write-seam ---------------------------------------
+  // The creator is the Noise RESPONDER (spec §3.1.3). This opt-in seam lets
+  // a caller (the end-to-end pairing test today; the creator-finalize UI in
+  // a later session) drive the from-spec responder engine over the bridge:
+  // S8 left `_conn.send` private, so without this seam the creator can hold
+  // but never transmit M2/M4. Absent the attachment, behavior is exactly
+  // S8's (buffer PAIR_DATA, fabricate nothing). Responder logic lives in
+  // `lib/src/noise`; this file only shuttles frames and cancels the TTL
+  // timer at the bridge (TTL is a pre-bridge gate only — CODE decision).
+  void Function(PairingChannelMaterial material)? _onResponderComplete;
+  void Function()? _onResponderFailed;
+  AtRestAead? _aead;
+  NoiseResponderHandshake? _responder;
+  int _responderStep = 0;
+  PairingChannelMaterial? _material;
+
+  bool get _responderEnabled => _onResponderComplete != null;
+
+  /// The finalized channel material (peer static, CRID, ss, peer token)
+  /// after a valid handshake — held for the creator-finalize UI (a later
+  /// session persists it behind F2.6/F2.7). Null until completion.
+  PairingChannelMaterial? get pairingMaterial => _material;
+
+  /// Attaches the from-spec responder engine. Must be called before the
+  /// bridge forms. [onComplete] receives the finalized channel material;
+  /// [onFailed] fires on any fail-closed handshake failure (§3.1.6).
+  void attachResponder({
+    required void Function(PairingChannelMaterial material) onComplete,
+    void Function()? onFailed,
+  }) {
+    _onResponderComplete = onComplete;
+    _onResponderFailed = onFailed;
+  }
 
   RelayConnection? _conn;
   StreamSubscription<OuterFrame>? _sub;
@@ -221,9 +260,10 @@ class CreateLineController extends ChangeNotifier {
   /// foreground timer.
   Future<void> checkExpiryNow() async {
     final pending = _pending;
-    if (pending == null ||
-        (_phase != CreateLinePhase.waiting &&
-            _phase != CreateLinePhase.bridged)) {
+    // TTL is a pre-bridge gate only (CODE decision): once bridged, a
+    // progressing handshake is never aborted by a TTL crossing — its only
+    // exits are handshake success or fail-closed failure (§3.1.6).
+    if (pending == null || _phase != CreateLinePhase.waiting) {
       return;
     }
     if (pending.isExpired(_clock())) {
@@ -287,18 +327,105 @@ class CreateLineController extends ChangeNotifier {
     switch (frame.type) {
       case FrameType.topicBridged:
         if (_phase == CreateLinePhase.waiting) {
+          // TTL is a pre-bridge registration gate only (CODE decision): from
+          // the bridge onward the only terminal states are handshake success
+          // or a fail-closed handshake/bridge failure (§3.1.6). Cancel the
+          // expiry timer so a mid-flight TTL crossing never aborts a
+          // progressing handshake.
+          _expiryTimer?.cancel();
           _phase = CreateLinePhase.bridged;
           _diag.log(DiagEvent.pairingBridged);
+          if (_responderEnabled) {
+            _startResponder();
+          }
           notifyListeners();
         }
       case FrameType.pairData:
         if (_phase == CreateLinePhase.bridged) {
-          pairDataFrames.add(frame.payload);
-          notifyListeners();
+          if (_responderEnabled) {
+            _driveResponder(frame.payload);
+          } else {
+            pairDataFrames.add(frame.payload);
+            notifyListeners();
+          }
         }
       default:
         break; // Everything else is meaningless on this plane: drop.
     }
+  }
+
+  void _startResponder() {
+    final pending = _pending;
+    final secrets = _secrets;
+    if (pending == null || secrets == null) {
+      return;
+    }
+    final aead = _aead ??= AtRestAead(_sodium);
+    _responder = NoiseResponderHandshake(
+      sodium: _sodium,
+      aead: aead,
+      // The pending record owns the static keypair; the responder never
+      // disposes its `_static`, so wrapping it here transfers no ownership.
+      staticKeyPair: NoiseKeyPair(
+        publicKey: pending.publicKey,
+        secretKey: pending.secretKey,
+      ),
+      psk: secrets.psk,
+      // S9 ships push-off by default; the creator carries the "absent" form
+      // (§3.2.1 / §5.7). token-on carriage rides the same path when push is
+      // enabled — no retrofit needed for S15.
+      tokenPayload: const TokenPayload.absent(),
+    );
+    _responderStep = 0;
+  }
+
+  void _driveResponder(Uint8List payload) {
+    final responder = _responder;
+    final secrets = _secrets;
+    if (responder == null || secrets == null) {
+      return;
+    }
+    try {
+      if (_responderStep == 0) {
+        responder.readM1(payload);
+        _sendPairData(responder.writeM2());
+      } else if (_responderStep == 1) {
+        responder.readM3(payload);
+        final header = Uint8List.sublistView(
+          OuterFrame(
+            type: FrameType.pairData,
+            routingId: secrets.topic,
+          ).encode(),
+          0,
+          outerHeaderBytes,
+        );
+        _sendPairData(responder.writeM4(header));
+        _material = responder.finalizeChannel();
+        _onResponderComplete?.call(_material!);
+      }
+      _responderStep++;
+    } on PairingHandshakeError {
+      responder.dispose();
+      _responder = null;
+      _onResponderFailed?.call();
+      // Any failure inside the handshake window kills the topic and the
+      // code (spec §3.1.6, fail-closed).
+      unawaited(_discard(CreateLinePhase.spent));
+    }
+  }
+
+  void _sendPairData(Uint8List payload) {
+    final secrets = _secrets;
+    if (secrets == null) {
+      return;
+    }
+    _conn?.send(
+      OuterFrame(
+        type: FrameType.pairData,
+        routingId: secrets.topic,
+        payload: payload,
+      ),
+    );
   }
 
   void _onConnectionLost() {
@@ -372,6 +499,10 @@ class CreateLineController extends ChangeNotifier {
     _expiryTimer?.cancel();
     _reconnectTimer?.cancel();
     _graceTimer?.cancel();
+    _responder?.dispose();
+    _responder = null;
+    _material?.disposeSecret();
+    _material = null;
     await _closeConnection();
     if (pending != null) {
       await _store.remove(pending.code);
@@ -401,6 +532,8 @@ class CreateLineController extends ChangeNotifier {
     _expiryTimer?.cancel();
     _reconnectTimer?.cancel();
     _graceTimer?.cancel();
+    _responder?.dispose();
+    _material?.disposeSecret();
     unawaited(_closeConnection());
     // Key material dies with the flow; the persisted record survives for
     // relaunch-resume (it is erased only by discard paths).

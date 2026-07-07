@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 
 import '../crypto/at_rest_aead.dart';
@@ -11,6 +13,7 @@ import '../lock/lock_controller.dart';
 import '../lock/pin_verifier.dart';
 import '../pairing/initiator/pairing_initiator_service.dart';
 import '../pairing/initiator/pending_pairing.dart';
+import '../pairing/joiner/joiner_service.dart';
 import '../storage/backup/backup_exclusion.dart';
 import '../storage/keys/key_service.dart';
 import '../storage/keys/master_key_store.dart';
@@ -66,12 +69,23 @@ Future<NimnaServices> bootstrapNimna({
     dbFactory: dbFactory ?? databaseFactory,
   );
 
+  final connector =
+      relayConnector ?? WebSocketRelayConnector(config: const RelayConfig());
+
   final pairing = PairingInitiatorService(
     sodium: sodium,
     storage: storage,
     diag: diag,
-    connector:
-        relayConnector ?? WebSocketRelayConnector(config: const RelayConfig()),
+    connector: connector,
+    clock: clock,
+  );
+
+  final joiner = JoinerService(
+    sodium: sodium,
+    aead: aead,
+    storage: storage,
+    diag: diag,
+    connector: connector,
     clock: clock,
   );
 
@@ -104,17 +118,20 @@ Future<NimnaServices> bootstrapNimna({
   // Boot-time read of the creator's outstanding codes (F2.4/F2.8 relaunch
   // edges): the newest entry is handed to the flow via the channel list's
   // first frame; the widget layer itself never queries the DB for this.
-  // Fail-closed: a record that no longer decodes is unusable (the codes in
-  // it are unrecoverable by design) — erase it and boot clean.
   //
-  // Only when the store is actually open (lock disabled). With a lock
-  // enrolled the perimeter is sealed at boot, so this read cannot run
-  // without crashing (StorageSealedError) — skip it and treat it as no
-  // pending entry.
-  // TODO(S9): when a lock is enrolled, resume the pending-pairing flow
-  // after a successful unlock (read pending_pairings once the perimeter is
-  // unsealed) so F2.4/F2.8 relaunch edges also work behind the lock.
-  if (storage.isOpen) {
+  // The read requires an OPEN store. With the lock disabled the store is
+  // open at boot, so it runs immediately. With a lock enrolled the perimeter
+  // is sealed at boot (StorageSealedError otherwise), so it defers to the
+  // first sealed→unsealed transition (S13 // TODO(S9)) via a one-shot
+  // listener on the LockController. A single idempotency latch guarantees it
+  // fires EXACTLY once across both paths, guarding against a stale re-adopt
+  // of a consumed one-shot entry.
+  var pendingResumeLoaded = false;
+  Future<void> loadPendingPairing() async {
+    if (pendingResumeLoaded || !storage.isOpen) {
+      return;
+    }
+    pendingResumeLoaded = true;
     List<PendingPairing> pendingEntries;
     try {
       pendingEntries = await pairing.pendingStore.readAll();
@@ -137,11 +154,33 @@ Future<NimnaServices> bootstrapNimna({
     }
   }
 
+  // Lock-disabled cold start: the store is already open.
+  await loadPendingPairing();
+
+  // Lock-enrolled cold start: resume on the first unlock. `locked` reflects
+  // `keyService.sealed`; unlock opens the store and notifies. The latch
+  // makes this a no-op if the boot read already ran.
+  if (!pendingResumeLoaded) {
+    void onLockTransition() {
+      if (pendingResumeLoaded) {
+        lockController.removeListener(onLockTransition);
+        return;
+      }
+      if (storage.isOpen && !lockController.locked) {
+        lockController.removeListener(onLockTransition);
+        unawaited(loadPendingPairing());
+      }
+    }
+
+    lockController.addListener(onLockTransition);
+  }
+
   return NimnaServices(
     keyService: keyService,
     storage: storage,
     diag: diag,
     pairing: pairing,
+    joiner: joiner,
     lockController: lockController,
     wipe: wipe,
   );

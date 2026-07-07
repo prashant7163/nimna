@@ -17,3 +17,13 @@ directories); each folder carries the upstream `OFL.txt` license text.
 - `fonts/spline_sans_mono/SplineSansMono-wght.ttf` — variable-weight TTF
   (upstream `SplineSansMono[wght].ttf`); weight 500 only, used solely for
   machine-shaped strings (Nimna code, safety phrase).
+
+## wordlist/ (S9)
+
+- `wordlist/wordlist-en-v1.txt` — the pinned safety-phrase wordlist (EFF
+  short wordlist 2.0, 1296 words), a verbatim copy of the normative
+  `docs/test-vectors/wordlist-en-v1.txt`. **Protocol output, not UI copy:**
+  one global list, rendered identically in every locale (spec §3.1.4). Its
+  SHA-256 is normative and is verified at load time by
+  `lib/src/pairing/joiner/safety_phrase_wordlist.dart` (fail-closed on
+  drift). Never localized, never edited outside a spec change.

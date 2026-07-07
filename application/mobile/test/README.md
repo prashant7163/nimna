@@ -40,7 +40,23 @@ protocol/ (S8, vector-locked to ../../docs/test-vectors/)
                            mirror); Argon2id/HKDF constants pinned
   outer_frame_test.dart    §5.4: all 11 committed outer-frame cases,
                            full enum coverage assertion, strict rejects
-pairing/ (S8)
+  token_payload_test.dart  §5.7: committed token_payload vectors (present/
+                           absent, both platforms) + round-trip +
+                           malformation rejection (S9)
+  channel_identity_test.dart  §3.1.4: the phrase-words mapping vectors
+                           (uint64→base-1296 incl. the full-uint64 BigInt
+                           path) + wordlist pin + salt2 order-independence
+                           (S9)
+noise/ (S9, vector-locked to ../../docs/test-vectors/pairing-handshake.json)
+  handshake_vectors_test.dart  the FULL XXpsk2 byte-lock: every key, every
+                           message byte, per-step ck + h, Split, M4
+                           PAIR_CONFIRM, CRID + safety phrase — both
+                           transcripts, both roles in lockstep
+  xxpsk2_pairing_test.dart  end-to-end pairing (fresh keys) → identical
+                           CRID + phrase; the adversarial rejections: a
+                           code-less MITM (wrong psk), a tampered M4, a
+                           lying M0 commitment (the explicit §3.1.3 check)
+pairing/ (S8 + S9)
   initiator_controller_test.dart  the state machine over the fake relay:
                            create/register/persist, offline edge (no
                            phantom codes), bridged hold + opaque PAIR_DATA
@@ -56,7 +72,19 @@ pairing/ (S8)
                            decoder verified) + determinism
   single_call_site_test.dart  source pins: startCreateLine G2 single call
                            site, share_plus fence, qr-encoder fence, S10
-                           inner-envelope fence
+                           §5.5–§5.8 inner-envelope fence (§5.7 token_payload
+                           now explicitly allowed — the S9 reconciliation)
+  join_methods_test.dart   the four join methods (manual/paste/scan/upload)
+                           all converge through PairingCode.canonicalize /
+                           fromScannedPayload to identical canonical bytes
+                           (S9)
+  join_controller_test.dart  the F3 joiner state machine over the fake relay,
+                           driven against a REAL responder engine (shared
+                           reduced-cost psk): full handshake → matching
+                           phrase → persisted channel + stored peer token;
+                           self-join guard; no-answer timeout; fail-closed
+                           spent; local-only mismatch discard (nothing
+                           persisted, no wire signal); offline edge (S9)
 storage/
   key_service_test.dart    MK mint/load, seal ⇒ StorageSealedError, key
                            destruction, Keychain-accessibility pin
@@ -67,6 +95,12 @@ storage/
                              raw-byte marker absence over db/WAL/media/diag,
                              schema-mismatch destructive reset, full-wipe
                              and per-channel-wipe seams
+app/ (S9)
+  bootstrap_resume_test.dart  the post-unlock pending-pairing resume hook:
+                           adopted at boot when the store is open (lock
+                           disabled) and on the FIRST sealed→unsealed
+                           transition (lock enrolled), fired exactly once by
+                           the idempotency latch
 privacy/
   diag_marker_audit_test.dart  planted-marker audit (relay-logscrub
                                mirror): fake code/label/body/token/key-hex

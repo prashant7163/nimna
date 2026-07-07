@@ -553,6 +553,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Channel wiped.'**
   String get wipe_channelWipedToast;
+
+  /// F3.1 join-screen headline, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a code'**
+  String get pairing_joinTitle;
+
+  /// F3.1 join-screen caption, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes come from the other person. Each one works once.'**
+  String get pairing_joinIntro;
+
+  /// F3.1 quiet affordance — paste the code from the clipboard (join method ii). Verb, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste'**
+  String get pairing_joinPaste;
+
+  /// F3.1 quiet affordance — open the live QR scanner (join method iii). Verb, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan'**
+  String get pairing_joinScan;
+
+  /// F3.1 quiet affordance — pick a QR image or PDF (join method iv). Verb, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload'**
+  String get pairing_joinUpload;
+
+  /// F3.1 primary button — begin joining with the entered code. Enabled only when the code is complete and is not this device's own. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get pairing_joinAction;
+
+  /// F3.1 edge — device offline; nothing was sent. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Joining needs a connection.'**
+  String get pairing_joinOffline;
+
+  /// F3.2 live-scanner headline, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan their code'**
+  String get pairing_joinScanTitle;
+
+  /// F3.2 live-scanner caption, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Point your camera at the code on their screen.'**
+  String get pairing_joinScanCaption;
+
+  /// F3.2 escape from the scanner back to manual entry. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter it instead'**
+  String get pairing_joinScanEnterInstead;
+
+  /// F3.2 edge — camera permission denied; drop to manual entry (or upload). Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'No camera access — type the code instead.'**
+  String get pairing_joinCameraDenied;
+
+  /// F3.1 edge — an uploaded image/PDF held no readable QR; field untouched. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'No code in that file.'**
+  String get pairing_joinNoQrInFile;
+
+  /// F3.3 handshake headline — the bridge formed. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Found them.'**
+  String get pairing_joinFoundThem;
+
+  /// F3.3 handshake status line — key agreement runs beneath; usually sub-second. Verbatim. No crypto vocabulary. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Setting up the line…'**
+  String get pairing_joinSettingUp;
+
+  /// F3.3 footer — the single-use code is discarded forever the moment pairing completes (spec §3.1.6). Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'The code has done its job. It won\'t work again for anyone.'**
+  String get pairing_joinCodeSpentNote;
+
+  /// F3.3 edge — the handshake/bridge failed (connection lost); both sides discarded partial state, a half-made channel never exists (spec §3.1.6). Verbatim. Distinct from the creator's F2.5 '…make a new one.' by the 'ask them' (the joiner cannot create a code). S9.
+  ///
+  /// In en, this message translates to:
+  /// **'That didn\'t finish. The code is spent — ask them to make a new one.'**
+  String get pairing_joinSpentBody;
+
+  /// CANONICAL, voice guide string (register notes) verbatim. F3.6/F3.7 — the ONE generic response for wrong / expired / used / never-existed codes (indistinguishable by design so a prober can never confirm a code once existed; spec §3.1.6, silence doctrine). Shown after the joiner's own no-answer timeout. Never edit outside a spec/voice change. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'That code didn\'t match anything. Codes expire — ask them to make a new one.'**
+  String get pairing_noMatchError;
+
+  /// F3.6/F3.8 — clears the code field to try again. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get pairing_clearAction;
+
+  /// F3.4 safety-phrase headline — the closing ritual of pairing, compared out-of-band (spec §3.1 verification). Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Call them and compare'**
+  String get pairing_verifyTitle;
+
+  /// F3.4 safety-phrase body, verbatim (voice guide string on the closing ritual). S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Read these three words to each other. If they match, the line is yours alone.'**
+  String get pairing_verifyBody;
+
+  /// F3.4 primary button — the phrases matched; finalize (spec §3.1). No skip affordance (USER 2026-07-04). Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'They match'**
+  String get pairing_verifyMatch;
+
+  /// F3.4 secondary (spaced below, never adjacent) — decline; the pairing is thrown away locally, no peer signal (USER 2026-07-07). Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'They don\'t match'**
+  String get pairing_verifyMismatch;
+
+  /// F2.9/F3.4-decline mismatch screen headline, verbatim. Level tone — the MITM defense working as designed (spec §3.1 verification, §9). S9.
+  ///
+  /// In en, this message translates to:
+  /// **'The words didn\'t match.'**
+  String get pairing_mismatchTitle;
+
+  /// F2.9/F3.4-decline mismatch screen body, verbatim. States what it can mean and that everything was discarded LOCALLY — it never claims the other side was notified (silence doctrine; USER 2026-07-07 local-only discard). S9.
+  ///
+  /// In en, this message translates to:
+  /// **'That can mean someone got between you while pairing. This pairing has been thrown away — nothing was kept.'**
+  String get pairing_mismatchBody;
+
+  /// F2.9/F3.4-decline mismatch screen forward guidance, verbatim. Points to a fresh, safer pairing. S9. NOTE (design-sync flag): the 'make a new code' phrasing is creator-oriented; on the joiner side the forward action is to ask the other person for a fresh code — flagged in progress/SESSION-9.md.
+  ///
+  /// In en, this message translates to:
+  /// **'Make a new code and share it somewhere safer. In person is safest.'**
+  String get pairing_mismatchShareSafer;
+
+  /// F3.5 channel-ready headline, verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'The line is yours.'**
+  String get pairing_readyTitle;
+
+  /// F3.5 label-field caption — the label is local-only. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Name this line'**
+  String get pairing_nameLineLabel;
+
+  /// F3.5 honest note — labels are local text, never transmitted (spec §6). Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Labels live only on this phone. They\'re never sent anywhere.'**
+  String get pairing_nameLineCaption;
+
+  /// F3.5 primary button — persist the channel and enter the line. Verbatim. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get pairing_doneAction;
+
+  /// Canonical button verb (voice guide register notes). Dismisses the mismatch screen back to the channel list. S9.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get pairing_goBack;
 }
 
 class _AppLocalizationsDelegate

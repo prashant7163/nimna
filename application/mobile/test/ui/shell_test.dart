@@ -44,12 +44,12 @@ void main() {
       expect(find.text(en.channelListEmptyBody), findsOneWidget);
       expect(find.text(en.appTitle), findsOneWidget);
 
-      // S8: "Create a code" is live (the G2 single entry point);
-      // "Enter a code" stays an S9 stub.
+      // "Create a code" is live (the G2 single entry point, S8); "Enter a
+      // code" is now live too (the S9 joiner flow, never paywalled).
       final create = tester.widget<FilledButton>(find.byType(FilledButton));
       final enter = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
       expect(create.onPressed, isNotNull);
-      expect(enter.onPressed, isNull);
+      expect(enter.onPressed, isNotNull);
       expect(find.text(en.actionCreateCode), findsOneWidget);
       expect(find.text(en.actionEnterCode), findsOneWidget);
     });

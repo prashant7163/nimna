@@ -89,22 +89,34 @@ void main() {
     );
   });
 
-  test('S8 ships no inner-envelope codec (the S10 checkpoint fence)', () {
-    // §5.5–§5.8 are S10's. The protocol tree may reference the sections in
-    // comments only; no Dart identifiers for the inner envelope may exist.
-    for (final file
-        in Directory('lib/src/protocol')
-            .listSync(recursive: true)
-            .whereType<File>()
-            .where((f) => f.path.endsWith('.dart'))) {
-      final code = stripComments(file.readAsStringSync());
-      expect(
-        RegExp(
-          r'class\s+(InnerEnvelope|Envelope|TokenPayload)\b',
-        ).hasMatch(code),
-        isFalse,
-        reason: '${file.path} crosses the S10 codec fence',
+  test(
+    'ships no §5.5–§5.8 inner-envelope codec (the S10 checkpoint fence)',
+    () {
+      // §5.5 (inner envelope: TEXT/ACK/CONTROL/HANGUP/MEDIA_CHUNK/REACTION) and
+      // §5.8 (reactions/replies) are S10's — no Dart identifiers for them may
+      // exist in the protocol tree; the sections may appear in comments only.
+      //
+      // S9 reconciliation: `TokenPayload` (§5.7) was REMOVED from this fence —
+      // §5.7 is the pairing-plane device-token leaf carried in the handshake
+      // payloads M2/M3 (§3.1.3), explicitly in S9's scope; it is NOT the inner
+      // envelope. The fence still forbids the actual §5.5–§5.8 codec classes.
+      // (Same reconciliation shape as the S13 pwhash-fence widening.)
+      final forbidden = RegExp(
+        r'class\s+(InnerEnvelope|Envelope|Reaction|MediaChunk)\b'
+        r'|\b(refMsgId|replyTo|innerEnvelope)\b',
       );
-    }
-  });
+      for (final file
+          in Directory('lib/src/protocol')
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.dart'))) {
+        final code = stripComments(file.readAsStringSync());
+        expect(
+          forbidden.hasMatch(code),
+          isFalse,
+          reason: '${file.path} crosses the S10 §5.5–§5.8 codec fence',
+        );
+      }
+    },
+  );
 }

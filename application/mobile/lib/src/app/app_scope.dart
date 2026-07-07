@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../diag/diag.dart';
 import '../lock/lock_controller.dart';
 import '../pairing/initiator/pairing_initiator_service.dart';
+import '../pairing/joiner/joiner_service.dart';
 import '../storage/keys/key_service.dart';
 import '../storage/storage_service.dart';
 import '../wipe/wipe_service.dart';
@@ -16,6 +17,7 @@ class NimnaServices {
     required this.storage,
     required this.diag,
     required this.pairing,
+    required this.joiner,
     required this.lockController,
     required this.wipe,
   });
@@ -24,6 +26,9 @@ class NimnaServices {
   final StorageService storage;
   final Diag diag;
   final PairingInitiatorService pairing;
+
+  /// The joiner flow (F3) — the S9 counterpart to [pairing].
+  final JoinerService joiner;
   final LockController lockController;
   final WipeService wipe;
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../app/routes.dart';
 import '../../pairing/initiator/create_line_entry.dart';
+import '../../pairing/joiner/join_line_entry.dart';
 import '../theme/nimna_tokens.dart';
 import '../widgets/glyphs.dart';
 
@@ -75,7 +76,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
               ),
               const SizedBox(height: NimnaSpacing.base * 2),
               OutlinedButton(
-                onPressed: null, // S9 flow — stub until then.
+                onPressed: () => unawaited(startJoinLine(context)),
                 child: Text(l10n.actionEnterCode),
               ),
               const Spacer(flex: 3),
