@@ -564,7 +564,10 @@ class SessionController {
     if (_closed) {
       return;
     }
-    final now = _nowMs();
+    // Use the RECEIVER receive-time the controller already stamped (and used for
+    // the blob's purge_at), so the message row and the media_ix row purge in
+    // lockstep — never the sender-controlled wire timestamp (spec §5.1).
+    final now = received.receivedAtMs;
     final expiring = received.expirySeconds != null;
     final purgeAt = expiring ? now + received.expirySeconds! * 1000 : null;
     _mediaMeta[_hex(received.mediaId)] = _MediaMeta(

@@ -33,6 +33,7 @@ class ReceivedMedia {
     required this.mime,
     required this.byteLength,
     required this.timestampMs,
+    required this.receivedAtMs,
     this.expirySeconds,
     this.replyTo,
   });
@@ -45,7 +46,16 @@ class ReceivedMedia {
 
   final String mime;
   final int byteLength;
+
+  /// The sender's wire timestamp (display/ordering only — NEVER expiry).
   final int timestampMs;
+
+  /// The RECEIVER's local receive time (this device's clock). Expiry is
+  /// keyed to THIS — the same value the blob's `media_ix.purge_at` uses — so a
+  /// peer's forged manifest timestamp cannot defeat disappearing media
+  /// (spec §5.1; matches the TEXT read-at path).
+  final int receivedAtMs;
+
   final int? expirySeconds;
   final Uint8List? replyTo;
 }
@@ -59,6 +69,7 @@ class MediaTransferController {
     required this._randomBytes,
     required this._sealFrame,
     required this._onInboundComplete,
+    required this._nowMs,
     required this._diag,
   }) : _channelId = Uint8List.fromList(channelId);
 
@@ -67,6 +78,11 @@ class MediaTransferController {
   final Uint8List Function(int length) _randomBytes;
   final bool Function(InnerEnvelope env) _sealFrame;
   final void Function(ReceivedMedia received) _onInboundComplete;
+
+  /// THIS device's clock (Unix ms) — the SAME source the session uses. Inbound
+  /// media expiry is keyed to it, never the sender-controlled wire timestamp.
+  final int Function() _nowMs;
+
   final Diag _diag;
 
   final MediaReassembler _reassembler = MediaReassembler();
@@ -143,11 +159,18 @@ class MediaTransferController {
   }
 
   Future<void> _ingest(CompletedMediaTransfer transfer) async {
-    // Persist the received blob + index BEFORE the record exists, so the
-    // display path (readMedia) always finds the blob (never the gallery).
+    // Expiry is keyed to the RECEIVER's clock (read = receive time), NOT the
+    // sender-controlled manifest timestamp — a peer stamping a future wire
+    // timestamp must NOT be able to make the blob/row never sweep (spec §5.1;
+    // matches the TEXT read-at path). The SAME `receivedAt` drives both the
+    // blob's `media_ix.purge_at` here and the message row's `purge_at` in the
+    // session, so the two rows stay in lockstep.
+    final receivedAt = _nowMs();
     final purgeAt = transfer.expirySeconds == null
         ? null
-        : transfer.timestampMs + transfer.expirySeconds! * 1000;
+        : receivedAt + transfer.expirySeconds! * 1000;
+    // Persist the received blob + index BEFORE the record exists, so the
+    // display path (readMedia) always finds the blob (never the gallery).
     final record = await _media.add(
       channelId: _channelId,
       mime: transfer.mime,
@@ -163,6 +186,7 @@ class MediaTransferController {
         mime: transfer.mime,
         byteLength: transfer.bytes.length,
         timestampMs: transfer.timestampMs,
+        receivedAtMs: receivedAt,
         expirySeconds: transfer.expirySeconds,
         replyTo: transfer.replyTo,
       ),

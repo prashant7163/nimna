@@ -237,6 +237,78 @@ void main() {
       throwsA(anything),
     );
   });
+
+  test('over-cap manifest is discarded (no OOM), session stays LIVE', () async {
+    final s = await _Session.establish(sodium, aead);
+    addTearDown(s.dispose);
+
+    // A hostile manifest: chunk_count = 2^32-1, total_len ~= 2^63. If the
+    // receiver allocated from these it would OOM; instead it discards, stays
+    // live, and never ACKs.
+    final mid = aead.randomBytes(16);
+    final manifest = InnerEnvelope(
+      type: InnerType.mediaChunk,
+      manifest: true,
+      msgId: mid,
+      timestampMs: 1,
+      body: ManifestBody(
+        chunkCount: 0xFFFFFFFF,
+        totalLen: 0x7FFFFFFFFFFFFFFF,
+        contentHash: aead.randomBytes(32),
+        mime: 'image/jpeg',
+      ).encode(),
+    );
+    expect(s.knocker.controller.sealForTest(manifest), isTrue);
+    await settle();
+
+    expect(s.accepter.controller.messages, isEmpty);
+    expect(s.accepter.controller.isLive, isTrue);
+    expect(s.knocker.controller.isLive, isTrue);
+  });
+
+  test(
+    'receiver expiry uses the RECEIVER clock, not the wire timestamp',
+    () async {
+      // Sender clock is a YEAR in the future; the receiver clock is "now". A
+      // forged future manifest timestamp must NOT be able to defeat disappearing
+      // media — the receiver keys expiry to its OWN receive time.
+      var receiverNow = DateTime.utc(2026, 7, 7, 12);
+      final senderFuture = DateTime.utc(2027, 7, 7, 12);
+      final s = await _Session.establish(
+        sodium,
+        aead,
+        knockerClock: () => senderFuture,
+        accepterClock: () => receiverNow,
+      );
+      addTearDown(s.dispose);
+
+      await s.knocker.controller.sendMedia(
+        MediaAttachment(bytes: jpeg(), mime: 'image/jpeg'),
+        expirySeconds: 60,
+      );
+      await settle();
+      final rxId = s.accepter.controller.messages.single.mediaId!;
+
+      // Advance the RECEIVER's own clock 2 min past receipt, then sweep.
+      receiverNow = receiverNow.add(const Duration(minutes: 2));
+      await s.accepter.controller.purgeExpiredMedia();
+      await settle();
+
+      // Purged on the receiver's schedule despite the sender's future timestamp.
+      expect(s.accepter.controller.messages, isEmpty);
+      expect(
+        await s.accepter.storageMedia.indexByChannel(s.accepter.channelId),
+        isEmpty,
+      );
+      expect(
+        () => s.accepter.storageMedia.readBlob(
+          channelId: s.accepter.channelId,
+          id: rxId,
+        ),
+        throwsA(anything),
+      );
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -253,6 +325,8 @@ class _Session {
     SodiumSumo sodium,
     AtRestAead aead, {
     DateTime Function()? clock,
+    DateTime Function()? knockerClock,
+    DateTime Function()? accepterClock,
   }) async {
     final knockerStatic = generateNoiseKeyPair(sodium);
     final accepterStatic = generateNoiseKeyPair(sodium);
@@ -267,7 +341,7 @@ class _Session {
       peerStaticPublic: accepterStatic.publicKey,
       crid: crid,
       connector: _BridgeConnector(bridge, knocker: true),
-      clock: clock,
+      clock: knockerClock ?? clock,
     );
     final accepter = await _Party.create(
       sodium: sodium,
@@ -277,7 +351,7 @@ class _Session {
       peerStaticPublic: knockerStatic.publicKey,
       crid: crid,
       connector: _BridgeConnector(bridge, knocker: false),
-      clock: clock,
+      clock: accepterClock ?? clock,
     );
 
     await accepter.controller.start();
@@ -333,6 +407,7 @@ class _Party {
       ),
     );
     final diag = Diag(aead: aead);
+    final clk = clock ?? DateTime.now;
     final controller = SessionController(
       sodium: sodium,
       aead: aead,
@@ -353,6 +428,8 @@ class _Party {
         randomBytes: aead.randomBytes,
         sealFrame: controller.sealMediaFrame,
         onInboundComplete: controller.ingestReceivedMedia,
+        // The controller's clock must match the session's (same source).
+        nowMs: () => clk().toUtc().millisecondsSinceEpoch,
         diag: diag,
       ),
     );

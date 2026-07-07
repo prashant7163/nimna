@@ -15,6 +15,15 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart' as crypto;
 
 import '../../protocol/inner_envelope.dart';
+import 'media_chunker.dart' show mediaChunkPlaintextBytes;
+
+/// Receiver-side HARD bounds on UNTRUSTED manifest values (spec §5.1). The
+/// frozen codec validates only STRUCTURE, never magnitude — a hostile/buggy
+/// peer can put `chunk_count` up to 2^32-1 and `total_len` up to 2^64-1 in a
+/// well-formed manifest. The sender-side 5 MB cap does NOT protect the
+/// receiver, so these bounds gate every allocation, BEFORE it happens.
+const int maxMediaTotalLen = 5 * 1024 * 1024; // spec §5.1 cap
+const int maxMediaChunkCount = 80; // ceil(5 MB / 65536) — the §5.1 upper bound
 
 /// What a fed envelope produced.
 enum MediaReassemblyOutcome {
@@ -41,6 +50,11 @@ enum MediaDiscardReason {
   lengthMismatch,
   indexOutOfRange,
   duplicateChunk,
+
+  /// The manifest's `chunk_count` / `total_len` exceed the §5.1 bounds, or are
+  /// mutually inconsistent — rejected BEFORE any buffer is allocated (an OOM
+  /// guard against untrusted manifest values).
+  manifestOutOfBounds,
 }
 
 /// A completed transfer's assembled payload + manifest header fields.
@@ -128,6 +142,18 @@ class MediaReassembler {
 
   MediaReassemblyResult _onManifest(InnerEnvelope env) {
     final body = ManifestBody.decode(env.body);
+    // Enforce the §5.1 envelope on UNTRUSTED manifest values BEFORE allocating
+    // `List.filled(chunkCount)` / `Uint8List(totalLen)` — otherwise a peer's
+    // `chunk_count = 0xFFFFFFFF` / `total_len = 2^64-1` is an instant OOM. This
+    // is a TRANSFER-LEVEL discard (no ACK, session stays live) — a policy bound,
+    // not a §3.3.1 structural codec error.
+    if (!_manifestWithinBounds(body)) {
+      return MediaReassemblyResult(
+        MediaReassemblyOutcome.discarded,
+        manifestMsgId: env.msgId,
+        reason: MediaDiscardReason.manifestOutOfBounds,
+      );
+    }
     final pending = _PendingTransfer(
       manifestMsgId: env.msgId,
       chunkCount: body.chunkCount,
@@ -233,6 +259,23 @@ class MediaReassembler {
 
   /// Drops all buffered partial transfers (session end / teardown).
   void clear() => _pending.clear();
+
+  /// True iff the manifest's magnitudes are within the §5.1 envelope AND
+  /// mutually consistent. `total_len` is a decoded uint64 — values above 2^63
+  /// come back negative in Dart, which this rejects. `chunk_count` must equal
+  /// `ceil(total_len / 65536)` (an over-large count would over-allocate).
+  static bool _manifestWithinBounds(ManifestBody body) {
+    if (body.totalLen < 0 || body.totalLen > maxMediaTotalLen) {
+      return false;
+    }
+    if (body.chunkCount < 0 || body.chunkCount > maxMediaChunkCount) {
+      return false;
+    }
+    final expected =
+        (body.totalLen + mediaChunkPlaintextBytes - 1) ~/
+        mediaChunkPlaintextBytes;
+    return body.chunkCount == expected;
+  }
 
   static bool _constantTimeEquals(Uint8List a, Uint8List b) {
     if (a.length != b.length) {

@@ -462,6 +462,34 @@ alternative for the orchestrator, not taken: `Routes.mediaViewer = '/media'`.)
 
 ## Review
 
+**Reopened 2026-07-07 — two BLOCKING findings, both fixed by the developer:**
+
+- **B1 (OOM from untrusted manifest):** `media_reassembler.dart` now enforces
+  receiver-side HARD bounds on the UNTRUSTED `chunk_count`/`total_len` BEFORE any
+  allocation — `total_len ≤ 5 MB`, `chunk_count ≤ 80`, and
+  `chunk_count == ceil(total_len/65536)` (a decoded uint64 `total_len` above
+  2^63 comes back negative and is also rejected). A violation is a
+  TRANSFER-LEVEL discard (`MediaDiscardReason.manifestOutOfBounds`) — no ACK,
+  session stays live, never a §3.3.1 kill. The frozen codec is untouched (it
+  validates structure, not magnitude). Tests: 4 reassembler unit cases
+  (`chunk_count=0xFFFFFFFF`/`total_len≈2^63` discarded before allocation,
+  just-over-cap discarded, inconsistent-count discarded, valid at-cap 5 MB/80
+  accepted) + a session-level integration case (over-cap manifest → accepter
+  stays live, no message, no crash).
+- **B2 (peer defeats disappearing-media):** the receiver's blob `purge_at` was
+  keyed to the sender-controlled manifest `timestamp` — a forged future value
+  meant the blob/row never swept. Fixed: `MediaTransferController` takes the
+  session's `nowMs` and stamps a single receiver `receivedAt` used for BOTH the
+  blob's `media_ix.purge_at` (in `_ingest`) and the message row's `purge_at`
+  (`ingestReceivedMedia` reads `received.receivedAtMs`), so the two rows purge in
+  lockstep on the RECEIVER's clock — matching the TEXT read-at path + intake §4.
+  The wire timestamp is retained ONLY as the display/ordering time. Test: a
+  skewed-clock integration case (sender clock +1 year, receiver "now") asserts
+  the receiver still purges on its own schedule.
+
+Re-run after the fixes: `flutter analyze` clean · `flutter test` 375 pass
+(+6 net-new) · `dart format` clean. Diff scope otherwise unchanged.
+
 ## QA done-check
 
 ## Next / follow-ups

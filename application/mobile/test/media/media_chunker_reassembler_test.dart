@@ -126,6 +126,91 @@ void main() {
     expect(result.transfer, isNull);
   });
 
+  test('OVER-CAP manifest is discarded BEFORE any allocation (OOM guard)', () {
+    final r = MediaReassembler();
+    // A hostile manifest: chunk_count = 2^32-1, total_len ~= 2^63 — allocating
+    // List.filled / Uint8List from these would OOM. The bounds gate rejects it
+    // as a transfer-level discard, never touching the allocator.
+    final hostile = InnerEnvelope(
+      type: InnerType.mediaChunk,
+      manifest: true,
+      msgId: manifestId,
+      timestampMs: 1,
+      body: ManifestBody(
+        chunkCount: 0xFFFFFFFF,
+        totalLen: 0x7FFFFFFFFFFFFFFF,
+        contentHash: Uint8List(32),
+        mime: 'image/jpeg',
+      ).encode(),
+    );
+    final result = r.onEnvelope(wire(hostile));
+    expect(result.outcome, MediaReassemblyOutcome.discarded);
+    expect(result.reason, MediaDiscardReason.manifestOutOfBounds);
+    expect(result.transfer, isNull);
+  });
+
+  test('manifest just over the 5 MB cap is discarded', () {
+    final r = MediaReassembler();
+    const over = maxMediaTotalLen + 1;
+    final manifest = InnerEnvelope(
+      type: InnerType.mediaChunk,
+      manifest: true,
+      msgId: manifestId,
+      timestampMs: 1,
+      body: ManifestBody(
+        chunkCount:
+            (over + mediaChunkPlaintextBytes - 1) ~/ mediaChunkPlaintextBytes,
+        totalLen: over,
+        contentHash: Uint8List(32),
+        mime: 'image/jpeg',
+      ).encode(),
+    );
+    final result = r.onEnvelope(wire(manifest));
+    expect(result.outcome, MediaReassemblyOutcome.discarded);
+    expect(result.reason, MediaDiscardReason.manifestOutOfBounds);
+  });
+
+  test(
+    'manifest with chunk_count inconsistent with total_len is discarded',
+    () {
+      final r = MediaReassembler();
+      // Within the cap, but chunk_count lies (claims 1 for a 3-chunk length).
+      final manifest = InnerEnvelope(
+        type: InnerType.mediaChunk,
+        manifest: true,
+        msgId: manifestId,
+        timestampMs: 1,
+        body: ManifestBody(
+          chunkCount: 1,
+          totalLen: mediaChunkPlaintextBytes * 3,
+          contentHash: Uint8List(32),
+          mime: 'image/jpeg',
+        ).encode(),
+      );
+      final result = r.onEnvelope(wire(manifest));
+      expect(result.outcome, MediaReassemblyOutcome.discarded);
+      expect(result.reason, MediaDiscardReason.manifestOutOfBounds);
+    },
+  );
+
+  test('a valid at-cap manifest (5 MB, 80 chunks) is accepted', () {
+    final r = MediaReassembler();
+    final manifest = InnerEnvelope(
+      type: InnerType.mediaChunk,
+      manifest: true,
+      msgId: manifestId,
+      timestampMs: 1,
+      body: ManifestBody(
+        chunkCount: maxMediaChunkCount,
+        totalLen: maxMediaTotalLen,
+        contentHash: Uint8List(32),
+        mime: 'image/jpeg',
+      ).encode(),
+    );
+    final result = r.onEnvelope(wire(manifest));
+    expect(result.outcome, MediaReassemblyOutcome.buffered); // within bounds
+  });
+
   test('chunk BEFORE its manifest is ignored (nothing to discard)', () {
     final frames = build(body(100, 1));
     final r = MediaReassembler();
