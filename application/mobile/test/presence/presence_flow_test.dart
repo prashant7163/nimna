@@ -383,6 +383,52 @@ void main() {
     expect(phases.last, ReconnectPhase.lost);
     expect(coordinator.controller!.isLive, isFalse);
   });
+
+  test('a cold knock that drops before going live does NOT reconnect', () async {
+    final env = await _Env.create(sodium, aead);
+    addTearDown(env.dispose);
+
+    // A knock with nobody to pick it up: the knocker reaches `waiting` and
+    // never goes live (a COLD knock — never auto-retried, spec §4).
+    final knocker = env.knocker.build(SessionRole.knocker);
+    addTearDown(knocker.dispose);
+    await knocker.start();
+    await settle();
+    expect(knocker.lineState, SessionLineState.waiting);
+    expect(knocker.isLive, isFalse);
+
+    final coordinator = ReconnectCoordinator(
+      rebuild: (seed) =>
+          env.knocker.build(SessionRole.knocker, seedPendingReactions: seed),
+      knockPayload: () => Uint8List(0),
+      diag: env.knocker.diag,
+      window: const Duration(seconds: 20),
+      sleeper: (d) async => env.advance(d),
+      clock: env.clock,
+    );
+    addTearDown(coordinator.dispose);
+    coordinator.adopt(knocker);
+
+    final phases = <ReconnectPhase>[];
+    coordinator.phases.listen(phases.add);
+
+    // The socket dies mid-knock → connectionLost, but the line was NEVER live.
+    await env.bridge.killKnocker();
+    await settle();
+
+    expect(knocker.lineState, SessionLineState.connectionLost);
+    // The cold-vs-live gate (`_hasBeenLive`) blocks recovery entirely: the
+    // coordinator stays idle, emits no phase, and re-knocks nothing. (Fails if
+    // `&& _hasBeenLive` is dropped from the reconnect trigger — the cold knock
+    // would then be auto-retried, violating spec §4.)
+    expect(coordinator.phase, ReconnectPhase.idle);
+    expect(phases, isEmpty);
+    expect(
+      env.bridge.knockerSent.where((f) => f.type == FrameType.knock),
+      hasLength(1),
+      reason: 'no second KNOCK — the cold knock is never auto-retried',
+    );
+  });
 }
 
 // ---------------------------------------------------------------------------

@@ -482,6 +482,23 @@ item, same treatment as touch #4.
 
 ## Review
 
+Code review PASSED (no blocking). Two items applied in-worktree (2026-07-07):
+- **S-2 (SHOULD-FIX):** added a direct test for the reconnect coordinator's
+  cold-vs-live gate — `presence_flow_test.dart` "a cold knock that drops before
+  going live does NOT reconnect": adopt a knocker that goes `connectionLost`
+  from `waiting` (never live) and assert the coordinator stays `idle`, emits no
+  phase, and re-knocks nothing (only the one original KNOCK on the wire).
+  Verified it FAILS with `&& _hasBeenLive` removed (the cold knock would be
+  auto-retried, violating §4) and passes with it — the defense-in-depth gate is
+  now covered.
+- **N-2 (nit):** `reconnect_coordinator._reconnect` now disposes the dropped
+  adopted controller (cancels the sub AND closes its broadcast event stream) on
+  the drop path — no leak; transport/keys were already destroyed.
+
+Per PM ruling, the push-toggle mount stays deferred to S16 F7 (model + tile
+unchanged) and the offline-reaction restart-durability flag stays a fold/S11
+item — both untouched.
+
 ## QA done-check
 
 ## Next / follow-ups
@@ -502,13 +519,14 @@ item, same treatment as touch #4.
 ## Verification (this worktree)
 
 - `flutter analyze` → **No issues found.**
-- `flutter test` → **All 360 tests passed** (incl. 16 new S12 tests in
+- `flutter test` → **All 361 tests passed** (incl. 17 new S12 tests in
   `test/presence/`: offline text outbox ordered delivery, offline reaction
   re-send over reconnect, knock-accept gating, ignore=silence, token
   rotate+revoke persist, push-off empty / push-on token payload, reconnect
-  recover vs terminal exhaustion, background-grace expiry/cancel, cold-knock
-  lapse "No answer." + never-auto-retry + stale hint, push opt-in payload,
-  peer-token store, no-push-SDK source fence).
+  recover vs terminal exhaustion, cold-knock-drops-before-live does-NOT-reconnect
+  (the review S-2 gate test), background-grace expiry/cancel, cold-knock lapse
+  "No answer." + never-auto-retry + stale hint, push opt-in payload, peer-token
+  store, no-push-SDK source fence).
 - `dart format --set-exit-if-changed` → **clean.**
 - l10n regenerated (`flutter gen-l10n`) and builds.
 - **No new dependencies** (`pubspec.yaml` unchanged) — reuses `dart:async`

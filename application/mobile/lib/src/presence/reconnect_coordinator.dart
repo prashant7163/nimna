@@ -124,6 +124,13 @@ class ReconnectCoordinator {
     final seed = _controller?.pendingReactions ?? const <PendingReaction>[];
     final deadline = _clock().add(window);
 
+    // The dropped controller's transport/keys are already destroyed; dispose it
+    // so its broadcast event stream is closed too (no leak). Snapshot its seed
+    // first (above). The reconnect loop replaces _controller with fresh ones.
+    await _sub?.cancel();
+    _sub = null;
+    await _controller?.dispose();
+
     while (!_disposed && _clock().isBefore(deadline)) {
       await _sleeper(_backoff.nextDelay());
       if (_disposed || !_clock().isBefore(deadline)) {
