@@ -30,6 +30,9 @@ import '../../diag/diag.dart';
 import '../../diag/diag_events.dart';
 import '../../domain/message_repository.dart';
 import '../../domain/models/message_record.dart';
+import '../../media/model/media_attachment.dart';
+import '../../media/model/media_transfer_state.dart';
+import '../../media/transfer/media_transfer_controller.dart';
 import '../../noise/dh.dart';
 import '../../noise/noise_transport.dart';
 import '../../noise/session_kk.dart';
@@ -122,6 +125,16 @@ class SessionController {
   bool _peerTyping = false;
   Timer? _typingTimer;
   bool _closed = false;
+
+  // ---- media (S11, media-only region) --------------------------------
+  // The media send/receive orchestrator (Flutter-free — the fence holds).
+  // Attached post-construction; null until then.
+  MediaTransferController? _media;
+  // mime + byte length per media blob id (hex), for synchronous display /
+  // reply-kind resolution without an async media_ix read on the render path.
+  final Map<String, _MediaMeta> _mediaMeta = {};
+  // Per media message (record id hex) transfer phase (sending/receiving/…).
+  final Map<String, MediaTransferState> _mediaTransfer = {};
 
   // ---- read-only surface ---------------------------------------------
 
@@ -462,6 +475,169 @@ class SessionController {
     await _closeConnection();
   }
 
+  // ---- media (S11, media-only region) --------------------------------
+
+  /// Attaches the media orchestrator post-construction. MUST be called before
+  /// [start] so history hydration can read the media index. No Flutter import
+  /// is added here — [MediaTransferController] is Flutter-free (the fence).
+  void attachMedia(MediaTransferController media) {
+    _media = media;
+  }
+
+  /// Seals a MEDIA_CHUNK envelope over the LIVE transport exactly as any
+  /// outbound frame (same counter advance + REKEY). The media controller drives
+  /// the chunker through this; returns false after the protocol-error kill path.
+  bool sealMediaFrame(InnerEnvelope env) => _seal(env);
+
+  /// Sends an attachment (spec §5.1): persists the sender's own encrypted copy
+  /// (blob + media_ix), records a `type = media` message, then — when live —
+  /// chunks and seals the manifest + chunks. Offline it waits locally like text
+  /// (spec §3.4); no auto-retry knock (§4). [expirySeconds] and [replyTo] ride
+  /// the manifest (§5.8: a manifest is a replyable referent).
+  Future<void> sendMedia(
+    MediaAttachment attachment, {
+    int? expirySeconds,
+    Uint8List? replyTo,
+  }) async {
+    if (_closed) {
+      return;
+    }
+    final media = _media;
+    if (media == null) {
+      return;
+    }
+    final msgId = _aead.randomBytes(msgIdBytes);
+    final now = _nowMs();
+    final expiring = expirySeconds != null;
+    final purgeAt = expiring ? now + expirySeconds * 1000 : null;
+    final mediaId = await media.persistOutgoing(
+      attachment,
+      msgId,
+      purgeAt: purgeAt,
+    );
+    _mediaMeta[_hex(mediaId)] = _MediaMeta(
+      attachment.mime,
+      attachment.byteLength,
+    );
+    final record = MessageRecord(
+      id: _aead.randomBytes(16),
+      direction: MessageDirection.sent,
+      msgId: msgId,
+      timestampMs: now,
+      type: MessageType.media,
+      mediaId: mediaId,
+      deliveryState: DeliveryState.waiting,
+      expirySeconds: expirySeconds,
+      // Own copy disappears too (string 7 "yours will too"): compose time = read.
+      readAtMs: expiring ? now : null,
+      replyTo: replyTo,
+    );
+    await _messages.append(_channelId, record, purgeAt: purgeAt);
+    _insert(record);
+    _mediaTransfer[_hex(record.id)] = MediaTransferState.loaded;
+    _emit(MessageArrived(_view(record)));
+
+    if (!isLive) {
+      return; // Waits in the outbox (spec §3.4); no auto-retry knock (§4).
+    }
+    _mediaTransfer[_hex(record.id)] = const MediaTransferState.sending();
+    final sealed = media.transmit(
+      attachment,
+      msgId,
+      now,
+      expirySeconds: expirySeconds,
+      replyTo: replyTo,
+    );
+    _mediaTransfer[_hex(record.id)] = MediaTransferState.loaded;
+    if (!sealed) {
+      return; // Protocol error already handled by the seal path.
+    }
+    await _advanceDelivery(record.id, DeliveryState.sent);
+  }
+
+  /// Called by the media controller when an inbound transfer reassembles and
+  /// its `SHA-256 == content_hash` (spec §5.1): records a received `type =
+  /// media` message and ACKs the manifest `msg_id` (the exact ACK path text
+  /// uses). A hash-mismatch/incomplete transfer never reaches here — it was
+  /// discarded with NO ACK.
+  void ingestReceivedMedia(ReceivedMedia received) {
+    if (_closed) {
+      return;
+    }
+    final now = _nowMs();
+    final expiring = received.expirySeconds != null;
+    final purgeAt = expiring ? now + received.expirySeconds! * 1000 : null;
+    _mediaMeta[_hex(received.mediaId)] = _MediaMeta(
+      received.mime,
+      received.byteLength,
+    );
+    final record = MessageRecord(
+      id: _aead.randomBytes(16),
+      direction: MessageDirection.received,
+      msgId: received.manifestMsgId,
+      timestampMs: received.timestampMs,
+      type: MessageType.media,
+      mediaId: received.mediaId,
+      deliveryState: DeliveryState.delivered,
+      expirySeconds: received.expirySeconds,
+      readAtMs: expiring ? now : null,
+      replyTo: received.replyTo,
+    );
+    unawaited(_messages.append(_channelId, record, purgeAt: purgeAt));
+    _insert(record);
+    _mediaTransfer[_hex(record.id)] = MediaTransferState.loaded;
+    _emit(MessageArrived(_view(record)));
+    _seal(
+      InnerEnvelope(
+        type: InnerType.ack,
+        msgId: _aead.randomBytes(msgIdBytes),
+        timestampMs: now,
+        body: AckBody(ackedMsgId: received.manifestMsgId).encode(),
+      ),
+    );
+  }
+
+  /// Decrypts a media blob to memory for display (never to a file — spec §5.1).
+  Future<Uint8List> readMedia(Uint8List mediaId) async {
+    final media = _media;
+    if (media == null) {
+      throw StateError('media not attached');
+    }
+    return media.readMedia(mediaId);
+  }
+
+  /// Sweeps expired media on THIS device (spec §5.1: expiry applies to media on
+  /// both ends): deletes each due media_ix row + blob file (via the media
+  /// controller) and the matching message row + thread record. The injectable
+  /// clock makes this headless-provable; production scheduling is a later lane.
+  Future<void> purgeExpiredMedia() async {
+    final media = _media;
+    if (media == null) {
+      return;
+    }
+    final purgedMsgIds = await media.purgeExpired(_nowMs());
+    var purgedAny = false;
+    for (final msgId in purgedMsgIds) {
+      final idx = _byMsgId[_hex(msgId)];
+      if (idx == null) {
+        continue;
+      }
+      final record = _records.removeAt(idx);
+      await _messages.delete(record.id);
+      final mediaId = record.mediaId;
+      if (mediaId != null) {
+        _mediaMeta.remove(_hex(mediaId));
+      }
+      _mediaTransfer.remove(_hex(record.id));
+      _reindex();
+      _emit(MessageRemoved(record.id));
+      purgedAny = true;
+    }
+    if (purgedAny) {
+      _diag.log(DiagEvent.mediaExpired);
+    }
+  }
+
   // ---- inbound dispatch ----------------------------------------------
 
   void _dispatchInbound(InnerEnvelope env) {
@@ -477,9 +653,11 @@ class SessionController {
       case InnerType.hangup:
         _onInboundHangup();
       case InnerType.mediaChunk:
-        // TODO(S11): reassemble media; a manifest becomes a reactable/
-        // replyable referent. Untestable until media exists — not a defect.
-        break;
+        // Reassemble; on completion + hash-verify a manifest becomes a
+        // reactable/replyable referent (spec §5.1, §5.8). Transfer-integrity
+        // failures discard with NO ACK inside the controller (never a §3.3.1
+        // protocol error).
+        _media?.onInbound(env);
     }
   }
 
@@ -719,6 +897,14 @@ class SessionController {
 
   Future<void> _loadHistory() async {
     final history = await _messages.byChannel(_channelId);
+    // Hydrate media mime/byteLength for any media messages (spec §5.1) so the
+    // render/reply paths stay synchronous. Media-only; no-op without _media.
+    final media = _media;
+    if (media != null && history.any((r) => r.type == MessageType.media)) {
+      for (final rec in await media.loadIndex()) {
+        _mediaMeta[_hex(rec.id)] = _MediaMeta(rec.mime, rec.byteLength);
+      }
+    }
     for (final r in history) {
       _insert(r);
     }
@@ -747,6 +933,8 @@ class SessionController {
   }
 
   MessageView _view(MessageRecord r) {
+    final mediaId = r.mediaId;
+    final meta = mediaId == null ? null : _mediaMeta[_hex(mediaId)];
     return MessageView(
       recordId: r.id,
       msgId: r.msgId,
@@ -760,6 +948,12 @@ class SessionController {
       reply: _resolveReply(r),
       ownReaction: r.ownReaction,
       peerReaction: r.peerReaction,
+      mediaId: mediaId,
+      mediaMime: meta?.mime,
+      mediaByteLength: meta?.byteLength,
+      mediaTransfer: r.type == MessageType.media
+          ? (_mediaTransfer[_hex(r.id)] ?? MediaTransferState.loaded)
+          : null,
     );
   }
 
@@ -783,10 +977,13 @@ class SessionController {
         excerpt: ref.text,
       );
     }
-    // TODO(S11): distinguish photo vs document from the media manifest.
+    // Media referent: photo vs document from the persisted mime (spec §5.8).
+    final mediaId = ref.mediaId;
+    final mime = mediaId == null ? null : _mediaMeta[_hex(mediaId)]?.mime;
+    final isPhoto = mime != null && mime.startsWith('image/');
     return ReplyPreview.referent(
       referentRecordId: ref.id,
-      kind: ReplyReferentKind.document,
+      kind: isPhoto ? ReplyReferentKind.photo : ReplyReferentKind.document,
     );
   }
 
@@ -820,6 +1017,9 @@ class SessionController {
     _responder?.dispose();
     _responder = null;
     _awaitingHandshakeFrame = false;
+    // Drop any partial inbound media transfers with the session (spec §5.1: an
+    // incomplete transfer is discarded, never resumed across sessions).
+    _media?.dispose();
   }
 
   void _setLineState(SessionLineState state) {
@@ -863,4 +1063,14 @@ class SessionController {
     }
     return out.toString();
   }
+}
+
+/// Display metadata for a media blob, kept in memory so the render/reply paths
+/// never do an async media_ix read (spec §5.1; mime/len live in the media_ix
+/// ciphertext, hydrated on send/receive/history-load).
+class _MediaMeta {
+  const _MediaMeta(this.mime, this.byteLength);
+
+  final String mime;
+  final int byteLength;
 }

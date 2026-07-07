@@ -641,5 +641,102 @@
   "chat_deliveryDeliveredA11y": "Delivered.",
   "@chat_deliveryDeliveredA11y": {
     "description": "A11y label for a message the peer has ACKed (spec §3.3 client ACK; components.md delivery states — the ✓ glyph). Functional label. S10 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_attachA11y": "Add a photo or file",
+  "@media_attachA11y": {
+    "description": "A11y label for the composer's attach affordance (the plus glyph left of the input; components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_pickPhoto": "Photo",
+  "@media_pickPhoto": {
+    "description": "Attach sheet option — pick a photo (components.md attach affordance: photo / file pickers). S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_pickFile": "File",
+  "@media_pickFile": {
+    "description": "Attach sheet option — pick a document/file (components.md attach affordance: photo / file pickers). S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_overCapError": "That's over 5 MB — the line carries documents, not archives. Try a smaller file.",
+  "@media_overCapError": {
+    "description": "Over-the-cap error at attach time (voice string 17, canonical verbatim; spec §5.1 5 MB cap). Must stay claim-accurate in translation. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_metadataStripNotice": "Photos are cleaned before they're sealed — location, device, and time are stripped on your phone, before encryption.",
+  "@media_metadataStripNotice": {
+    "description": "The metadata-strip feature notice under the attach preview, first time (voice string 17, canonical verbatim; spec §5.1). Marketed as a feature. Must stay claim-accurate (on-device, before encryption). S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_compressionNote": "Sent smaller by default. Original quality is a toggle away.",
+  "@media_compressionNote": {
+    "description": "Compression-default helper text beside the original-quality toggle (voice string 17, canonical verbatim; spec §5.1). S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_originalQualityToggle": "Original quality",
+  "@media_originalQualityToggle": {
+    "description": "Attach-preview toggle label — send at original quality (off by default; components.md attach affordance). Functional label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_exportAction": "Export",
+  "@media_exportAction": {
+    "description": "Media viewer bottom-bar action and export-confirm CTA — the single deliberate act that moves a file out of Nimna's store (components.md media viewer; spec §5.1). Register verb. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_exportConfirm": "This copies it out of Nimna — into your phone's own storage.",
+  "@media_exportConfirm": {
+    "description": "Export-confirm sheet body (components.md media viewer, canonical verbatim; spec §5.1 export is a deliberate act). Must stay claim-accurate. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_exportRollNote": "Nothing you receive touches your photo roll. It stays inside Nimna until you choose to take it out.",
+  "@media_exportRollNote": {
+    "description": "Received-media note (voice string 17/16, canonical verbatim; spec §5.1 no auto-save to gallery). Must stay claim-accurate. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_exportCancel": "Go back",
+  "@media_exportCancel": {
+    "description": "The safe choice on the export-confirm sheet — a warm register verb, not 'Cancel' (voice register notes; matches string 14's 'Go back'). S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_viewerReceivedTime": "Received {time}",
+  "@media_viewerReceivedTime": {
+    "description": "Media viewer top-bar received-time label (components.md media viewer). {time} is a locale-aware formatted date/time computed via intl. S11 net-new. Enters the S16 crafted-translation pass.",
+    "placeholders": {
+      "time": { "type": "String", "example": "7 Jul 2026, 12:04" }
+    }
+  },
+  "media_sendingA11y": "Sending.",
+  "@media_sendingA11y": {
+    "description": "A11y label for a media bubble in the sending (outbound chunked transfer) state (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_receivingA11y": "Receiving.",
+  "@media_receivingA11y": {
+    "description": "A11y label for a media bubble in the receiving (inbound chunked transfer) state (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_documentA11y": "Document.",
+  "@media_documentA11y": {
+    "description": "A11y label for a document (non-image) media bubble (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_imageA11y": "Photo.",
+  "@media_imageA11y": {
+    "description": "A11y label for an image media bubble (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_documentKindPdf": "PDF",
+  "@media_documentKindPdf": {
+    "description": "Document-bubble kind label for a PDF attachment (components.md media bubbles: size + kind). Factual file-type label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_documentKindFile": "File",
+  "@media_documentKindFile": {
+    "description": "Document-bubble kind label for a non-PDF document attachment (components.md media bubbles: size + kind). Factual file-type label. S11 net-new. Enters the S16 crafted-translation pass."
+  },
+  "media_sizeMegabytes": "{size} MB",
+  "@media_sizeMegabytes": {
+    "description": "Document-bubble file size in megabytes (components.md media bubbles). {size} is a locale-aware formatted number. S11 net-new. Enters the S16 crafted-translation pass.",
+    "placeholders": {
+      "size": { "type": "String", "example": "1.2" }
+    }
+  },
+  "media_sizeKilobytes": "{size} KB",
+  "@media_sizeKilobytes": {
+    "description": "Document-bubble file size in kilobytes (components.md media bubbles). {size} is a locale-aware formatted number. S11 net-new. Enters the S16 crafted-translation pass.",
+    "placeholders": {
+      "size": { "type": "String", "example": "640" }
+    }
+  },
+  "media_documentMeta": "{kind} · {size}",
+  "@media_documentMeta": {
+    "description": "Document-bubble metadata line combining kind and size (components.md media bubbles: 'size + kind'). Composed from media_documentKind* and media_size*. S11 net-new. Enters the S16 crafted-translation pass.",
+    "placeholders": {
+      "kind": { "type": "String", "example": "PDF" },
+      "size": { "type": "String", "example": "1.2 MB" }
+    }
   }
 }

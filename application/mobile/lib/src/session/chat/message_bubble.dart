@@ -13,11 +13,13 @@
 library;
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../domain/models/message_record.dart';
+import '../../media/ui/media_bubble_content.dart';
 import '../../ui/theme/nimna_tokens.dart';
 import '../model/message_view.dart';
 
@@ -82,6 +84,8 @@ class MessageBubble extends StatelessWidget {
     required this.message,
     this.onLongPress,
     this.onTapQuote,
+    this.mediaLoadBytes,
+    this.onTapMedia,
     super.key,
   });
 
@@ -92,6 +96,14 @@ class MessageBubble extends StatelessWidget {
 
   /// Tap on the quote block scrolls the thread to the referent.
   final VoidCallback? onTapQuote;
+
+  /// Decrypts this message's media blob to memory (media messages only) — the
+  /// chat screen routes it through the session controller; the chat lane never
+  /// touches the store directly (the import fence).
+  final Future<Uint8List> Function()? mediaLoadBytes;
+
+  /// Tap on a media bubble opens the full-bleed viewer.
+  final VoidCallback? onTapMedia;
 
   static const double _maxWidthFraction = 0.75;
 
@@ -174,6 +186,9 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _bubbleBody(BuildContext context, NimnaTokens tokens, bool outbound) {
+    if (message.isMedia) {
+      return _mediaBody(context, tokens, outbound);
+    }
     final waiting = outbound && message.deliveryState == DeliveryState.waiting;
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(NimnaRadius.large),
@@ -217,6 +232,37 @@ class MessageBubble extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: content,
+    );
+  }
+
+  /// The media bubble (components.md media bubbles): images fill edge-to-edge,
+  /// documents render as a self-contained row. A media reply carries the quote
+  /// block above the content inside the same bubble.
+  Widget _mediaBody(BuildContext context, NimnaTokens tokens, bool outbound) {
+    final content = MediaBubbleContent(
+      message: message,
+      loadBytes: mediaLoadBytes,
+      onTap: onTapMedia,
+    );
+    if (message.reply == null) {
+      return content;
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(NimnaRadius.large),
+      child: Container(
+        color: outbound ? tokens.bubbleSent : tokens.bubbleReceived,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+              child: _quoteBlock(context, tokens, message.reply!),
+            ),
+            content,
+          ],
+        ),
+      ),
     );
   }
 

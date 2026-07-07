@@ -87,7 +87,24 @@ enum DiagEvent {
   /// destroyed and a relay TEARDOWN sent. Distinct from
   /// [pairingHandshakeFailed], which stays the S8/S9 pairing lane's event.
   /// Never surfaced to the user (silence doctrine); a local diagnostic only.
-  sessionProtocolError(18);
+  sessionProtocolError(18),
+
+  /// S11 media (transfer) events — events ONLY: no content, mime, ids, hashes,
+  /// or bytes are representable here.
+
+  /// An inbound media transfer reassembled and its `SHA-256 == content_hash`;
+  /// the blob was persisted and the manifest ACKed (spec §5.1).
+  mediaTransferComplete(19),
+
+  /// An inbound media transfer failed hash verification and was discarded with
+  /// NO ACK (spec §5.1: a resend is the sender's call — never a protocol
+  /// error). A local diagnostic only.
+  mediaHashMismatch(20),
+
+  /// Expired media was swept on this device — the media_ix row + blob file +
+  /// message row were deleted (spec §5.1, expiry applies to media on both
+  /// ends).
+  mediaExpired(21);
 
   const DiagEvent(this.id);
 
