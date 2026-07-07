@@ -118,34 +118,45 @@ void main() {
     },
   );
 
-  test(
-    'ships no §5.5–§5.8 inner-envelope codec (the S10 checkpoint fence)',
-    () {
-      // §5.5 (inner envelope: TEXT/ACK/CONTROL/HANGUP/MEDIA_CHUNK/REACTION) and
-      // §5.8 (reactions/replies) are S10's — no Dart identifiers for them may
-      // exist in the protocol tree; the sections may appear in comments only.
-      //
-      // S9 reconciliation: `TokenPayload` (§5.7) was REMOVED from this fence —
-      // §5.7 is the pairing-plane device-token leaf carried in the handshake
-      // payloads M2/M3 (§3.1.3), explicitly in S9's scope; it is NOT the inner
-      // envelope. The fence still forbids the actual §5.5–§5.8 codec classes.
-      // (Same reconciliation shape as the S13 pwhash-fence widening.)
-      final forbidden = RegExp(
-        r'class\s+(InnerEnvelope|Envelope|Reaction|MediaChunk)\b'
-        r'|\b(refMsgId|replyTo|innerEnvelope)\b',
-      );
-      for (final file
-          in Directory('lib/src/protocol')
-              .listSync(recursive: true)
-              .whereType<File>()
-              .where((f) => f.path.endsWith('.dart'))) {
-        final code = stripComments(file.readAsStringSync());
-        expect(
-          forbidden.hasMatch(code),
-          isFalse,
-          reason: '${file.path} crosses the S10 §5.5–§5.8 codec fence',
-        );
+  test('the §5.5–§5.8 inner-envelope codec is confined to its two modules '
+      '(S10 checkpoint)', () {
+    // S10 OPENS the fence the S8/S9 sessions reserved: the inner envelope
+    // (§5.5: TEXT/ACK/CONTROL/HANGUP/MEDIA_CHUNK/REACTION) and the
+    // reaction/reply codecs (§5.8) are now implemented — but the CLASS
+    // DEFINITIONS live ONLY in inner_envelope.dart + reaction_body.dart.
+    // No second implementation may sprawl elsewhere in the protocol tree
+    // (same crypto/framing-sprawl discipline as the scalarmult fence
+    // above). Usage from the future session layer (lib/src/session, Phase
+    // B) is expected and unfenced — this pins the codec's single home.
+    const sanctioned = {
+      'lib/src/protocol/inner_envelope.dart',
+      'lib/src/protocol/reaction_body.dart',
+    };
+    final defRe = RegExp(
+      r'class\s+(InnerEnvelope|ReactionBody|AckBody|ControlBody|'
+      r'ManifestBody|ChunkBody)\b',
+    );
+    final offenders = <String>[];
+    for (final file
+        in Directory('lib/src/protocol')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.dart'))) {
+      if (sanctioned.contains(file.path)) {
+        continue;
       }
-    },
-  );
+      final code = stripComments(file.readAsStringSync());
+      if (defRe.hasMatch(code)) {
+        offenders.add(file.path);
+      }
+    }
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'the §5.5–§5.8 inner-envelope codec is defined only in '
+          'inner_envelope.dart + reaction_body.dart (S10 checkpoint home); '
+          'found a second definition in: $offenders',
+    );
+  });
 }

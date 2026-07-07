@@ -1,14 +1,15 @@
-// Package framing implements the exact wire layouts of spec v0.2 §5.4–§5.7:
+// Package framing implements the exact wire layouts of spec v0.2.1 §5.4–§5.8:
 // the 18-byte relay-visible outer frame, the encrypted inner envelope
-// (including MEDIA_CHUNK manifest/chunk bodies per §5.1), and token_payload.
-// All integers are big-endian; layouts are fixed and hand-specified — no
-// serialization library.
+// (including MEDIA_CHUNK manifest/chunk bodies per §5.1, and REACTION and
+// reply_to per §5.8), and token_payload. All integers are big-endian;
+// layouts are fixed and hand-specified — no serialization library.
 package framing
 
 import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"unicode/utf8"
 )
 
 // Protocol version byte (outer frame and inner envelope).
@@ -52,12 +53,20 @@ const (
 	TypeControl    = 0x03
 	TypeHangup     = 0x04
 	TypeMediaChunk = 0x05
+	TypeReaction   = 0x06 // v0.2.1, §5.8
 )
 
 // Envelope flags (spec §5.5).
 const (
 	FlagExpiry   = 0x01 // bit 0: expiry_s present (TEXT and MEDIA_CHUNK manifest only)
 	FlagManifest = 0x02 // bit 1: MEDIA_CHUNK manifest (MEDIA_CHUNK only)
+	FlagReplyTo  = 0x04 // bit 2 (v0.2.1): reply_to present (TEXT and MEDIA_CHUNK manifest only)
+)
+
+// REACTION op values (spec §5.8).
+const (
+	ReactionRemove = 0x00
+	ReactionAdd    = 0x01
 )
 
 // CONTROL body control_type values (spec §5.5).
@@ -75,27 +84,34 @@ const (
 )
 
 // Envelope is the decoded inner envelope. ExpiryS is meaningful only when
-// Flags&FlagExpiry is set.
+// Flags&FlagExpiry is set; ReplyTo only when Flags&FlagReplyTo is set.
 type Envelope struct {
 	Type        byte
 	Flags       byte
 	MsgID       [16]byte
 	TimestampMS uint64
 	ExpiryS     uint32
+	ReplyTo     [16]byte
 	Body        []byte
 }
 
 const headerLenNoExpiry = 27 // ver(1) type(1) flags(1) msg_id(16) timestamp(8)
-const headerLenExpiry = 31   // … + expiry_s(4)
+const expiryLen = 4          // expiry_s (present only if flags bit 0)
+const replyToLen = 16        // reply_to (present only if flags bit 2)
 
 // Encode serializes an envelope, validating the spec's structural rules.
+// Optional header fields appear in flag-bit order (§5.5): expiry_s (bit 0)
+// then reply_to (bit 2), so reply_to follows expiry_s when both are present.
 func Encode(e Envelope) ([]byte, error) {
 	if err := validate(e); err != nil {
 		return nil, err
 	}
 	n := headerLenNoExpiry
 	if e.Flags&FlagExpiry != 0 {
-		n = headerLenExpiry
+		n += expiryLen
+	}
+	if e.Flags&FlagReplyTo != 0 {
+		n += replyToLen
 	}
 	out := make([]byte, 0, n+len(e.Body))
 	out = append(out, Ver, e.Type, e.Flags)
@@ -103,6 +119,9 @@ func Encode(e Envelope) ([]byte, error) {
 	out = binary.BigEndian.AppendUint64(out, e.TimestampMS)
 	if e.Flags&FlagExpiry != 0 {
 		out = binary.BigEndian.AppendUint32(out, e.ExpiryS)
+	}
+	if e.Flags&FlagReplyTo != 0 {
+		out = append(out, e.ReplyTo[:]...)
 	}
 	return append(out, e.Body...), nil
 }
@@ -120,15 +139,22 @@ func Decode(b []byte) (Envelope, error) {
 	e.Flags = b[2]
 	copy(e.MsgID[:], b[3:19])
 	e.TimestampMS = binary.BigEndian.Uint64(b[19:27])
-	body := b[headerLenNoExpiry:]
+	off := headerLenNoExpiry
 	if e.Flags&FlagExpiry != 0 {
-		if len(b) < headerLenExpiry {
-			return e, errors.New("envelope: expiry flag set but expiry_s missing")
+		if len(b) < off+expiryLen {
+			return Envelope{}, errors.New("envelope: expiry flag set but expiry_s missing")
 		}
-		e.ExpiryS = binary.BigEndian.Uint32(b[27:31])
-		body = b[headerLenExpiry:]
+		e.ExpiryS = binary.BigEndian.Uint32(b[off : off+expiryLen])
+		off += expiryLen
 	}
-	e.Body = append([]byte{}, body...)
+	if e.Flags&FlagReplyTo != 0 {
+		if len(b) < off+replyToLen {
+			return Envelope{}, errors.New("envelope: reply_to flag set but reply_to missing")
+		}
+		copy(e.ReplyTo[:], b[off:off+replyToLen])
+		off += replyToLen
+	}
+	e.Body = append([]byte{}, b[off:]...)
 	if err := validate(e); err != nil {
 		return Envelope{}, err
 	}
@@ -140,22 +166,27 @@ func Decode(b []byte) (Envelope, error) {
 // a transfer, hash verification) are client behavior, not frame structure.
 func validate(e Envelope) error {
 	switch e.Type {
-	case TypeText, TypeAck, TypeControl, TypeHangup, TypeMediaChunk:
+	case TypeText, TypeAck, TypeControl, TypeHangup, TypeMediaChunk, TypeReaction:
 	default:
 		return errors.New("envelope: unknown type")
 	}
-	if e.Flags&^(FlagExpiry|FlagManifest) != 0 {
+	if e.Flags&^(FlagExpiry|FlagManifest|FlagReplyTo) != 0 {
 		return errors.New("envelope: reserved flag bits must be 0")
 	}
 	if e.Flags&FlagManifest != 0 && e.Type != TypeMediaChunk {
 		return errors.New("envelope: manifest flag only valid on MEDIA_CHUNK")
 	}
-	if e.Flags&FlagExpiry != 0 {
-		expiryOK := e.Type == TypeText ||
-			(e.Type == TypeMediaChunk && e.Flags&FlagManifest != 0)
-		if !expiryOK {
-			return errors.New("envelope: expiry flag only valid on TEXT and MEDIA_CHUNK manifest")
-		}
+	// expiry_s (bit 0) and reply_to (bit 2) share one predicate: legal only
+	// on TEXT or a MEDIA_CHUNK manifest (§5.5, §5.8). This rejects both flags
+	// on ACK/CONTROL/HANGUP/REACTION and on a non-manifest MEDIA_CHUNK chunk —
+	// and enforces that a REACTION carries no flags at all.
+	optionalHeaderOK := e.Type == TypeText ||
+		(e.Type == TypeMediaChunk && e.Flags&FlagManifest != 0)
+	if e.Flags&FlagExpiry != 0 && !optionalHeaderOK {
+		return errors.New("envelope: expiry flag only valid on TEXT and MEDIA_CHUNK manifest")
+	}
+	if e.Flags&FlagReplyTo != 0 && !optionalHeaderOK {
+		return errors.New("envelope: reply_to flag only valid on TEXT and MEDIA_CHUNK manifest")
 	}
 	switch e.Type {
 	case TypeAck:
@@ -174,6 +205,9 @@ func validate(e Envelope) error {
 			return err
 		}
 		_, err := ParseChunk(e.Body)
+		return err
+	case TypeReaction:
+		_, err := ParseReaction(e.Body)
 		return err
 	}
 	return nil
@@ -198,6 +232,63 @@ func validateControl(body []byte) error {
 		return err
 	default:
 		// Unknown control types are ignored, never errors (§5.5).
+	}
+	return nil
+}
+
+// Reaction is a REACTION body (spec §5.8):
+// ref_msg_id(16) ‖ op(1) ‖ emoji_len(1) ‖ emoji(emoji_len). Emoji is 1–64
+// bytes of valid UTF-8; emoji_len is its exact byte length.
+type Reaction struct {
+	RefMsgID [16]byte
+	Op       byte // ReactionAdd (0x01) or ReactionRemove (0x00)
+	Emoji    []byte
+}
+
+const reactionMinBody = 18 // ref_msg_id(16) ‖ op(1) ‖ emoji_len(1)
+
+// EncodeReaction serializes a REACTION body, validating the §5.8 rules.
+func EncodeReaction(r Reaction) ([]byte, error) {
+	if err := validateReactionFields(r.Op, r.Emoji); err != nil {
+		return nil, err
+	}
+	out := make([]byte, 0, reactionMinBody+len(r.Emoji))
+	out = append(out, r.RefMsgID[:]...)
+	out = append(out, r.Op, byte(len(r.Emoji)))
+	return append(out, r.Emoji...), nil
+}
+
+// ParseReaction parses and structurally validates a REACTION body. Per §5.8
+// these are deterministic byte-level checks; the sender-side single-grapheme
+// rule is not receiver-validated — receivers never grapheme-segment (§5.5),
+// only UTF-8 validity is checked.
+func ParseReaction(b []byte) (Reaction, error) {
+	var r Reaction
+	if len(b) < reactionMinBody {
+		return r, errors.New("reaction: body too short")
+	}
+	copy(r.RefMsgID[:], b[0:16])
+	r.Op = b[16]
+	emojiLen := int(b[17])
+	if len(b) != reactionMinBody+emojiLen {
+		return r, errors.New("reaction: emoji_len does not match remaining body length")
+	}
+	r.Emoji = append([]byte{}, b[reactionMinBody:]...)
+	if err := validateReactionFields(r.Op, r.Emoji); err != nil {
+		return Reaction{}, err
+	}
+	return r, nil
+}
+
+func validateReactionFields(op byte, emoji []byte) error {
+	if op != ReactionAdd && op != ReactionRemove {
+		return errors.New("reaction: op must be 0x00 (remove) or 0x01 (add)")
+	}
+	if len(emoji) < 1 || len(emoji) > 64 {
+		return errors.New("reaction: emoji_len must be 1–64 bytes")
+	}
+	if !utf8.Valid(emoji) {
+		return errors.New("reaction: emoji must be valid UTF-8")
 	}
 	return nil
 }

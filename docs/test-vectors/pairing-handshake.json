@@ -1,6 +1,6 @@
 {
   "_purpose": "Two full deterministic pairing-handshake transcripts (Noise_XXpsk2 with commitment prologue): every key, every message byte, per-step chaining keys and handshake hashes, Split keys, M4 PAIR_CONFIRM, and the derived CRID and safety phrase.",
-  "_spec": "nimna-protocol-spec-v0.2.md §3.1.2–§3.1.5, §5.4, §5.6, §5.7",
+  "_spec": "nimna-protocol-spec-v0.2.1.md §3.1.2–§3.1.5, §5.4, §5.6, §5.7",
   "protocol_name": "Noise_XXpsk2_25519_ChaChaPoly_SHA256",
   "notes": [
     "The joiner is the Noise initiator; the creator is the responder (spec §3.1.3).",

@@ -3,12 +3,11 @@
 Committed protocol test vectors for
 [`nimna-protocol-spec-v0.2.1.md`](../nimna-protocol-spec-v0.2.1.md). **Both
 implementations (Go relay-side tooling and the Dart/Flutter app) must
-reproduce these byte-for-byte** (spec §7, "Engine requirements"). Known
-coverage gap, tracked: the vectors were authored at v0.2 and do not yet
-carry v0.2.1's REACTION type or `reply_to` flag — those cases must be
-added (generator + `framing.json` + a `session-handshake.json` transport
-case) no later than the first envelope-codec implementation (spec v0.2.1
-changelog; PROGRESS.md 2026-07-05). All
+reproduce these byte-for-byte** (spec §7, "Engine requirements"). Coverage
+is at v0.2.1: the envelope vectors carry the REACTION type (`0x06`) and the
+`reply_to` flag (bit 2), including the `expiry_s`+`reply_to` flag-bit
+ordering and the full §5.8 structural-error set, in both `framing.json` and
+`session-handshake.json` transport frames. All
 byte fields are lowercase hex; every input — keys, ephemerals, msg_ids,
 timestamps, codes, dates, push tokens — is a fixed constant spelled out in
 the files (no randomness, no clock).
@@ -47,22 +46,27 @@ source.
   and handshake hashes (labeled for implementers), Split keys, and the
   finished channel's ss/salt2 → CRID and safety phrase (indices *and*
   words). M1 = 80 bytes, M4 = 16 bytes, exactly as tabled in §3.1.3.
-- **`session-handshake.json`** (§3.3.1, §5.4–§5.6) — two
+- **`session-handshake.json`** (§3.3.1, §5.4–§5.6, §5.8) — two
   `Noise_KK_25519_ChaChaPoly_SHA256` transcripts on the channels
   established in `pairing-handshake.json` (each side knocking once):
   S1/S2 (48 bytes each), Split keys, then transport frames in both
   directions with exact nonces, per-frame keys **before and after** the
   per-message REKEY, and inner-envelope plaintexts (TEXT with and without
-  expiry, ACK, CONTROL screenshot-notice/token-refresh/revoke/typing,
-  HANGUP). The forbidden-counter rule (2^64−1) is stated in the file.
+  expiry, ACK, CONTROL screenshot-notice/token-refresh/revoke/typing, a
+  REACTION and a `reply_to`-TEXT (v0.2.1, §5.8), HANGUP). The
+  forbidden-counter rule (2^64−1) is stated in the file.
 - **`phrase-words.json`** (§3.1.4) — the 8-HKDF-bytes → uint64 (BE) →
   three base-1296 digits (most-significant first) → wordlist-indices →
   words mapping, including boundaries: n = 0 (word[0] ×3), 1296³−1,
   1296³ (modulo wrap on word0), and 2^64−1.
-- **`framing.json`** (§5.1, §5.4, §5.5, §5.7) — inner-envelope
-  encode/decode cases for every v0.2 type and flag combination plus
-  invalid encodings that must be rejected (v0.2.1's REACTION/`reply_to`
-  cases pending, see above); two complete MEDIA_CHUNK transfers
+- **`framing.json`** (§5.1, §5.4, §5.5, §5.7, §5.8) — inner-envelope
+  encode/decode cases for every v0.2.1 type and flag combination
+  (including REACTION add/remove, boundary and multi-byte emoji, and
+  `reply_to` on TEXT/manifest with the `expiry_s`+`reply_to` ordering)
+  plus invalid encodings that must be rejected (the full §5.8
+  structural-error set: bad `op`, `emoji_len` out of range or
+  disagreeing, invalid UTF-8, `reply_to` on illegal types, truncations);
+  two complete MEDIA_CHUNK transfers
   (single-chunk, and a 65537-byte two-chunk boundary case) with
   content_hash and full reassembly data; token_payload in all three forms
   (absent/revoke, present, prefix-less KNOCK form); and an outer-frame

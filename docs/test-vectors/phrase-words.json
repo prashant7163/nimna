@@ -1,6 +1,6 @@
 {
   "_purpose": "Safety-phrase mapping: 8 HKDF output bytes → uint64 (big-endian) → three base-1296 digits, most-significant first → wordlist indices → words. End-to-end derivations from key material live in pairing-handshake.json.",
-  "_spec": "nimna-protocol-spec-v0.2.md §3.1.4",
+  "_spec": "nimna-protocol-spec-v0.2.1.md §3.1.4",
   "wordlist": {
     "file": "wordlist-en-v1.txt",
     "sha256": "7aa57a4d3ecf6581729992bad9575bacdebf7c28378af2aec6a50f11aec326f5",
