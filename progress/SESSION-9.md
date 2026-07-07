@@ -229,3 +229,20 @@ fence test enforces it.
   namespaced, canonical. `pairing_selfJoinOwnCode` reused verbatim from the DS
   handoff (not re-authored). Two new diag events (`pairingFinalized`,
   `pairingHandshakeFailed`) appended to the closed vocabulary.
+
+### Code-review: PASSED (no blocking findings) — 2 fixes applied (2026-07-07)
+
+1. **SHOULD-FIX (done):** added a `crypto_scalarmult` source-scan fence in
+   `test/pairing/single_call_site_test.dart` — asserts `scalarmult` appears in
+   `lib/` ONLY in `lib/src/noise/dh.dart` (the sole X25519/Noise-DH site),
+   same crypto-sprawl-guard shape as the `crypto_pwhash` fence. Passes.
+2. **NIT (done):** exact-pinned `dependency_overrides: win32` to `5.15.0` (was
+   `^5.14.0`), matching the exact pins on the other deps; comment clarified as
+   host-test-only Windows FFI that never links into the app binary.
+
+Deferred (correct): the pdfrx/http NIT is a device-QA verification note
+(confirm zero outbound connections on-device), left to the QA/device pass —
+no code change.
+
+Full suite **253 green** (all lanes) after the fixes; `flutter analyze` +
+`dart format` clean. Cleared for the senior-qa done-check.

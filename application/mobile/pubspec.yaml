@@ -77,10 +77,12 @@ dependencies:
 # win32 6.x drops the symbols file_picker_windows.dart uses (COMObject,
 # HRESULT-as-int, GUID.createInstance…), so it is pinned to the 5.x line that
 # file_picker requires and share_plus's Windows code also compiles against.
-# Touches no crypto/network dependency. (SESSION-9 CODE, flagged for merge —
-# revisit if file_picker/share_plus realign on win32 6.x.)
+# HOST-TEST-ONLY: win32 is Windows FFI — never compiled or linked into the
+# iOS/Android app binary. Touches no crypto/network dependency. Exact-pinned
+# like the other deps. (SESSION-9 CODE, flagged for merge — revisit if
+# file_picker/share_plus realign on win32 6.x.)
 dependency_overrides:
-  win32: ^5.14.0
+  win32: 5.15.0
 
 dev_dependencies:
   flutter_test:
