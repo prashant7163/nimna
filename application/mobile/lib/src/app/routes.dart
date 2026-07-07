@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../session/chat/chat_screen.dart';
 import '../ui/screens/channel_list_screen.dart';
 import '../ui/screens/paywall/paywall_screen.dart';
 import '../ui/screens/settings/app_lock_setup_screen.dart';
@@ -22,6 +23,12 @@ abstract final class Routes {
   /// `startCreateLine` when the store has no active creation subscription;
   /// pops a [PaywallResult]. Never a launch route, never joined-from.
   static const String paywall = '/paywall';
+
+  /// F5 — the live chat session (S10). Pushed with a [ChatScreenArgs] carrying
+  /// a built [SessionController] + the channel's local label. The entry points
+  /// that construct the controller (channel-row tap → knock, incoming-knock
+  /// pick-up → accept) are S12; never a launch route.
+  static const String chat = '/chat';
 }
 
 Route<dynamic>? onGenerateRoute(RouteSettings settings) {
@@ -45,6 +52,13 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
       return NimnaPageRoute<PaywallResult>(
         settings: settings,
         builder: (context) => const PaywallScreen(),
+      );
+    case Routes.chat:
+      final args = settings.arguments as ChatScreenArgs;
+      return NimnaPageRoute(
+        settings: settings,
+        builder: (context) =>
+            ChatScreen(controller: args.controller, label: args.label),
       );
   }
   return null;

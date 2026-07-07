@@ -114,3 +114,76 @@ commits per phase after review):
 
 **Phase C:** code-reviewer → senior-qa done-check (incl. explicit PASS/FAIL on the
 session-decomposition clause + both-stacks vector conformance) → wrap.
+
+---
+
+## Phase B — DONE (mobile-developer-flutter, 2026-07-07, uncommitted for review)
+
+Built `lib/src/session/{model,connection,chat}` (the live text path), the persistence
+interior additions, the i18n + voice-guide fold, the route/screen wiring, and the
+full test set. `flutter analyze` clean, `dart format` clean, full suite **343 green**
+(Phase A's 311 + 32 new).
+
+### Files created
+- `lib/src/session/model/chat_event.dart` — sealed `ChatEvent` (MessageArrived,
+  MessageRemoved, DeliveryChanged, ReactionArrived, PeerTyping, LineStateChanged,
+  SessionEnded{ended|connectionLost}); `SessionLineState`, `ReactionSide`,
+  `SessionEndReason` enums.
+- `lib/src/session/model/message_view.dart` — immutable `MessageView` + `ReplyPreview`
+  (referent | tombstone) + `ReplyReferentKind`.
+- `lib/src/session/connection/session_controller.dart` — the live session
+  (`SessionRole` knocker/accepter; KK driver + SessionTransport + counters; send/recv
+  loop; delivery FSM; §5.8 reaction/reply state; typing; expiry; HANGUP +
+  protocol-error kill). Read-only `Stream<ChatEvent>` + typed send methods.
+- `lib/src/session/chat/{message_bubble,message_actions,composer,chat_screen}.dart` —
+  the chat UI (bubbles, delivery ticks, reaction chips, quoted-reply + tombstone,
+  long-press actions card with the six presets + system-keyboard "+", composer with
+  the timer picker showing string 7 verbatim, reply strip, silent typing glyph).
+  `sanitizeEmojiForA11y` (the REQUIRED a11y emoji sanitizer) lives in message_bubble.
+- READMEs for `lib/src/session/` (+ model/connection/chat).
+- Tests: `test/session/{import_direction_test,session_controller_test,chat_widgets_test}.dart`.
+
+### Files changed
+- `lib/src/domain/models/message_record.dart` — interior version bump 1→2: added
+  `replyTo` (16-byte msg_id) + `ownReaction`/`peerReaction` slots (encrypted interior
+  only; NO plaintext graph columns). `MessageType` unchanged {text, media}.
+- `lib/src/domain/message_repository.dart` — `update()` gained optional `purgeAt` to
+  mirror the read-time disappearing deadline into the existing plaintext column.
+- `lib/src/ui/widgets/glyphs.dart` — added `SendGlyph` (↑) + `TimerGlyph` (◷).
+- `lib/l10n/app_en.arb` + regenerated `app_localizations*.dart` — net-new keys below.
+- `designs/brand/voice-and-microcopy.md` — added **voice string 22** ("They hung up." /
+  "You hung up.") so the S16 translation pass covers it.
+
+### Route registration (one line, per the ask)
+`routes.dart`: `Routes.chat = '/chat'` → `ChatScreen(controller: args.controller,
+label: args.label)` from a `ChatScreenArgs`. The entry points that construct the
+controller (channel-row tap → knock, incoming-knock pick-up → accept) are S12.
+
+### Net-new ARB keys (namespace `session_` / `chat_`; EN canonical, DE/FR/ES/IT ride S16)
+`session_lineOnline`, `session_lineOffline`, `session_lineDropped` (string 10 l1),
+`session_lineRecovered` (string 10 l2), `session_peerHungUp`/`session_youHungUp`
+(string 22); `chat_hangUp`, `chat_waitingHeader` ("WAITING — ON YOUR PHONE ONLY"),
+`chat_peerOfflineHeadline`/`chat_peerOfflineBody` (string 5), `chat_expiryDisclaimer`
+(string 7 VERBATIM), `chat_timerOff`/`chat_timerMinutes`/`chat_timerHours`
+(locale-aware plurals), `chat_timerButtonA11y`, `chat_composerA11y`, `chat_sendA11y`,
+`chat_deliveryWaitingA11y`/`chat_deliverySentA11y`/`chat_deliveryDeliveredA11y`. The
+11 DS `chat_*` reply/reaction keys were reused verbatim (not re-added).
+
+### Decomposition fence (the G4-gating done-check clause — mechanical PASS)
+`test/session/import_direction_test.dart`: model/ is a Flutter-free leaf (no
+connection/chat imports); connection/ imports NO Flutter and no chat/; chat/ holds no
+NoiseTransport/SessionTransport/SecureKey/MessageRepository/MessageStore/AtRestAead/
+handshake type and never imports the noise/transport/storage trees.
+
+### TODO(S12) seams marked in connection/
+knock-waiting/lapse UX, reconnect, background grace, offline-compose outbox
+auto-flush, device-token refresh, per-channel push, and gating ACCEPT behind the
+pick-up UX (S10 auto-answers to exercise the live path). TODO(S11): media reassembly /
+react-on-manifest / reply-to-media kind. TODO(S14): screenshot notice. TODO(F7): read
+receipts + typing toggle. No auto-retry of a knock anywhere.
+
+### Note for QA
+The protocol-error kill path (`_protocolError` → destroy keys + relay TEARDOWN +
+`connectionLost`) is tested via the AEAD-failure/tampered-frame class; the
+malformed-inner-envelope and counter-violation classes share the identical sink and
+are codec-covered by Phase A's `InnerEnvelope.decode` structural-error tests.

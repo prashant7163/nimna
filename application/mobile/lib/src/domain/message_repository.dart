@@ -49,9 +49,18 @@ class MessageRepository {
     );
   }
 
-  /// Rewrites an existing message record (delivery-state / read_at updates;
-  /// fresh nonce by construction).
-  Future<void> update(Uint8List channelId, MessageRecord record) async {
+  /// Rewrites an existing message record (delivery-state / read_at / reaction
+  /// updates; fresh nonce by construction). [purgeAt] mirrors the read-time
+  /// disappearing deadline into the existing plaintext `purge_at` column (the
+  /// accepted, already-disclosed leak — spec §5, app-architecture §4): pass it
+  /// once, when a received disappearing message is first read
+  /// (`read_at + expiry_s*1000`); omit it to preserve the current value. No
+  /// new plaintext column is ever introduced.
+  Future<void> update(
+    Uint8List channelId,
+    MessageRecord record, {
+    int? purgeAt,
+  }) async {
     final existing = await _store.get(record.id);
     if (existing == null) {
       throw ArgumentError('unknown message');
@@ -69,7 +78,7 @@ class MessageRepository {
         id: record.id,
         channelId: channelId,
         seq: existing.seq,
-        purgeAt: existing.purgeAt,
+        purgeAt: purgeAt ?? existing.purgeAt,
         ct: sealed,
       ),
     );
