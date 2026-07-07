@@ -492,6 +492,95 @@ Re-run after the fixes: `flutter analyze` clean · `flutter test` 375 pass
 
 ## QA done-check
 
+**done-check: PASS + evidence** — senior-qa · 2026-07-07 · worktree
+`session-11-media` @ `623e9f9`. Every clause executed against my own runs; no
+production code edited (this section is the only committed change).
+
+**Standing bars.** `flutter analyze` → "No issues found!" · `flutter test` →
+**375 pass** (0 fail/skip; media suite = `image_processor`, `media_chunker_
+reassembler`, `media_fences`, `media_transfer_integration`, `media_widgets`) ·
+`dart format --output=none --set-exit-if-changed lib test` → clean (166 files, 0
+changed). **Frozen codec:** `git diff 195d7c4..HEAD -- application/mobile/lib/
+src/protocol` is **EMPTY** — codec untouched, S11 consumes it byte-for-byte.
+
+**Clause 1 — photo + PDF round-trip between devices (PASS).** Two live
+`SessionController`s over the KK bridge-relay harness: a JPEG and a 150 000-B
+multi-chunk PDF (3 frames) each reassemble and the receiver's *decrypted blob*
+`== ` the sender's exact bytes (`readBlob(...) equals bytes`, genuine byte-
+equality — not a tautology; the sender's own encrypted copy also matches), with
+the manifest ACKed (`deliveryState == delivered`). Non-image PDF renders as a
+document bubble (`isMediaImage == false`, mime `application/pdf`). A received
+manifest is a replyable referent (§5.8) — verified.
+
+**Clause 2 — EXIF verifiably stripped (PASS).** `image_processor_test` embeds a
+JPEG with GPS/Make/Model/DateTime, a precondition asserts the fixture *carries*
+EXIF, then after `ImageProcessor.process` the output `exif.isEmpty == true`
+(GPS/Make null), pixels within ±12 and dims preserved (orientation baked). Strip
+is structural (decode→`bakeOrientation`→fresh `ExifData()`→re-encode), on-device
+in `Isolate.run`, pure-Dart/network-incapable, and happens in the attach preview
+BEFORE the attachment is sealed (`attach_sheet` → `MediaAttachment` → `sendMedia`
+→ `persistOutgoing`/`transmit` seal). XMP/ICC surgical removal = accepted S18 NIT
+(noted, not failed).
+
+**Clause 3 — B1 receiver manifest bounds / no OOM (PASS, discriminating).**
+Hostile manifest (`chunk_count = 0xFFFFFFFF`, `total_len = 0x7FFFFFFF...`)
+discarded at `_manifestWithinBounds` BEFORE any `List.filled`/`Uint8List`
+allocation → `manifestOutOfBounds`, no ACK, both sides stay live (not a §3.3.1
+kill), no OOM. Bounds are discriminating: just-over-5 MB rejected, inconsistent
+`chunk_count != ceil(total_len/65536)` rejected, negative decoded uint64
+rejected, **and a valid at-cap manifest (5 MB / 80 chunks) is ACCEPTED** — so it
+is not reject-everything. Session-level integration case confirms live-after.
+
+**Clause 4 — media quarantine / no backup (PASS).** Blobs ride S7
+`MediaRepository` AEAD files (CDK-derived, store-root, backup-excluded); the
+fence test bans all gallery/photo-roll APIs across `lib/src/media`
+(`image_gallery_saver`/`photo_manager`/`PHPhotoLibrary`/`MediaStore.Images`/…) —
+green. Export is decrypt-to-temp → share sheet → `delete` in a `finally`, generic
+name (no original filename retained), no residue. Plaintext budget respected:
+`media_ix` plaintext = only `id/channel_id/purge_at`; mime/len/hash/msgId stay in
+`MediaIndexRecord` ciphertext. Diag events carry no content (privacy audit green
+in-suite).
+
+**Clause 5 — expiry vanishes on both ends / B2 (PASS).** `MediaRepository.
+purgeExpired` deletes the due `media_ix` row + blob file and returns purged
+`msg_id`s; `SessionController.purgeExpiredMedia` drops the matching message rows
+— no orphan. Both-ends test: after advancing past `purge_at`, threads empty,
+`indexByChannel` empty, `readBlob` throws on BOTH controllers. B2: receiver keys
+`purge_at` to its OWN `nowMs` receive-time (used for BOTH blob and message row,
+lockstep), NOT the sender wire timestamp — skewed-clock case (sender +1 year,
+receiver "now") still purges on the receiver's schedule.
+
+**Clause 6 — `image` dep audit (PASS).** Pinned `^4.5.4`, resolved **4.8.0**
+(pubspec.lock), promoted direct; fenced to `image_processor.dart` (fence test
+green). Transitive tree pure-Dart (`archive`, `xml`→`petitparser`/`collection`,
+`meta`); no telemetry/analytics/socket/platform-channel under the subtree.
+
+**Clause 7 — i18n (PASS).** New `media_*` keys ARB-sourced; voice-guide strings
+verbatim — `media_metadataStripNotice`, `media_compressionNote`,
+`media_overCapError`, `media_exportRollNote` match `voice-and-microcopy.md`
+lines 95–98 exactly; `media_exportConfirm` matches `components.md` line 113
+verbatim. DE/FR/ES/IT carry zero `media_` keys (locale-only stubs → S16, per the
+S10 pattern).
+
+**Fold-wiring note (record, NOT a fail).** `MediaTransferController` is
+constructed ONLY in the test harness (`media_transfer_integration_test.dart:425`)
+and `SessionController.attachMedia` is called ONLY there — media is NOT wired into
+a live production session in this branch, because production session construction
+is S12's `session_launcher` (created after S11 branched). The seam is verified
+correct and ready: `attachMedia` / `sealMediaFrame` / `sendMedia` /
+`ingestReceivedMedia` / `purgeExpiredMedia` on `SessionController` + the
+`case InnerType.mediaChunk → _media?.onInbound(env)` dispatch, no Flutter import
+added (fence holds). **At fold, S12's launcher MUST construct a
+`MediaTransferController` and `attachMedia(...)` it** (with the session's clock
+source and `sealMediaFrame`/`ingestReceivedMedia` callbacks) or media stays dark
+in the live app.
+
+**Device-deferred rungs (honestly seam-marked, NOT faked).** Real picker/camera,
+OS share sheet (platform channel), and gallery/backup/EXIF forensic inspection
+ride the S7/S18 deferral — each is comment-marked as an S18 real-device rung with
+full headless stand-in coverage (fences + integration harness). Verified genuine,
+not stubbed-to-pass.
+
 ## Next / follow-ups
 
 - **Fold-time coordination (G4):** `session_controller.dart` is the primary
