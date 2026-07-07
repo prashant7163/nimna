@@ -84,6 +84,29 @@ marker-absence scans and restart-persistence tests run under plain
 (pubspec.lock records it as `direct dev` — reviewer keeps it there). No
 codegen packages.
 
+**S9 additions (join methods, deps audit PASS — no telemetry/analytics/
+crash/Firebase in the tree):**
+- **`mobile_scanner` 7.2.0** — live QR scan + still-image decode. Pinned to
+  the **BUNDLED on-device MLKit** (`com.google.mlkit:barcode-scanning`, the
+  default; `dev.steenbakker.mobile_scanner.useUnbundled` NOT set), never the
+  `play-services-mlkit-*` variant that downloads models and carries the
+  play-services telemetry surface. Verified on-device, zero network. Fence:
+  ONE module `lib/src/pairing/joiner/join_entry/qr_source.dart`.
+- **`file_picker` 11.0.2** — OS image/PDF picker (spec §3.1 method iv). Fence:
+  ONE module `join_entry/upload_source.dart`. Its `http`-free; the desktop
+  Windows COM impl compiles on the host test target only (see win32 below).
+- **`pdfrx` 2.4.4** — rasterizes PDF page 1 → image → decode. Its transitive
+  `http` serves pdfrx's remote-URL loading API, which Nimna NEVER invokes (we
+  rasterize a locally-picked file only) — no autonomous network. Fence: ONE
+  module `join_entry/upload_source.dart`.
+- **`dependency_overrides: win32: ^5.14.0`** — file_picker 11's Windows COM
+  picker needs win32 5.x symbols (COMObject/HRESULT-as-int/GUID.createInstance)
+  that win32 6.x drops; share_plus ^13.2 declares win32 ^6.0.1. Nimna ships
+  ONLY iOS/Android (win32 never compiled/linked), but `flutter test` compiles
+  every plugin's desktop impl on the host, so both must at least COMPILE — the
+  5.x line satisfies file_picker and share_plus compiles against it too.
+  Touches no crypto/network dep. Revisit when the two realign on win32 6.x.
+
 **Explicitly NOT in S7** (each waits for its session's intake +
 sign-off): qr_flutter, mobile_scanner, image/file pickers,
 flutter_image_compress, share_plus (S8/S9/S11), local_auth (S13),

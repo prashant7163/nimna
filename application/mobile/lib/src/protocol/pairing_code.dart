@@ -76,6 +76,22 @@ class PairingCode {
     return PairingCode._(out.toString());
   }
 
+  /// Extracts a code from a scanned or uploaded QR payload (spec §3.1.1):
+  /// "scanners accept the payload with or without the prefix and hyphens —
+  /// the canonicalization makes all forms converge." Strips an optional,
+  /// case-insensitive `nimna:` prefix, then [canonicalize]s. Returns null on
+  /// anything that does not canonicalize to a valid code (a QR that isn't
+  /// ours — no error state, per F3.2). Locale-independent.
+  static PairingCode? fromScannedPayload(String raw) {
+    var s = raw.trim();
+    if (s.length >= qrPayloadPrefix.length &&
+        s.substring(0, qrPayloadPrefix.length).toLowerCase() ==
+            qrPayloadPrefix) {
+      s = s.substring(qrPayloadPrefix.length);
+    }
+    return canonicalize(s);
+  }
+
   /// Rebuilds a code from stored canonical bytes (the at-rest record);
   /// throws on anything that is not already canonical.
   factory PairingCode.fromCanonicalBytes(Uint8List bytes) {

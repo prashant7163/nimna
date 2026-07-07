@@ -271,4 +271,105 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get wipe_channelWipedToast => 'Channel wiped.';
+
+  @override
+  String get pairing_joinTitle => 'Enter a code';
+
+  @override
+  String get pairing_joinIntro =>
+      'Codes come from the other person. Each one works once.';
+
+  @override
+  String get pairing_joinPaste => 'Paste';
+
+  @override
+  String get pairing_joinScan => 'Scan';
+
+  @override
+  String get pairing_joinUpload => 'Upload';
+
+  @override
+  String get pairing_joinAction => 'Join';
+
+  @override
+  String get pairing_joinOffline =>
+      'You\'re offline. Joining needs a connection.';
+
+  @override
+  String get pairing_joinScanTitle => 'Scan their code';
+
+  @override
+  String get pairing_joinScanCaption =>
+      'Point your camera at the code on their screen.';
+
+  @override
+  String get pairing_joinScanEnterInstead => 'Enter it instead';
+
+  @override
+  String get pairing_joinCameraDenied =>
+      'No camera access — type the code instead.';
+
+  @override
+  String get pairing_joinNoQrInFile => 'No code in that file.';
+
+  @override
+  String get pairing_joinFoundThem => 'Found them.';
+
+  @override
+  String get pairing_joinSettingUp => 'Setting up the line…';
+
+  @override
+  String get pairing_joinCodeSpentNote =>
+      'The code has done its job. It won\'t work again for anyone.';
+
+  @override
+  String get pairing_joinSpentBody =>
+      'That didn\'t finish. The code is spent — ask them to make a new one.';
+
+  @override
+  String get pairing_noMatchError =>
+      'That code didn\'t match anything. Codes expire — ask them to make a new one.';
+
+  @override
+  String get pairing_clearAction => 'Clear';
+
+  @override
+  String get pairing_verifyTitle => 'Call them and compare';
+
+  @override
+  String get pairing_verifyBody =>
+      'Read these three words to each other. If they match, the line is yours alone.';
+
+  @override
+  String get pairing_verifyMatch => 'They match';
+
+  @override
+  String get pairing_verifyMismatch => 'They don\'t match';
+
+  @override
+  String get pairing_mismatchTitle => 'The words didn\'t match.';
+
+  @override
+  String get pairing_mismatchBody =>
+      'That can mean someone got between you while pairing. This pairing has been thrown away — nothing was kept.';
+
+  @override
+  String get pairing_mismatchShareSafer =>
+      'Make a new code and share it somewhere safer. In person is safest.';
+
+  @override
+  String get pairing_readyTitle => 'The line is yours.';
+
+  @override
+  String get pairing_nameLineLabel => 'Name this line';
+
+  @override
+  String get pairing_nameLineCaption =>
+      'Labels live only on this phone. They\'re never sent anywhere.';
+
+  @override
+  String get pairing_doneAction => 'Done';
+
+  @override
+  String get pairing_goBack => 'Go back';
 }
