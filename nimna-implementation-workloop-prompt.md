@@ -1,17 +1,18 @@
 # Nimna — Implementation Work-Loop Prompt
 
-Paste the prompt below into Claude Code from the project root. Attach: the current protocol spec (`docs/nimna-protocol-spec-v*.md`) as single source of truth and the current build plan (`nimna-build-plan-v*-sessions.md`) as the session plan it executes — in each family, the CURRENT file is the one WITHOUT a DEPRECATED header; deprecated versions are history only (USER, 2026-07-05). The design loop's outputs in `/design` are reference material for all UI work.
+Paste the prompt below into Claude Code, started from the project root. Attach the **current normative protocol spec** and the **current build plan** — in each case, the file *without* a DEPRECATED header (at time of writing: `docs/nimna-protocol-spec-v0.2.1.md` and `nimna-build-plan-v3-sessions.md`; if running from the repo, no attachment is needed — the loop reads them from disk by the same rule). The design loop's outputs in `/design` are reference material for all UI work.
 
 ---
 
 ```
 PROJECT ROOT: /Users/pacific/Playground/AIManagedProjects/Nimna
 
-You are running the IMPLEMENTATION work loop for Nimna, executing the
-current build plan (nimna-build-plan-v*-sessions.md) session by session
-against the current protocol spec (docs/nimna-protocol-spec-v*.md) as the
-single source of truth — in each family, the current file is the one
-without a DEPRECATED header. Where UI is
+You are running the IMPLEMENTATION work loop for Nimna, executing
+the current build plan (the build-plan file without a DEPRECATED header;
+plan versions supersede by deprecation, same rule as the spec) session
+by session against the current normative protocol spec in docs/ (the
+spec file without a DEPRECATED header) as the single source of truth.
+Where UI is
 involved, the artifacts in /design (tokens, components, wireframes, hi-fi
 screens, microcopy/voice guide) are binding — implement them, don't
 reinterpret them. Any conflict between plan, spec, and design artifacts:
@@ -165,6 +166,27 @@ QUALITY BARS (standing, all sessions):
   * NO third-party crash/analytics/telemetry SDKs in the app, ever
     (no Crashlytics, no Sentry, nothing that phones home). Adding one is
     not a CODE decision at any point.
+
+- INTERNATIONALIZATION (launch languages: EN, DE, FR, ES, IT):
+  * Every user-facing string externalized via Flutter ARB/l10n from the
+    first widget — zero hardcoded strings, reviewer-enforced. Locale-aware
+    dates/times/plurals. Layouts must survive German-length strings;
+    never hardcode left/right (RTL-readiness for future languages).
+  * Protocol and storage code is locale-independent by definition — no
+    locale-dependent logic anywhere below the UI layer. The Nimna code
+    (Crockford Base32) renders identically in all locales.
+  * Translations are CRAFTED, not batch-machine-translated: each language
+    is a deliberate pass against the voice guide's canonical strings,
+    reviewed for register and for claim-accuracy — the screenshot
+    disclosure and permanence guarantee are near-promissory copy and must
+    say exactly what the English says. product-manager reviews each
+    language pass; disputed renderings escalate to USER.
+  * Store listings ship in all five languages at launch. The website
+    also ships in all five languages — EN default, language switcher,
+    honoring browser language where sensible — with copy separated from
+    markup and every localized page held to the same claim-accuracy bar
+    as the app strings (the launch checklist's copy-honesty verification
+    runs per language).
 
 - DEPENDENCY DISCIPLINE: minimal and boring. Every new dependency (Go
   module or pub.dev package) is justified in the PR description, pinned,
