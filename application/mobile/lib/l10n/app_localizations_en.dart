@@ -271,4 +271,83 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wipe_channelWipedToast => 'Channel wiped.';
+
+  @override
+  String get billing_headline => 'One of you buys the line.';
+
+  @override
+  String get billing_subhead => 'The other never pays.';
+
+  @override
+  String get billing_pointSubscriptionTitle => 'One subscription a year.';
+
+  @override
+  String get billing_pointSubscriptionCaption =>
+      'As many lines as you care to create.';
+
+  @override
+  String get billing_pointPermanenceTitle => 'Every line is yours for good.';
+
+  @override
+  String get billing_pointPermanenceCaption =>
+      'If it lapses, everything you made keeps working — only new lines wait.';
+
+  @override
+  String get billing_pointNoAccountTitle => 'No account.';
+
+  @override
+  String get billing_pointNoAccountCaption =>
+      'The receipt stays between you and the store.';
+
+  @override
+  String get billing_pointJoiningFreeTitle => 'Joining is always free.';
+
+  @override
+  String get billing_pointJoiningFreeCaption =>
+      'The person you invite never sees this screen.';
+
+  @override
+  String billing_ctaStart(String price) {
+    return '$price — start';
+  }
+
+  @override
+  String get billing_restore => 'Restore';
+
+  @override
+  String get billing_noIdentityFootnote => 'We never learn who you are.';
+
+  @override
+  String get billing_restoreChecking => 'Checking with the store…';
+
+  @override
+  String get billing_restoreSuccessToast => 'Purchase restored.';
+
+  @override
+  String get billing_subscriptionStartedToast => 'Subscription started.';
+
+  @override
+  String get billing_restoreNothing =>
+      'The store has no subscription for this account.';
+
+  @override
+  String get billing_storeUnreachable =>
+      'Couldn\'t reach the store. Try again in a moment.';
+
+  @override
+  String get billing_reconnectToVerify =>
+      'Reconnect to verify your subscription.';
+
+  @override
+  String get billing_tryAgain => 'Try again';
+
+  @override
+  String get billing_autoRenewDisclosure =>
+      'PROVISIONAL — awaiting USER sign-off. This is a yearly subscription that renews automatically until you cancel. Your app-store account is charged at each renewal. Manage or cancel anytime in your store account settings.';
+
+  @override
+  String get billing_termsOfUse => 'Terms of Use';
+
+  @override
+  String get billing_privacyPolicy => 'Privacy Policy';
 }

@@ -12,6 +12,9 @@ helpers/test_env.dart      shared harness: TestDevice (stable store root +
 helpers/fake_relay.dart    in-memory RelayConnector/RelayConnection fakes
                            (recorded sends, test-side deliver/drop,
                            fail-next-attempts)
+helpers/fake_entitlement.dart  scriptable EntitlementSource fake (S17):
+                           status/price/restore/purchase permutations, call
+                           counts (permanence: zero-query assertion)
 fixtures/                  committed expected values (see its README):
                            the independently-decoder-verified QR matrix
 crypto/
@@ -116,6 +119,18 @@ ui/
                            choose→confirm enroll + mismatch restart,
                            biometric recommended-on, turn-off gated by the
                            current PIN, wipe row raises the string-8 sheet
+billing/ (S17)
+  billing_service_test.dart  gate bool mapping (active only; unresolved
+                           fail-closed), price pass-through / null, restore
+                           + purchase re-grant, cancelled = calm
+  billing_fences_test.dart   in_app_purchase fenced to store_entitlement_
+                           source; session/storage path never references
+                           billing (permanence is structural)
+  paywall_gate_test.dart   F9 gate: unentitled intercepts to the paywall,
+                           entitled goes straight to create; buy/restore
+                           re-grant + toast + continue; dismiss = calm
+                           return; offline = reconnect state (no CTA);
+                           existing state never consults billing
 ```
 
 Device-attached coverage lives in `../integration_test/` (see its README);

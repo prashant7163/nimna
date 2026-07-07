@@ -94,6 +94,38 @@ Android has no FCM-less alternative to weigh it against — expect a
 tightly-scoped sign-off decision then). **No Firebase anything at S7.**
 **google_fonts REJECTED permanently** (§8.5).
 
+**S17 addition — platform IAP (creation paywall, spec §10). Sign-off GIVEN
+(SESSION-17 intake), conditional on a pin-time transitive no-telemetry audit
+— PASSED.** Three first-party Flutter-team plugins, pinned EXACT (no caret):
+
+- **`in_app_purchase` 3.2.4 (flutter.dev)** — the canonical Flutter IAP
+  facade; the app's ONLY billing surface.
+- **`in_app_purchase_storekit` 0.4.10+1 (flutter.dev)** — iOS StoreKit
+  federation.
+- **`in_app_purchase_android` 0.4.0+11 (flutter.dev)** — Android Play
+  Billing federation.
+
+Transitive additions are boring and first-party only:
+`in_app_purchase_platform_interface`, `plugin_platform_interface`,
+`collection`, `meta`, `json_annotation`. **Pin-time audit
+(`flutter pub deps` + grep for analytics/firebase/crashlytics/sentry/beacon):
+CLEAN** — the no-SDK doctrine holds absolutely; the only native frameworks
+pulled are Apple StoreKit and the Google Play Billing client themselves,
+which are the intended payment substrate, not telemetry. The general-purpose
+plugin surface is fenced by code review to ONE module
+(`lib/src/billing/store_entitlement_source.dart` — `billing_fences` test),
+behind the pure-Dart `EntitlementSource` seam. Entitlement is read ONLY from
+the platform's signed on-device cache (StoreKit 2 `currentEntitlements` /
+Play `queryPurchasesAsync`); Nimna persists ZERO entitlement flag and runs no
+billing server (permanence is structural). Platform config: Android
+`com.android.vending.BILLING` permission; iOS StoreKit capability + committed
+dev-only `ios/nimna_creation.storekit` (placeholder tier, never shipped —
+real product IDs + tier are the S19 store-console hand step; the
+numberless-price lock is untouched, the app renders `ProductDetails.price` at
+runtime). Rejected: `purchases_flutter` (RevenueCat — a third-party server in
+the money path, at odds with the account-less/no-server doctrine and the
+no-telemetry rule).
+
 ## 2. At-rest encryption — inside the crypto lock (adjudication)
 
 **Decision: all Nimna-authored at-rest encryption uses the S2-locked

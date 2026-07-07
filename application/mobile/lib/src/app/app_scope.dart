@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../billing/billing_service.dart';
 import '../diag/diag.dart';
 import '../lock/lock_controller.dart';
 import '../pairing/initiator/pairing_initiator_service.dart';
@@ -18,6 +19,7 @@ class NimnaServices {
     required this.pairing,
     required this.lockController,
     required this.wipe,
+    required this.billing,
   });
 
   final KeyService keyService;
@@ -26,6 +28,11 @@ class NimnaServices {
   final PairingInitiatorService pairing;
   final LockController lockController;
   final WipeService wipe;
+
+  /// S17 — the creation-gate billing orchestrator. Consulted ONLY by
+  /// `startCreateLine`; the session/send/receive path and the channel list
+  /// never reference it (permanence is structural, spec §10).
+  final BillingService billing;
 }
 
 /// The one DI surface. `AppScope.of(context)` anywhere below the app root.

@@ -13,6 +13,7 @@ import 'package:nimna/src/storage/store_root.dart';
 import 'package:sodium/sodium_sumo.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'fake_entitlement.dart';
 import 'fake_relay.dart';
 
 /// Shared host-test environment: real libsodium (build-hook native asset),
@@ -106,6 +107,10 @@ class TestDevice {
   /// WebSocketRelayConnector; pairing tests that drive the wire build their
   /// own connector against [NimnaServices.storage].
   final FakeRelayConnector relayConnector = FakeRelayConnector();
+
+  /// Billing seam fake — defaults to "no subscription" so the S17 gate is
+  /// exercised without a store. Billing tests script it before [boot].
+  final FakeEntitlementSource entitlement = FakeEntitlementSource();
   DateTime Function()? clock;
 
   /// Injectable escalating-delay scheduler (default: real timers).
@@ -136,6 +141,7 @@ class TestDevice {
       relayConnector: relayConnector,
       lockConfigStore: lockStore,
       biometricGate: biometricGate,
+      entitlementSource: entitlement,
       clock: clock,
       pinOpsLimit: testPinOpsLimit,
       pinMemLimit: testPinMemLimit,
