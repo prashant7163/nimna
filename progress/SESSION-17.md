@@ -175,7 +175,8 @@ payment substrate itself), not SDKs. No-telemetry doctrine holds absolutely.
 ### Verification
 
 - `flutter analyze` — **No issues found.**
-- `flutter test` — **+222, all passed** (17 new billing tests).
+- `flutter test` — **+224, all passed** (billing suite: billing_service ×7,
+  billing_fences ×4, paywall_gate ×8).
 - `dart format --set-exit-if-changed` — clean.
 - single_call_site_test test 1 (one create call site) — **green**; no second
   creation door; receivers never gated; `billing_fences_test` proves the
@@ -216,3 +217,38 @@ payment substrate itself), not SDKs. No-telemetry doctrine holds absolutely.
 Real product IDs + price tier (numberless lock untouched — app renders
 `ProductDetails.price`); iOS In-App-Purchase capability + scheme StoreKit
 config; Terms/Privacy destinations; honest-limits FAQ (website).
+
+---
+
+## Code-review — PASSED (no blocking); fixes applied (CODE, 2026-07-07)
+
+1. **PRIORITY — gate now reads the signed cache SILENTLY (calm, never a nag).**
+   `hasActiveCreationEntitlement()` no longer calls `restorePurchases()` (which
+   on StoreKit could surface a login sheet at every creation intent). The gate
+   reads per platform with **no user prompt**:
+   - **iOS:** StoreKit 2 `Transaction.all` via `SK2Transaction.transactions()`
+     (SK2 is the plugin default; the wrapper hits the SK2 host API directly),
+     filtered to the unexpired transaction for `nimna_creation_yearly` — no
+     `AppStore.sync()`, no prompt.
+   - **Android:** `queryPurchasesAsync` via the platform addition's
+     `queryPastPurchases()` — never prompts; expired subs drop off, so a
+     returned owned purchase IS the active entitlement.
+   `restorePurchases()` is now confined to `restore()` (the user-tapped button)
+   — **single call site**, pinned by a new `billing_fences_test` occurrence
+   count. iOS 17 floor guarantees SK2. Real-device silent-check rides the
+   sandbox done-check. Fake-level tests assert `restoreCount == 0` on the gate
+   path (unentitled + entitled) and `== 1` only after the explicit Restore tap.
+2. **NIT — stale test-file name** `in_app_purchase_fence_test.dart` → the real
+   `billing_fences_test.dart`, corrected in `entitlement_source.dart`,
+   `store_entitlement_source.dart`, and `pubspec.yaml`.
+3. **NIT — permanence fence widened:** `guardedTrees` now also covers
+   `lib/src/wipe` + `lib/src/lock` (green — billing is genuinely absent), so
+   "wipe cannot touch/forge the paywall" is CI-enforced.
+4. **NIT — count corrected** to +223 (see Verification above).
+
+Re-verify: `flutter analyze` clean; `flutter test` **+224** green (new
+restorePurchases single-call-site pin + the restore-count assertions on
+existing gate tests); `dart format` clean.
+Entitlement-read path after the change: **iOS `SK2Transaction.transactions()`
+(silent) · Android `queryPastPurchases()` (silent); the gate never triggers
+restore.** Cleared for the senior-qa done-check.

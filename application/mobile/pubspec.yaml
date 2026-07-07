@@ -52,7 +52,7 @@ dependencies:
   share_plus: ^13.2.0
   # Platform IAP (S17 paywall). First-party Flutter-team plugins; the app's
   # ONLY billing surface. Fenced to lib/src/billing/store_entitlement_source
-  # (in_app_purchase_fence_test). Pinned exact after a pin-time transitive
+  # (billing_fences_test). Pinned exact after a pin-time transitive
   # no-telemetry audit (flutter pub deps + analytics/firebase/crashlytics/
   # sentry/beacon grep) — clean. Sign-off: SESSION-17 intake (dependency
   # proposal); app-architecture.md §1.

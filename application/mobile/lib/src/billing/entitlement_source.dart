@@ -5,7 +5,7 @@
 /// `in_app_purchase` integration — lives in the single concrete
 /// implementation `store_entitlement_source.dart`, which is the app's only
 /// file allowed to import `package:in_app_purchase` (fenced by
-/// test/billing/in_app_purchase_fence_test.dart).
+/// test/billing/billing_fences_test.dart).
 ///
 /// The intake named the two core methods
 /// ([hasActiveCreationEntitlement] + [restore]); [localizedPrice] and

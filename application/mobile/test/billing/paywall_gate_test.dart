@@ -87,6 +87,10 @@ void main() {
     expect(find.text(en.billing_privacyLabel), findsOneWidget);
     // No provisional placeholder text survives on the rendered paywall.
     expect(find.textContaining('PROVISIONAL'), findsNothing);
+
+    // Calm, never a nag: neither the gate nor the paywall load ever triggers
+    // restore — that stays reserved for the user-tapped Restore button.
+    expect(device.entitlement.restoreCount, 0);
   });
 
   testWidgets('entitled: Create goes straight to the create flow', (
@@ -100,6 +104,9 @@ void main() {
     expect(find.byType(CreateLineFlow), findsOneWidget);
     expect(find.byType(PaywallScreen), findsNothing);
     expect(find.text(en.pairing_createIntro), findsOneWidget);
+    // The gate consulted the silent entitlement query, never restore.
+    expect(device.entitlement.queryCount, greaterThan(0));
+    expect(device.entitlement.restoreCount, 0);
   });
 
   testWidgets('dismiss (✕): calm return to the list, nothing created', (
@@ -149,12 +156,15 @@ void main() {
     await pumpApp(tester);
 
     await tapCreate(tester);
+    // Restore runs ONLY on the explicit user tap.
+    expect(device.entitlement.restoreCount, 0);
     await tester.tap(find.widgetWithText(TextButton, en.billing_restore));
     await tester.pumpAndSettle();
 
     expect(find.byType(CreateLineFlow), findsOneWidget);
     expect(find.byType(PaywallScreen), findsNothing);
     expect(find.text(en.billing_restoreSuccessToast), findsOneWidget);
+    expect(device.entitlement.restoreCount, 1);
 
     await tester.pump(const Duration(seconds: 3));
   });

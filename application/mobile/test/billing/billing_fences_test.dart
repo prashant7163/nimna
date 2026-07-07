@@ -75,14 +75,37 @@ void main() {
     );
   });
 
+  test('the gate never calls restorePurchases (calm, never a nag)', () {
+    // restorePurchases() can surface a store login sheet — forbidden on the
+    // creation gate (spec §10). It must have exactly ONE call site in the
+    // store source, inside restore() (the user-tapped button). The gate reads
+    // the signed cache silently. A second call site (e.g. regressing the gate
+    // back onto restore) fails this pin.
+    const storeModule = 'lib/src/billing/store_entitlement_source.dart';
+    final code = stripComments(File(storeModule).readAsStringSync());
+    final calls = RegExp(r'\.restorePurchases\s*\(').allMatches(code).length;
+    expect(
+      calls,
+      1,
+      reason:
+          'restorePurchases() must have exactly ONE call site ($storeModule '
+          'restore(), user-initiated) — the silent gate must never trigger '
+          'it. Found $calls.',
+    );
+  });
+
   test('the session/storage path never references billing (permanence)', () {
-    // The send/receive/session path + at-rest storage. If any of these ever
-    // consulted the subscription, permanence would stop being structural.
+    // The send/receive/session path + at-rest storage + the wipe & lock
+    // perimeters. If any of these ever consulted the subscription, permanence
+    // would stop being structural — and "wipe cannot touch/forge the paywall"
+    // must be CI-enforced, not incidentally true.
     const guardedTrees = [
       'lib/src/protocol',
       'lib/src/transport',
       'lib/src/storage',
       'lib/src/crypto',
+      'lib/src/wipe',
+      'lib/src/lock',
     ];
     final offenders = <String>[];
     final pattern = RegExp(r'\b(BillingService|EntitlementSource|\.billing)\b');

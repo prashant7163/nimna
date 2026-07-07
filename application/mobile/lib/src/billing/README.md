@@ -15,12 +15,15 @@ entitlement_source.dart        Abstract seam + enums (EntitlementStatus,
                                RestoreOutcome, PurchaseOutcome). Everything
                                above this line is pure Dart and
                                store-agnostic → fully fake-injectable.
-store_entitlement_source.dart  The ONLY file importing package:in_app_purchase
-                               (fenced). Reads the platform's SIGNED
-                               on-device entitlement cache (StoreKit 2
-                               currentEntitlements / Play queryPurchasesAsync)
-                               and drives purchase/restore/price. Never a
-                               Nimna flag or server.
+store_entitlement_source.dart  The ONLY file importing package:in_app_purchase*
+                               (fenced). Gate reads the SIGNED on-device cache
+                               SILENTLY — iOS StoreKit 2 Transaction.all
+                               (SK2Transaction.transactions, filtered by
+                               expiry) / Android queryPurchasesAsync
+                               (queryPastPurchases) — no user prompt, and
+                               NEVER restorePurchases(). restorePurchases() is
+                               confined to restore() (the user button; single
+                               call site, pinned). Never a Nimna flag/server.
 billing_service.dart           Pure-Dart orchestrator in NimnaServices.
                                Exposes the gate bool + the paywall's
                                tri-state query, price, purchase, restore.
