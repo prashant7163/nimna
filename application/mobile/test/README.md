@@ -9,6 +9,11 @@ the bootstrap seams).
 helpers/test_env.dart      shared harness: TestDevice (stable store root +
                            keystore across simulated relaunches), raw-byte
                            marker scanner, hex utilities
+helpers/fake_relay.dart    in-memory RelayConnector/RelayConnection fakes
+                           (recorded sends, test-side deliver/drop,
+                           fail-next-attempts)
+fixtures/                  committed expected values (see its README):
+                           the independently-decoder-verified QR matrix
 crypto/
   hkdf_test.dart           RFC 5869 A.1–A.3 + RFC 4231 HMAC vectors +
                            byte-cross-check vs the committed Go-generated
@@ -24,9 +29,40 @@ diag/
                            queue (256, drop-oldest), ciphertext-on-disk
   diag_api_surface_test.dart  source scan: no String/Object/dynamic in the
                               public diag API — free text unrepresentable
+protocol/ (S8, vector-locked to ../../docs/test-vectors/)
+  pairing_code_test.dart   §3.1.1: every committed canonicalization case
+                           (valid + reject), display/QR-payload forms,
+                           uniform-sampler generation, redacted toString
+  rendezvous_test.dart     §3.1.2: salts + seed/topic/psk under the
+                           reduced-cost set (fast default) AND the
+                           production-cost set (tagged `production-cost`,
+                           runs by default, CI-selectable — the Go -short
+                           mirror); Argon2id/HKDF constants pinned
+  outer_frame_test.dart    §5.4: all 11 committed outer-frame cases,
+                           full enum coverage assertion, strict rejects
+pairing/ (S8)
+  initiator_controller_test.dart  the state machine over the fake relay:
+                           create/register/persist, offline edge (no
+                           phantom codes), bridged hold + opaque PAIR_DATA
+                           buffering (no fabricated replies), backoff
+                           re-register (no retry storm), TTL expiry live +
+                           on-resume, original-creation-date resume topic,
+                           cancel silence, bridged-drop fail-closed,
+                           background grace, diag events-only
+  pending_pairing_test.dart  encrypted record round-trip incl. keypair,
+                           raw-disk absence of code/key bytes, remove =
+                           real erase (row deleted)
+  qr_matrix_test.dart      committed expected-matrix fixture (independent
+                           decoder verified) + determinism
+  single_call_site_test.dart  source pins: startCreateLine G2 single call
+                           site, share_plus fence, qr-encoder fence, S10
+                           inner-envelope fence
 storage/
   key_service_test.dart    MK mint/load, seal ⇒ StorageSealedError, key
                            destruction, Keychain-accessibility pin
+  meta_records_test.dart   encrypted meta values (S8): round-trip/rewrite/
+                           delete, ciphertext-on-disk + restart, AD
+                           transplant rejection, sealed perimeter
   storage_service_test.dart  THE done-check core: restart persistence,
                              raw-byte marker absence over db/WAL/media/diag,
                              schema-mismatch destructive reset, full-wipe
@@ -42,6 +78,12 @@ ui/
   shell_test.dart          boots in all five locales (EN fallback pre-S16),
                            both themes expose NimnaTokens, LockGate swaps
                            the whole subtree while sealed
+  pairing_flow_test.dart   F2 widget slices (S8): F2.1/F2.2+F2.4/F2.8
+                           canonical strings in all five locales, QR + code
+                           simultaneous, TTL sheet presets, offline edge,
+                           copy toast, F2.3 sheet caption (string 13),
+                           back-confirm vocabulary, 320 px narrow-frame
+                           survival (wide test font = length stress)
   no_hardcoded_strings_test.dart  grep safety net for Text('...') literals
 ```
 

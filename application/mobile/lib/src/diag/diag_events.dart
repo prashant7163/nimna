@@ -41,7 +41,27 @@ enum DiagEvent {
   backupExclusionFailed(9),
 
   /// A storage-layer operation failed (see [DiagCode]).
-  storageError(10);
+  storageError(10),
+
+  /// S8 pairing (initiator) events — events ONLY: the code, topic, and
+  /// keys are structurally unloggable (no String parameter exists).
+
+  /// A Nimna code (and its keypair) was created.
+  pairingCodeCreated(11),
+
+  /// The rendezvous topic was registered at the relay (first registration
+  /// or a resume/reconnect re-registration).
+  pairingTopicRegistered(12),
+
+  /// The relay bridged the topic (the peer arrived); the flow holds for
+  /// the S9 handshake.
+  pairingBridged(13),
+
+  /// The code's TTL lapsed unused; code and keypair were discarded.
+  pairingExpired(14),
+
+  /// The user cancelled the code; code and keypair were discarded.
+  pairingCancelled(15);
 
   const DiagEvent(this.id);
 
@@ -76,7 +96,11 @@ enum DiagCode {
   platformChannelUnavailable(6),
 
   /// meta.schema_version did not match the code's schema epoch.
-  schemaMismatch(7);
+  schemaMismatch(7),
+
+  /// A relay connection attempt failed (offline/refused/TLS —
+  /// deliberately one indistinct class; no addresses, no reasons).
+  relayUnreachable(8);
 
   const DiagCode(this.id);
 

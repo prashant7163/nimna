@@ -1,0 +1,6 @@
+# Test tags (S8 intake §8): the production-cost Argon2id lane mirrors the
+# Go suite's `-short` split. It RUNS in the default `flutter test` (the
+# on-device parameters must stay covered) and is selectable/excludable in
+# CI via `--tags production-cost` / `--exclude-tags production-cost`.
+tags:
+  production-cost:

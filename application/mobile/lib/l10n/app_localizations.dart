@@ -205,6 +205,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This is your own Nimna code — share it with the other person.'**
   String get pairing_selfJoinOwnCode;
+
+  /// F2 flow title (hi-fi 02-create-code navbar; also the F2.1 heading and its primary action — voice register: buttons are verbs, one or two words).
+  ///
+  /// In en, this message translates to:
+  /// **'Create a code'**
+  String get pairing_createTitle;
+
+  /// F2.1 body copy, wireframe verbatim.
+  ///
+  /// In en, this message translates to:
+  /// **'A code pairs your phone with one other. Share it however you like — in person is safest.'**
+  String get pairing_createIntro;
+
+  /// F2.1 TTL row label, wireframe verbatim.
+  ///
+  /// In en, this message translates to:
+  /// **'Code works for'**
+  String get pairing_ttlLabel;
+
+  /// F2.1 TTL row caption, wireframe verbatim.
+  ///
+  /// In en, this message translates to:
+  /// **'Shorter is safer. One use, either way.'**
+  String get pairing_ttlHint;
+
+  /// TTL preset value rendering (1 hour / 8 hours / 24 hours — S8 intake section 5 presets). Locale-aware plural; at the 24 h default this renders '24 hours' exactly as the wireframe shows.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{1 hour} other{{hours} hours}}'**
+  String pairing_ttlHours(int hours);
+
+  /// F2.1 offline edge, wireframe verbatim. Nothing is generated without a live registration — no phantom codes.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. A code needs the relay listening for it — try again when you\'re connected.'**
+  String get pairing_offlineError;
+
+  /// CANONICAL, spec section 3.1 verbatim (voice string 13). The one-line briefing that rides every code share: the F2.3 sheet's header caption and the share-screen caption. '24h' is spec-fixed wording here regardless of the chosen TTL preset — never edit outside a spec change.
+  ///
+  /// In en, this message translates to:
+  /// **'Works once, expires in 24h — share it like a password.'**
+  String get pairing_shareBriefing;
+
+  /// Share-screen caption line 2 (hi-fi 02-create-code verbatim): text code and QR are one surface, each independently shareable (spec section 3.1.1).
+  ///
+  /// In en, this message translates to:
+  /// **'The words or the square — either one pairs you.'**
+  String get pairing_eitherFormPairs;
+
+  /// Share-screen secondary action: puts the display-form code on the clipboard (hi-fi 02-create-code).
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get pairing_copyAction;
+
+  /// Share-screen secondary action: opens the F2.3 share sheet (hi-fi 02-create-code, ellipsis included).
+  ///
+  /// In en, this message translates to:
+  /// **'Share…'**
+  String get pairing_shareAction;
+
+  /// Toast after Copy (F2.2 / components.md toast examples, verbatim). Auto-dismiss 3 s.
+  ///
+  /// In en, this message translates to:
+  /// **'Code copied.'**
+  String get pairing_codeCopiedToast;
+
+  /// F2.3 sheet option, wireframe verbatim. The code travels alone as XXX-XXX-XXX text.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the code as text'**
+  String get pairing_shareAsText;
+
+  /// F2.3 sheet option, wireframe verbatim. The QR PNG travels alone; temp file deleted after handoff.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the QR as an image'**
+  String get pairing_shareQrAsImage;
+
+  /// F2.3 sheet ghost option, wireframe verbatim.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy code'**
+  String get pairing_copyCode;
+
+  /// F2.4 waiting caption under the dotted idle line, wireframe + hi-fi verbatim.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for them to join…'**
+  String get pairing_waitingForJoin;
+
+  /// F2.4 patience caption. Wireframe verbatim at the 24 h default ('Your code works for 24 hours — …'); the hour count follows the chosen TTL preset for claim accuracy. Promises the code's LIFETIME, never background presence (USER copy decision 2026-07-04): no push, no background socket claim.
+  ///
+  /// In en, this message translates to:
+  /// **'Your code works for {hours, plural, =1{1 hour} other{{hours} hours}} — come back anytime. Pairing completes when you\'re both here.'**
+  String pairing_waitLifetime(int hours);
+
+  /// F2.4 ghost action, wireframe verbatim: discards code and keypair — nothing was created. Also the confirming action of the back-confirm modal.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel this code'**
+  String get pairing_cancelCode;
+
+  /// Back-from-waiting confirm copy (F2.2 exit annotation, wireframe verbatim).
+  ///
+  /// In en, this message translates to:
+  /// **'Stop waiting? The code stops working.'**
+  String get pairing_stopWaitingConfirm;
+
+  /// Ghost decline (F2.8/F2.9 wireframe verbatim; voice register ghost vocabulary). Also the safe choice on the back-confirm modal.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get pairing_notNow;
+
+  /// F2.8 edge headline, wireframe verbatim. Silence doctrine: expiry is the only failure surfaced, and only to the creator.
+  ///
+  /// In en, this message translates to:
+  /// **'This code expired unused.'**
+  String get pairing_expiredHeadline;
+
+  /// F2.8 edge body, wireframe verbatim — expiry means literally nothing happened; no channel, no residue.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was created. Make a new one whenever you\'re ready.'**
+  String get pairing_expiredBody;
+
+  /// F2.8 primary action, wireframe verbatim: back to F2.1 (fresh keypair, fresh code).
+  ///
+  /// In en, this message translates to:
+  /// **'Make a new code'**
+  String get pairing_makeNewCode;
+
+  /// F2.5 edge-case copy, wireframe verbatim: the bridge/handshake window failed (connection lost). Both sides discard partial state; a half-made channel never exists (spec section 3.1.6).
+  ///
+  /// In en, this message translates to:
+  /// **'That didn\'t finish. The code is spent — make a new one.'**
+  String get pairing_spentBody;
 }
 
 class _AppLocalizationsDelegate

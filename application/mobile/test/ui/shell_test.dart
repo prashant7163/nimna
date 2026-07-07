@@ -44,10 +44,11 @@ void main() {
       expect(find.text(en.channelListEmptyBody), findsOneWidget);
       expect(find.text(en.appTitle), findsOneWidget);
 
-      // The two actions are present but disabled stubs in S7.
+      // S8: "Create a code" is live (the G2 single entry point);
+      // "Enter a code" stays an S9 stub.
       final create = tester.widget<FilledButton>(find.byType(FilledButton));
       final enter = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
-      expect(create.onPressed, isNull);
+      expect(create.onPressed, isNotNull);
       expect(enter.onPressed, isNull);
       expect(find.text(en.actionCreateCode), findsOneWidget);
       expect(find.text(en.actionEnterCode), findsOneWidget);
