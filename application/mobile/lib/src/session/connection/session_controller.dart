@@ -22,6 +22,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
 import 'package:sodium/sodium_sumo.dart';
 
 import '../../crypto/at_rest_aead.dart';
@@ -483,6 +484,18 @@ class SessionController {
   }
 
   void _onInboundText(InnerEnvelope env) {
+    // The codec deliberately does NOT validate TEXT bodies as UTF-8 (it
+    // mirrors the Go stack), so a transport-valid, envelope-valid TEXT can
+    // still carry a non-UTF-8 body. Per §3.3.1 that is a malformed frame:
+    // fail CLOSED (destroy keys + TEARDOWN), never tolerate it — no
+    // allowMalformed, which would silently accept garbage.
+    final String text;
+    try {
+      text = utf8.decode(env.body);
+    } on FormatException {
+      _protocolError();
+      return;
+    }
     final now = _nowMs();
     final expiring = env.expirySeconds != null;
     final record = MessageRecord(
@@ -491,7 +504,7 @@ class SessionController {
       msgId: env.msgId,
       timestampMs: env.timestampMs,
       type: MessageType.text,
-      text: utf8.decode(env.body),
+      text: text,
       deliveryState: DeliveryState.delivered,
       expirySeconds: env.expirySeconds,
       // Received disappearing message: read = now (we display on receipt);
@@ -618,7 +631,9 @@ class SessionController {
   /// TEARDOWN, and settle to connection-lost (NOT "ended" — the peer never
   /// authenticated an end).
   void _protocolError() {
-    _diag.log(DiagEvent.pairingHandshakeFailed);
+    // A session-layer kill (transport AEAD/counter, malformed frame/body, or
+    // a session KK-handshake failure) — NOT a pairing event. Events only.
+    _diag.log(DiagEvent.sessionProtocolError);
     _connectionLost();
   }
 
@@ -672,6 +687,14 @@ class SessionController {
       return false;
     }
   }
+
+  /// Test-only: seals [env] over the LIVE transport exactly as an ordinary
+  /// outbound frame would (same counter advance + REKEY), so a test can inject
+  /// an envelope the public send API can never produce — e.g. a TEXT whose body
+  /// is not valid UTF-8 (the codec deliberately does not validate TEXT bodies).
+  /// Returns false if the line is not live. Adds no production behavior.
+  @visibleForTesting
+  bool sealForTest(InnerEnvelope env) => _seal(env);
 
   void _sendSessionData(Uint8List payload) {
     _conn?.send(

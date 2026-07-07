@@ -75,7 +75,19 @@ enum DiagEvent {
   /// (§3.1.6) — a commitment/AEAD/transcript failure or a mid-handshake
   /// bridge loss. Never surfaced to the user (silence doctrine); a local
   /// diagnostic only.
-  pairingHandshakeFailed(17);
+  pairingHandshakeFailed(17),
+
+  /// S10 live-session (transport) events — events ONLY: no content, keys,
+  /// ids, or peer bytes are representable here.
+
+  /// A live-session §3.3.1 protocol error killed the session fail-closed:
+  /// a transport AEAD/counter violation, a malformed inbound frame or body
+  /// (bad inner envelope, bad ACK/CONTROL/REACTION body, or a non-UTF-8
+  /// TEXT body), or a session KK-handshake failure. All session keys were
+  /// destroyed and a relay TEARDOWN sent. Distinct from
+  /// [pairingHandshakeFailed], which stays the S8/S9 pairing lane's event.
+  /// Never surfaced to the user (silence doctrine); a local diagnostic only.
+  sessionProtocolError(18);
 
   const DiagEvent(this.id);
 

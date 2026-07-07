@@ -261,7 +261,10 @@ class _ChatScreenState extends State<ChatScreen> {
         label = l10n.session_lineOnline;
         color = tokens.lineLive;
       case SessionLineState.connectionLost:
-        label = l10n.session_lineDropped;
+        // Terminal loss with no reconnect in flight (reconnect is S12). Render
+        // the truthful subset of voice string 10, not the "…Trying to
+        // reconnect…" promise — session_lineDropped is wired at S12. (PM ruling)
+        label = l10n.session_lineLost;
         color = tokens.lineIdle;
       case SessionLineState.endedByYou:
         label = l10n.session_youHungUp;

@@ -554,13 +554,17 @@
   "@session_lineOffline": {
     "description": "Session-status-line label when there is no live session (components.md session-status-indicator; wireframe F5.1/F5.12 'Not on the line'). S10 net-new. Enters the S16 crafted-translation pass."
   },
+  "session_lineLost": "The line dropped.",
+  "@session_lineLost": {
+    "description": "Voice guide string 10 — truthful terminal caption for a mid-session connection loss with NO reconnect in flight (bridge died without an authenticated HANGUP; the terminal SessionLineState.connectionLost). Canonical subset. The reconnecting variant is session_lineDropped, rendered only while a reconnect attempt is live (S12). S10 net-new. Enters the S16 crafted-translation pass."
+  },
   "session_lineDropped": "The line dropped. Trying to reconnect…",
   "@session_lineDropped": {
-    "description": "Voice guide string 10, line 1 — the mid-session connection-lost caption (bridge died without an authenticated HANGUP; wireframe F5.15). Canonical, verbatim. The ellipsis is a single U+2026 character. S10 net-new. Enters the S16 crafted-translation pass."
+    "description": "Voice guide string 10, line 1 — the reconnecting caption, rendered only while a reconnect attempt is genuinely in flight (SessionLineState.reconnecting, wired S12). Not rendered in S10 — see session_lineLost for the terminal no-reconnect caption. Canonical, verbatim. The ellipsis is a single U+2026 character. Enters the S16 crafted-translation pass."
   },
   "session_lineRecovered": "You're both here.",
   "@session_lineRecovered": {
-    "description": "Voice guide string 10, line 2 — shown on reconnect recovery (wireframe F5.15). Canonical, verbatim. S10 net-new. Enters the S16 crafted-translation pass."
+    "description": "Voice guide string 10, line 2 — shown on reconnect recovery (wireframe F5.15), rendered only once reconnect exists (S12). Not rendered in S10. Canonical, verbatim. Enters the S16 crafted-translation pass."
   },
   "session_peerHungUp": "They hung up.",
   "@session_peerHungUp": {

@@ -7,6 +7,7 @@ import 'package:nimna/src/diag/diag.dart';
 import 'package:nimna/src/domain/models/channel_record.dart';
 import 'package:nimna/src/domain/models/message_record.dart';
 import 'package:nimna/src/noise/dh.dart';
+import 'package:nimna/src/protocol/inner_envelope.dart';
 import 'package:nimna/src/protocol/outer_frame.dart';
 import 'package:nimna/src/session/connection/session_controller.dart';
 import 'package:nimna/src/session/model/chat_event.dart';
@@ -241,6 +242,46 @@ void main() {
       isTrue,
     );
   });
+
+  test(
+    'an inbound TEXT with a non-UTF-8 body kills the session (§3.3.1)',
+    () async {
+      final s = await liveSession();
+      addTearDown(s.dispose);
+
+      final events = <ChatEvent>[];
+      s.accepter.controller.events.listen(events.add);
+
+      // A transport-valid, envelope-valid TEXT whose body is a lone 0x80 —
+      // the codec deliberately does NOT validate TEXT bodies as UTF-8 (it
+      // mirrors the Go stack), so this seals + decrypts + decodes cleanly and
+      // only fails when the session tries to read the text. Per §3.3.1 that
+      // malformed frame must fail CLOSED, not open.
+      final env = InnerEnvelope(
+        type: InnerType.text,
+        msgId: aead.randomBytes(msgIdBytes),
+        timestampMs: 0,
+        body: Uint8List.fromList([0x80]),
+      );
+      expect(s.knocker.controller.sealForTest(env), isTrue);
+      await settle();
+
+      // The session died: keys destroyed, TEARDOWN sent, connection LOST
+      // (never "ended" — the peer authenticated no end).
+      expect(s.accepter.controller.isLive, isFalse);
+      expect(s.accepter.controller.lineState, SessionLineState.connectionLost);
+      expect(
+        events.whereType<SessionEnded>().single.reason,
+        SessionEndReason.connectionLost,
+      );
+      expect(
+        s.bridge.accepterSent.any((f) => f.type == FrameType.teardown),
+        isTrue,
+      );
+      // The malformed TEXT never became a message.
+      expect(s.accepter.controller.messages, isEmpty);
+    },
+  );
 
   test(
     'a disappearing message mirrors purge_at into the plaintext column',

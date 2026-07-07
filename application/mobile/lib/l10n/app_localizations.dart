@@ -884,13 +884,19 @@ abstract class AppLocalizations {
   /// **'Not on the line'**
   String get session_lineOffline;
 
-  /// Voice guide string 10, line 1 — the mid-session connection-lost caption (bridge died without an authenticated HANGUP; wireframe F5.15). Canonical, verbatim. The ellipsis is a single U+2026 character. S10 net-new. Enters the S16 crafted-translation pass.
+  /// Voice guide string 10 — truthful terminal caption for a mid-session connection loss with NO reconnect in flight (bridge died without an authenticated HANGUP; the terminal SessionLineState.connectionLost). Canonical subset. The reconnecting variant is session_lineDropped, rendered only while a reconnect attempt is live (S12). S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'The line dropped.'**
+  String get session_lineLost;
+
+  /// Voice guide string 10, line 1 — the reconnecting caption, rendered only while a reconnect attempt is genuinely in flight (SessionLineState.reconnecting, wired S12). Not rendered in S10 — see session_lineLost for the terminal no-reconnect caption. Canonical, verbatim. The ellipsis is a single U+2026 character. Enters the S16 crafted-translation pass.
   ///
   /// In en, this message translates to:
   /// **'The line dropped. Trying to reconnect…'**
   String get session_lineDropped;
 
-  /// Voice guide string 10, line 2 — shown on reconnect recovery (wireframe F5.15). Canonical, verbatim. S10 net-new. Enters the S16 crafted-translation pass.
+  /// Voice guide string 10, line 2 — shown on reconnect recovery (wireframe F5.15), rendered only once reconnect exists (S12). Not rendered in S10. Canonical, verbatim. Enters the S16 crafted-translation pass.
   ///
   /// In en, this message translates to:
   /// **'You\'re both here.'**

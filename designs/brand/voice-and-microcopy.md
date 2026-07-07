@@ -64,6 +64,8 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 > The line dropped. Trying to reconnect…
 > *(on recovery)* You're both here.
 
+> *(rendering split, S10 — the same voice, two truths: `session_lineLost` "The line dropped." is the terminal caption when no reconnect is in flight; the fuller "…Trying to reconnect…" (`session_lineDropped`) + "You're both here." (`session_lineRecovered`) pair renders only while reconnect is genuinely attempted — wired S12. Translate all three; each must stay claim-accurate to its own state.)*
+
 **11 · Screenshot disclosure — onboarding, as informed consent** *(first sentence is canonical from spec §5.2, verbatim)*
 > Nimna can't stop a screenshot. It will always tell the other person.
 > It only notices what happens inside the app — a second camera pointed at a screen is invisible to any software. Said up front, so you both know the terms.

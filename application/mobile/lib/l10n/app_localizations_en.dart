@@ -460,6 +460,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get session_lineOffline => 'Not on the line';
 
   @override
+  String get session_lineLost => 'The line dropped.';
+
+  @override
   String get session_lineDropped => 'The line dropped. Trying to reconnect…';
 
   @override
