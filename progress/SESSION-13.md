@@ -508,3 +508,29 @@ the artifact strings verbatim).
 ### Pubspec delta (for the merge fold)
 
 - `local_auth: ^3.0.1` (runtime; architect sign-off in intake §4).
+
+### Code-review fixes applied
+
+**2026-07-07 · CODE · post-review fix pass (2 findings)**
+
+- SHOULD-FIX (seal-on-`hidden` ordering): `LockController.didChangeAppLifecycleState`
+  now flips the in-memory perimeter synchronously — calls the idempotent
+  `KeyService.seal()` directly BEFORE `unawaited(_sealStorage())` — so the
+  LockGate repaints the sealed surface within the callback (keys-before-I/O),
+  no longer deferred behind the async DB close and the switcher-snapshot
+  window. `KeyService.seal()` is idempotent (early-return when already
+  sealed), and `StorageService.seal()`'s guard still runs the DB close
+  because `isOpen` is true; the redundant inner `keyService.seal()` is a
+  no-op. `lib/src/lock/lock_controller.dart`.
+  New test `hidden seals the perimeter synchronously within the callback,
+  before the async DB close` in `test/ui/lock_gate_test.dart` asserts
+  `keyService.sealed` is true immediately after the synchronous `hidden`
+  dispatch, with no await/pump — locking the ordering guarantee.
+- NIT (stale pubspec comment): `pubspec.yaml` `flutter_secure_storage`
+  comment updated from "Exactly ONE item" to TWO items — wrapped master key
+  + lock config (`nimna/lock/v1`, `lib/src/lock/lock_config_store.dart`),
+  matching intake §3's amended scope.
+
+Checks after fixes: `flutter analyze` clean · `flutter test` 117/117 (was
+116; +1 for the new ordering test) · `dart format --set-exit-if-changed`
+clean.

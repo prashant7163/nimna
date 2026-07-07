@@ -82,6 +82,34 @@ void main() {
     expect(find.byType(PinDots), findsOneWidget);
   });
 
+  testWidgets('hidden seals the perimeter synchronously within the callback, '
+      'before the async DB close', (tester) async {
+    await tester.pumpWidget(NimnaApp(services: services));
+    await tester.pumpAndSettle();
+    expect(services.keyService.sealed, isFalse);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    // The `hidden` dispatch calls didChangeAppLifecycleState synchronously.
+    // The keys-before-I/O guarantee: the perimeter must be sealed the instant
+    // that call returns — with NO await/pump — so the LockGate can repaint the
+    // sealed surface before the OS switcher-snapshot window, rather than
+    // waiting behind the async _sealStorage() DB close.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    expect(
+      services.keyService.sealed,
+      isTrue,
+      reason:
+          'keys zeroized synchronously in the hidden callback, not '
+          'deferred behind the async DB close',
+    );
+
+    // Drain the async seal (DB close) so teardown is clean.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('inactive never seals (biometric prompts, pickers, shade)', (
     tester,
   ) async {

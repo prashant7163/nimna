@@ -124,6 +124,13 @@ class LockController extends ChangeNotifier with WidgetsBindingObserver {
     // `hidden` fires before `paused` on both platforms — before the OS
     // snapshot. `inactive` deliberately does nothing.
     if (state == AppLifecycleState.hidden && enabled && !_keyService.sealed) {
+      // Keys-before-I/O: flip the in-memory perimeter synchronously so the
+      // LockGate repaints to the sealed surface within this callback —
+      // before the OS captures the app-switcher snapshot. The async DB
+      // close then runs behind it. `KeyService.seal()` is idempotent, so
+      // the redundant `storage.seal()` → `keyService.seal()` inside
+      // `_sealStorage()` is a harmless no-op.
+      _keyService.seal();
       unawaited(_sealStorage());
     }
   }
