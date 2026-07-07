@@ -13,6 +13,7 @@ library;
 import 'dart:typed_data';
 
 import '../../domain/models/message_record.dart';
+import '../../media/model/media_transfer_state.dart';
 
 /// What kind of message a `reply_to` referent is — drives the quoted preview
 /// rendering (text excerpt vs media thumbnail + "Photo"/"Document",
@@ -78,6 +79,10 @@ class MessageView {
     this.reply,
     this.ownReaction,
     this.peerReaction,
+    this.mediaId,
+    this.mediaMime,
+    this.mediaByteLength,
+    this.mediaTransfer,
   });
 
   /// Local surrogate record id (16 bytes) — the thread's stable key and the
@@ -115,11 +120,32 @@ class MessageView {
   /// The peer's reaction emoji on this message, or null.
   final String? peerReaction;
 
+  /// The media_ix / blob record id (media messages only) — the display path
+  /// decrypts this blob to memory (never the gallery, spec §5.1).
+  final Uint8List? mediaId;
+
+  /// The attachment MIME (media messages only); drives image-vs-document
+  /// rendering (components.md media bubbles).
+  final String? mediaMime;
+
+  /// The attachment byte length (media messages only) — the doc-row size label.
+  final int? mediaByteLength;
+
+  /// The media transfer phase (media messages only): sending / receiving /
+  /// loaded / failed (components.md media bubbles).
+  final MediaTransferState? mediaTransfer;
+
   /// True when either side has reacted (adds the 14 px bottom clearance,
   /// components.md reaction-chip).
   bool get hasReactions => ownReaction != null || peerReaction != null;
 
   /// A reactable/replyable referent is a TEXT or a media manifest (spec §5.8).
-  /// S10 only ever holds TEXT here; media arrives in S11.
-  bool get isReferentEligible => type == MessageType.text;
+  bool get isReferentEligible =>
+      type == MessageType.text || type == MessageType.media;
+
+  /// True for media messages (the media bubble; components.md).
+  bool get isMedia => type == MessageType.media;
+
+  /// True for image media (edge-to-edge bubble); false for documents (doc row).
+  bool get isMediaImage => mediaMime != null && mediaMime!.startsWith('image/');
 }

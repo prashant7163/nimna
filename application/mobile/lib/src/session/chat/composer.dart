@@ -39,6 +39,7 @@ class Composer extends StatefulWidget {
   const Composer({
     required this.onSend,
     required this.onTyping,
+    required this.onAttach,
     this.replyingTo,
     this.onCancelReply,
     super.key,
@@ -49,6 +50,11 @@ class Composer extends StatefulWidget {
 
   /// Pinged as the user types (a CONTROL 0x01 typing heartbeat, spec §5.5).
   final VoidCallback onTyping;
+
+  /// Opens the attach sheet (photo / file; components.md attach affordance),
+  /// carrying the composer's current disappearing-timer selection so an
+  /// attachment obeys the same one timer as text (spec §5.1; string 7).
+  final void Function(int? expirySeconds) onAttach;
 
   /// The message being replied to (drives the reply strip), or null.
   final MessageView? replyingTo;
@@ -106,6 +112,7 @@ class _ComposerState extends State<Composer> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              _attachButton(tokens, l10n),
               _timerButton(tokens, l10n),
               const SizedBox(width: NimnaSpacing.base * 2),
               Expanded(
@@ -146,6 +153,27 @@ class _ComposerState extends State<Composer> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _attachButton(NimnaTokens tokens, AppLocalizations l10n) {
+    return Semantics(
+      button: true,
+      label: l10n.media_attachA11y,
+      child: GestureDetector(
+        onTap: () => widget.onAttach(_expirySeconds),
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: NimnaSpacing.touchTargetMin,
+          height: NimnaSpacing.touchTargetMin,
+          child: Center(
+            child: CustomPaint(
+              size: const Size.square(22),
+              painter: _AttachPlusPainter(color: tokens.textSecondary),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -203,7 +231,10 @@ class _ComposerState extends State<Composer> {
     if (target.type == MessageType.text) {
       quote = target.text ?? '';
     } else {
-      quote = l10n.chat_replyPreviewDocument; // TODO(S11): Photo vs Document.
+      // Media referent: photo vs document from the resolved mime (spec §5.8).
+      quote = target.isMediaImage
+          ? l10n.chat_replyPreviewPhoto
+          : l10n.chat_replyPreviewDocument;
     }
     return Container(
       decoration: BoxDecoration(
@@ -255,6 +286,30 @@ class _ComposerState extends State<Composer> {
       ),
     );
   }
+}
+
+/// The composer's attach affordance glyph — a simple plus (the icon set's
+/// `plus`, components.md). Symmetric, so no RTL mirroring.
+class _AttachPlusPainter extends CustomPainter {
+  const _AttachPlusPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.9
+      ..strokeCap = StrokeCap.round;
+    final c = size.width / 2;
+    canvas.drawLine(Offset(c, 3), Offset(c, size.height - 3), paint);
+    canvas.drawLine(Offset(3, c), Offset(size.width - 3, c), paint);
+  }
+
+  @override
+  bool shouldRepaint(_AttachPlusPainter oldDelegate) =>
+      color != oldDelegate.color;
 }
 
 /// The result of the timer picker: [changed] false means dismissed with no

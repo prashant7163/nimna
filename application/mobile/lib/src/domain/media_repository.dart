@@ -89,4 +89,38 @@ class MediaRepository {
     await _indexStore.delete(id);
     await _blobStore.delete(id);
   }
+
+  /// Deletes every media item in [channelId] whose `purge_at` is due at
+  /// [nowMs] — the media_ix row AND its blob file (spec §5.1: disappearing
+  /// applies identically to media, on both ends). Returns the manifest
+  /// `msg_id`s purged so the caller can drop the matching message rows.
+  ///
+  /// `purge_at` is the accepted plaintext expiry column (app-architecture §4);
+  /// the sweep reads only due rows, decrypts each once to recover its
+  /// `msg_id`, then deletes.
+  Future<List<Uint8List>> purgeExpired(Uint8List channelId, int nowMs) async {
+    final rows = await _indexStore.byChannel(channelId);
+    final purgedMsgIds = <Uint8List>[];
+    for (final row in rows) {
+      final due = row.purgeAt;
+      if (due == null || due > nowMs) {
+        continue;
+      }
+      final record = MediaIndexRecord.fromBytes(
+        row.id,
+        _cipher.open(
+          baseKey: _keyService.mediaIndexKey,
+          storeId: StoreId.mediaIndex,
+          recordId: row.id,
+          sealed: row.ct,
+        ),
+      );
+      await _indexStore.delete(row.id);
+      await _blobStore.delete(row.id);
+      if (record.msgId != null) {
+        purgedMsgIds.add(record.msgId!);
+      }
+    }
+    return purgedMsgIds;
+  }
 }

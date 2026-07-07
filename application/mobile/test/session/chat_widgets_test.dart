@@ -229,7 +229,9 @@ void main() {
   });
 
   testWidgets('composer expiry picker shows string 7 VERBATIM', (tester) async {
-    await tester.pumpWidget(host(Composer(onSend: (_, _) {}, onTyping: () {})));
+    await tester.pumpWidget(
+      host(Composer(onSend: (_, _) {}, onTyping: () {}, onAttach: (_) {})),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.bySemanticsLabel(en.chat_timerButtonA11y));
@@ -256,6 +258,7 @@ void main() {
             sentExpiry = e;
           },
           onTyping: () {},
+          onAttach: (_) {},
         ),
       ),
     );
@@ -278,7 +281,13 @@ void main() {
   testWidgets('typing on the composer pings onTyping', (tester) async {
     var typed = false;
     await tester.pumpWidget(
-      host(Composer(onSend: (_, _) {}, onTyping: () => typed = true)),
+      host(
+        Composer(
+          onSend: (_, _) {},
+          onTyping: () => typed = true,
+          onAttach: (_) {},
+        ),
+      ),
     );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(EditableText), 'h');

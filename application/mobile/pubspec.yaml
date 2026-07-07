@@ -68,6 +68,17 @@ dependencies:
   # ONE call site (join_entry/upload_source.dart). No telemetry/network
   # (SESSION-9 deps audit).
   pdfrx: 2.4.4
+  # Pure-Dart image decode → EXIF/metadata strip → re-encode (S11 media,
+  # spec §5.1). 100% on-device and network-incapable BY CONSTRUCTION: no
+  # platform channel, no socket API — "zero network calls" is structural.
+  # EXIF strip is likewise structural — decoding to a pixel buffer and
+  # re-encoding cannot carry the EXIF APP1 segment; bakeOrientation keeps
+  # the orientation-tag removal from rotating the image. Runs inside
+  # Isolate.run to keep the 5 MB worst case off the UI isolate. Fence: ONE
+  # call site (lib/src/media/pipeline/image_processor.dart). Sign-off:
+  # SESSION-11 intake §2 (pin-time no-telemetry audit — clean). Rejected:
+  # flutter_image_compress (native libjpeg surface, non-auditable EXIF).
+  image: ^4.5.4
   # Platform IAP (S17 paywall). First-party Flutter-team plugins; the app's
   # ONLY billing surface. Fenced to lib/src/billing/store_entitlement_source
   # (billing_fences_test). Pinned exact after a pin-time transitive

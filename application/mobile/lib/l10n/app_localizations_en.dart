@@ -533,4 +533,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chat_deliveryDeliveredA11y => 'Delivered.';
+
+  @override
+  String get media_attachA11y => 'Add a photo or file';
+
+  @override
+  String get media_pickPhoto => 'Photo';
+
+  @override
+  String get media_pickFile => 'File';
+
+  @override
+  String get media_overCapError =>
+      'That\'s over 5 MB — the line carries documents, not archives. Try a smaller file.';
+
+  @override
+  String get media_metadataStripNotice =>
+      'Photos are cleaned before they\'re sealed — location, device, and time are stripped on your phone, before encryption.';
+
+  @override
+  String get media_compressionNote =>
+      'Sent smaller by default. Original quality is a toggle away.';
+
+  @override
+  String get media_originalQualityToggle => 'Original quality';
+
+  @override
+  String get media_exportAction => 'Export';
+
+  @override
+  String get media_exportConfirm =>
+      'This copies it out of Nimna — into your phone\'s own storage.';
+
+  @override
+  String get media_exportRollNote =>
+      'Nothing you receive touches your photo roll. It stays inside Nimna until you choose to take it out.';
+
+  @override
+  String get media_exportCancel => 'Go back';
+
+  @override
+  String media_viewerReceivedTime(String time) {
+    return 'Received $time';
+  }
+
+  @override
+  String get media_sendingA11y => 'Sending.';
+
+  @override
+  String get media_receivingA11y => 'Receiving.';
+
+  @override
+  String get media_documentA11y => 'Document.';
+
+  @override
+  String get media_imageA11y => 'Photo.';
+
+  @override
+  String get media_documentKindPdf => 'PDF';
+
+  @override
+  String get media_documentKindFile => 'File';
+
+  @override
+  String media_sizeMegabytes(String size) {
+    return '$size MB';
+  }
+
+  @override
+  String media_sizeKilobytes(String size) {
+    return '$size KB';
+  }
+
+  @override
+  String media_documentMeta(String kind, String size) {
+    return '$kind · $size';
+  }
 }

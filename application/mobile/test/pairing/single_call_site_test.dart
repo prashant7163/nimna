@@ -49,11 +49,16 @@ void main() {
     expect(callSites.single, startsWith('lib/src/ui/screens/'));
   });
 
-  test('share_plus is imported only by the single share module', () {
-    const shareModule = 'lib/src/pairing/initiator/share.dart';
+  test('share_plus is imported only by the two fenced call sites', () {
+    // S8: the pairing-code share. S11: the media export (the one deliberate
+    // quarantine exit — decrypt-to-temp → share → cleanup, spec §5.1).
+    const allowed = {
+      'lib/src/pairing/initiator/share.dart',
+      'lib/src/media/pipeline/media_export.dart',
+    };
     final offenders = <String>[];
     for (final file in dartFilesUnderLib()) {
-      if (file.path == shareModule) {
+      if (allowed.contains(file.path)) {
         continue;
       }
       final code = stripComments(file.readAsStringSync());
@@ -65,8 +70,8 @@ void main() {
       offenders,
       isEmpty,
       reason:
-          'share_plus is fenced to $shareModule (S8 intake §7 scoped '
-          'sign-off)',
+          'share_plus is fenced to $allowed (S8 code-share + S11 media-export '
+          'scoped sign-offs)',
     );
   });
 

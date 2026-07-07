@@ -997,6 +997,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delivered.'**
   String get chat_deliveryDeliveredA11y;
+
+  /// A11y label for the composer's attach affordance (the plus glyph left of the input; components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo or file'**
+  String get media_attachA11y;
+
+  /// Attach sheet option — pick a photo (components.md attach affordance: photo / file pickers). S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get media_pickPhoto;
+
+  /// Attach sheet option — pick a document/file (components.md attach affordance: photo / file pickers). S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get media_pickFile;
+
+  /// Over-the-cap error at attach time (voice string 17, canonical verbatim; spec §5.1 5 MB cap). Must stay claim-accurate in translation. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s over 5 MB — the line carries documents, not archives. Try a smaller file.'**
+  String get media_overCapError;
+
+  /// The metadata-strip feature notice under the attach preview, first time (voice string 17, canonical verbatim; spec §5.1). Marketed as a feature. Must stay claim-accurate (on-device, before encryption). S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos are cleaned before they\'re sealed — location, device, and time are stripped on your phone, before encryption.'**
+  String get media_metadataStripNotice;
+
+  /// Compression-default helper text beside the original-quality toggle (voice string 17, canonical verbatim; spec §5.1). S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent smaller by default. Original quality is a toggle away.'**
+  String get media_compressionNote;
+
+  /// Attach-preview toggle label — send at original quality (off by default; components.md attach affordance). Functional label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Original quality'**
+  String get media_originalQualityToggle;
+
+  /// Media viewer bottom-bar action and export-confirm CTA — the single deliberate act that moves a file out of Nimna's store (components.md media viewer; spec §5.1). Register verb. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get media_exportAction;
+
+  /// Export-confirm sheet body (components.md media viewer, canonical verbatim; spec §5.1 export is a deliberate act). Must stay claim-accurate. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'This copies it out of Nimna — into your phone\'s own storage.'**
+  String get media_exportConfirm;
+
+  /// Received-media note (voice string 17/16, canonical verbatim; spec §5.1 no auto-save to gallery). Must stay claim-accurate. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing you receive touches your photo roll. It stays inside Nimna until you choose to take it out.'**
+  String get media_exportRollNote;
+
+  /// The safe choice on the export-confirm sheet — a warm register verb, not 'Cancel' (voice register notes; matches string 14's 'Go back'). S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get media_exportCancel;
+
+  /// Media viewer top-bar received-time label (components.md media viewer). {time} is a locale-aware formatted date/time computed via intl. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Received {time}'**
+  String media_viewerReceivedTime(String time);
+
+  /// A11y label for a media bubble in the sending (outbound chunked transfer) state (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending.'**
+  String get media_sendingA11y;
+
+  /// A11y label for a media bubble in the receiving (inbound chunked transfer) state (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving.'**
+  String get media_receivingA11y;
+
+  /// A11y label for a document (non-image) media bubble (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Document.'**
+  String get media_documentA11y;
+
+  /// A11y label for an image media bubble (components.md media bubbles). Functional label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo.'**
+  String get media_imageA11y;
+
+  /// Document-bubble kind label for a PDF attachment (components.md media bubbles: size + kind). Factual file-type label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF'**
+  String get media_documentKindPdf;
+
+  /// Document-bubble kind label for a non-PDF document attachment (components.md media bubbles: size + kind). Factual file-type label. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'File'**
+  String get media_documentKindFile;
+
+  /// Document-bubble file size in megabytes (components.md media bubbles). {size} is a locale-aware formatted number. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} MB'**
+  String media_sizeMegabytes(String size);
+
+  /// Document-bubble file size in kilobytes (components.md media bubbles). {size} is a locale-aware formatted number. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} KB'**
+  String media_sizeKilobytes(String size);
+
+  /// Document-bubble metadata line combining kind and size (components.md media bubbles: 'size + kind'). Composed from media_documentKind* and media_size*. S11 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · {size}'**
+  String media_documentMeta(String kind, String size);
 }
 
 class _AppLocalizationsDelegate

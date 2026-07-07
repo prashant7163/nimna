@@ -16,6 +16,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../app/transitions.dart';
+import '../../media/pipeline/media_export.dart';
+import '../../media/ui/attach_sheet.dart';
+import '../../media/ui/media_viewer.dart';
 import '../../ui/theme/nimna_tokens.dart';
 import '../../ui/widgets/glyphs.dart';
 import '../connection/session_controller.dart';
@@ -105,6 +109,52 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _openAttach(int? expirySeconds) async {
+    final attachment = await showAttachSheet(context);
+    if (attachment == null) {
+      return;
+    }
+    final reply = _replyingTo;
+    unawaited(
+      widget.controller.sendMedia(
+        attachment,
+        expirySeconds: expirySeconds,
+        replyTo: reply?.msgId,
+      ),
+    );
+    if (reply != null && mounted) {
+      setState(() => _replyingTo = null);
+    }
+  }
+
+  void _openMediaViewer(MessageView message) {
+    final mediaId = message.mediaId;
+    if (mediaId == null) {
+      return;
+    }
+    Navigator.of(context).push(
+      NimnaPageRoute<void>(
+        builder: (_) => MediaViewer(
+          loadBytes: () => widget.controller.readMedia(mediaId),
+          isImage: message.isMediaImage,
+          label: widget.label,
+          timestampMs: message.timestampMs,
+          onExport: () => _exportMedia(message),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportMedia(MessageView message) async {
+    final mediaId = message.mediaId;
+    final mime = message.mediaMime;
+    if (mediaId == null || mime == null) {
+      return;
+    }
+    final bytes = await widget.controller.readMedia(mediaId);
+    await MediaExport.share(bytes: bytes, mime: mime);
+  }
+
   Future<void> _openActions(MessageView message) async {
     await showMessageActions(
       context,
@@ -167,6 +217,12 @@ class _ChatScreenState extends State<ChatScreen> {
                             ? null
                             : () =>
                                   _scrollToReferent(m.reply!.referentRecordId!),
+                        mediaLoadBytes: m.isMedia && m.mediaId != null
+                            ? () => widget.controller.readMedia(m.mediaId!)
+                            : null,
+                        onTapMedia: m.isMedia
+                            ? () => _openMediaViewer(m)
+                            : null,
                       ),
                     ),
                   if (widget.controller.peerTyping) const PeerTypingBubble(),
@@ -176,6 +232,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Composer(
               onSend: _send,
               onTyping: widget.controller.setTyping,
+              onAttach: _openAttach,
               replyingTo: _replyingTo,
               onCancelReply: () => setState(() => _replyingTo = null),
             ),
