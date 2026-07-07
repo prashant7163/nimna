@@ -186,9 +186,13 @@ void main() {
     expect(channels.single.label, 'Attic');
     expect(channels.single.crid, creatorMat.crid);
     expect(channels.single.peerStaticPublic, creatorStatic.publicKey);
-    // The peer's device-token rode the handshake and is stored (§3.2.1).
+    // The peer's device-token rode the handshake and is stored (§3.2.1). S12
+    // (CODE, 2026-07-07): the stored form is the §5.7 PRESENT-FORM
+    // token_payload bytes (0x01‖platform‖len‖token), platform-preserving — not
+    // the bare token — so push_opt_in can derive the KNOCK payload and the
+    // token-refresh CONTROL body from one stored shape.
     expect(channels.single.peerDeviceToken, isNotNull);
-    expect(channels.single.peerDeviceToken, creatorToken.token);
+    expect(channels.single.peerDeviceToken, creatorToken.encode());
   });
 
   test('self-join guard: own OUTSTANDING code blocks Join; a foreign code '

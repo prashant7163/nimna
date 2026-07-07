@@ -272,6 +272,18 @@ class _ChatScreenState extends State<ChatScreen> {
       case SessionLineState.endedByPeer:
         label = l10n.session_peerHungUp;
         color = tokens.lineIdle;
+      case SessionLineState.waiting:
+        // S12 FOLD HOTSPOT (added here only to keep the exhaustive switch
+        // compiling; final F5/knock-screen presentation is the chat lane's).
+        // Knocked — waiting on a pick-up (string 6); the breathing live line.
+        label = l10n.knock_waitingTitle;
+        color = tokens.lineLive;
+      case SessionLineState.reconnecting:
+        // S12 FOLD HOTSPOT — a LIVE-session drop is auto-recovering (string 10,
+        // the "…Trying to reconnect…" variant, distinct from the terminal
+        // session_lineLost).
+        label = l10n.session_lineDropped;
+        color = tokens.lineIdle;
       case SessionLineState.offline:
       case SessionLineState.connecting:
         label = l10n.session_lineOffline;

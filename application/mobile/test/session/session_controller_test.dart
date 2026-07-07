@@ -361,10 +361,16 @@ class _Session {
       clock: clock,
     );
 
-    // Accepter registers/listens first, then the knocker knocks — the relay
-    // bridges and both run S1/S2.
+    // Accepter registers/listens first, then the knocker knocks. S12: the
+    // accepter no longer auto-ACCEPTs (knock-accept gating) — it surfaces an
+    // IncomingKnock and waits for an explicit pick-up. Answer it, then the
+    // relay bridges and both run S1/S2.
     await accepter.controller.start();
     await knocker.controller.start();
+    for (var i = 0; i < 30; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    await accepter.controller.acceptKnock();
     for (var i = 0; i < 30; i++) {
       await Future<void>.delayed(Duration.zero);
     }

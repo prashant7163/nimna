@@ -36,6 +36,7 @@ import '../../noise/session_kk.dart';
 import '../../protocol/inner_envelope.dart';
 import '../../protocol/outer_frame.dart';
 import '../../protocol/reaction_body.dart';
+import '../../protocol/token_payload.dart';
 import '../../transport/relay_socket.dart';
 import '../model/chat_event.dart';
 import '../model/message_view.dart';
@@ -74,10 +75,22 @@ class SessionController {
     // Typing is sent by default (USER, 2026-07-07); the per-channel F7 toggle
     // is a later session — [typingEnabled] is the single internal seam for it.
     this.typingEnabled = true,
+    // S12: receive-side device-token refresh (§5.5/§5.7). Wired by the
+    // presence lane's peer_token_store, which persists the token to the
+    // channel record; null in the pure text harness.
+    this._onPeerTokenRefresh,
+    // S12: offline-composed reactions handed forward across a reconnect (a
+    // FRESH controller — §3.3.1). The presence lane's reconnect_coordinator
+    // reads [pendingReactions] off the dying controller and seeds the rebuild;
+    // applied after history loads (referents must already exist).
+    List<PendingReaction> seedPendingReactions = const [],
   }) : _channelId = Uint8List.fromList(channelId),
        _peerStaticPublic = Uint8List.fromList(peerStaticPublic),
        _crid = Uint8List.fromList(crid),
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? DateTime.now,
+       _seedPendingReactions = List<PendingReaction>.unmodifiable(
+         seedPendingReactions,
+       );
 
   final SodiumSumo _sodium;
   final AtRestAead _aead;
@@ -96,6 +109,20 @@ class SessionController {
   final SessionRole role;
   final Diag _diag;
   final DateTime Function() _clock;
+
+  /// S12 receive-side token-refresh sink (§5.5). Persistence is the presence
+  /// lane's; the connection lane only decodes and forwards.
+  final void Function(TokenPayload token)? _onPeerTokenRefresh;
+
+  /// S12 offline-reaction outbox (spec §3.4, decision 3). Keyed by referent
+  /// record-id hex → the own-reaction emoji to send (null = a clear/remove).
+  /// Collapses to one per referent ("one per sender per message", §5.8), so a
+  /// re-reacted-then-un-reacted offline message sends only its final state.
+  final Map<String, PendingReaction> _pendingReactions = {};
+
+  /// Reactions handed forward from a dropped session's controller (reconnect
+  /// hand-off); applied once, after history load, in [start].
+  final List<PendingReaction> _seedPendingReactions;
 
   /// The single seam for the future F7 per-channel typing toggle (default on,
   /// USER 2026-07-07). Never surfaced as UI in S10.
@@ -123,6 +150,11 @@ class SessionController {
   Timer? _typingTimer;
   bool _closed = false;
 
+  /// S12: a forwarded knock (KNOCK_FWD) is waiting on an explicit pick-up
+  /// (F6). The accepter no longer auto-ACCEPTs (S10 did); it emits
+  /// [IncomingKnock] and holds here until [acceptKnock] or [ignoreKnock].
+  bool _incomingKnockPending = false;
+
   // ---- read-only surface ---------------------------------------------
 
   /// The event stream (broadcast). Notifications only — re-read [messages] /
@@ -139,24 +171,38 @@ class SessionController {
 
   bool get isLive => _transport != null && _lineState == SessionLineState.live;
 
+  /// S12: whether a forwarded knock is waiting on a pick-up ([acceptKnock] /
+  /// [ignoreKnock]). Drives the F6 banner's presence.
+  bool get incomingKnockPending => _incomingKnockPending;
+
+  /// S12: a snapshot of offline-composed reactions not yet on the wire, for
+  /// the reconnect hand-off into a fresh controller (spec §3.4, decision 3).
+  List<PendingReaction> get pendingReactions =>
+      List<PendingReaction>.unmodifiable(_pendingReactions.values);
+
   // ---- establishment --------------------------------------------------
 
   /// Loads this channel's history, connects, registers the CRID, and — for a
   /// [SessionRole.knocker] — sends the one KNOCK. Never knocks twice on its
-  /// own (spec §4). Rich presence (knocked-waiting, lapse, reconnect,
-  /// background grace, push) is S12.
-  Future<void> start() async {
+  /// own (spec §4): a cold knock is NEVER auto-retried — only the presence
+  /// lane's reconnect_coordinator re-knocks, and only to recover a LIVE-session
+  /// drop (a distinct doctrine, USER 2026-07). [knockPushPayload] is the §5.4
+  /// KNOCK payload (`platform‖token_len‖token`) built by the presence lane's
+  /// push_opt_in when this channel opted in; null/empty = pure burner-line
+  /// (zero third-party touch, §3.2.1 default).
+  Future<void> start({Uint8List? knockPushPayload}) async {
     if (_closed) {
       return;
     }
     await _loadHistory();
+    _applyPendingReactionSeed();
     final RelayConnection conn;
     try {
       conn = await _connector.connect();
     } on RelayUnreachableError {
       _diag.log(DiagEvent.storageError, code: DiagCode.relayUnreachable);
-      // Offline: the composer still works (spec §3.4) — writes wait locally.
-      // TODO(S12): the reconnect schedule + offline-compose outbox lifecycle.
+      // Offline: the composer still works (spec §3.4) — writes wait locally in
+      // the outbox and flush on the next live bridge (no auto-retry knock, §4).
       _setLineState(SessionLineState.offline);
       return;
     }
@@ -164,11 +210,57 @@ class SessionController {
     _sub = conn.frames.listen(_onFrame, onDone: _onConnectionClosed);
     conn.send(OuterFrame(type: FrameType.registerCrid, routingId: _crid));
     if (role == SessionRole.knocker) {
-      // One knock. Empty payload = push-off (§3.2.1 default; S9/S15 precedent).
-      // TODO(S15): carry the peer device-token here when per-channel push is on.
-      conn.send(OuterFrame(type: FrameType.knock, routingId: _crid));
+      // ONE knock. Empty payload = push-off (§3.2.1 default); a non-empty
+      // payload carries the peer device-token for a content-free wake (§5.4).
+      conn.send(
+        OuterFrame(
+          type: FrameType.knock,
+          routingId: _crid,
+          payload: knockPushPayload ?? Uint8List(0),
+        ),
+      );
+      _diag.log(DiagEvent.knockSent);
+      // Knocked — waiting (string 6). The 60 s countdown/lapse UX and the
+      // never-auto-retry rule live in knock_controller; this is the transport
+      // truth the UI reads.
+      _setLineState(SessionLineState.waiting);
+    } else {
+      _setLineState(SessionLineState.connecting);
     }
+  }
+
+  /// Applies the reconnect hand-off seed (offline reactions from the dropped
+  /// controller): keep only markers whose referent survived into this fresh
+  /// session's loaded history.
+  void _applyPendingReactionSeed() {
+    for (final pending in _seedPendingReactions) {
+      final key = _hex(pending.referentRecordId);
+      if (_byRecordId.containsKey(key)) {
+        _pendingReactions[key] = pending;
+      }
+    }
+  }
+
+  /// F6 pick-up: accept the pending incoming knock. Sends ACCEPT; the relay
+  /// bridges and the KK handshake runs (§3.3.1). No-op if no knock is pending.
+  Future<void> acceptKnock() async {
+    if (_closed || !_incomingKnockPending) {
+      return;
+    }
+    _incomingKnockPending = false;
+    _conn?.send(OuterFrame(type: FrameType.accept, routingId: _crid));
     _setLineState(SessionLineState.connecting);
+  }
+
+  /// F6 ignore: drop the pending knock. Pure silence — nothing is recorded and
+  /// NO wire signal is sent (the peer only ever observes silence; the relay
+  /// expires the pending knock at 60 s). The channel stays registered, so a
+  /// later knock still lands. No-op if no knock is pending.
+  Future<void> ignoreKnock() async {
+    if (_closed || !_incomingKnockPending) {
+      return;
+    }
+    _incomingKnockPending = false;
   }
 
   void _onFrame(OuterFrame frame) {
@@ -177,12 +269,17 @@ class SessionController {
     }
     switch (frame.type) {
       case FrameType.knockFwd:
-        // The accepter answers an incoming knock. TODO(S12): gate ACCEPT
-        // behind the pick-up UX (in-app banner / knock screen, F6) — S10
-        // answers immediately so the live path is exercisable end to end.
+        // S12: the accepter does NOT auto-ACCEPT. It surfaces the incoming
+        // knock (F6 banner / knock screen) and holds until an explicit pick-up
+        // ([acceptKnock]) or ignore ([ignoreKnock]). No content exists until
+        // the line is bridged, so the event carries none.
         if (role == SessionRole.accepter &&
-            _lineState == SessionLineState.connecting) {
-          _conn?.send(OuterFrame(type: FrameType.accept, routingId: _crid));
+            _transport == null &&
+            !_incomingKnockPending &&
+            (_lineState == SessionLineState.connecting ||
+                _lineState == SessionLineState.offline)) {
+          _incomingKnockPending = true;
+          _emit(const IncomingKnock());
         }
       case FrameType.sessionBridged:
         _onBridged();
@@ -276,6 +373,86 @@ class SessionController {
     }
     _awaitingHandshakeFrame = false;
     _setLineState(SessionLineState.live);
+    // S12: the line is up — drain the offline-compose outbox (spec §3.4).
+    // Indistinguishable from live typing: it is the same seal path.
+    unawaited(_flushOutbox());
+  }
+
+  /// Drains the offline-compose outbox on the [live] transition (spec §3.4):
+  /// every waiting SENT text record, in `seq` (insertion) order, then any
+  /// offline-composed reactions (decision 3). Media outbox records are S11's
+  /// lane — this flush deliberately touches only TEXT + REACTION.
+  Future<void> _flushOutbox() async {
+    // Snapshot: _advanceDelivery mutates _records in place (state only, not
+    // order/length), but a defensive copy keeps the iteration obvious.
+    for (final record in List<MessageRecord>.from(_records)) {
+      if (record.direction != MessageDirection.sent ||
+          record.deliveryState != DeliveryState.waiting ||
+          record.type != MessageType.text) {
+        continue;
+      }
+      final msgId = record.msgId;
+      if (msgId == null) {
+        continue; // A real waiting text always carries its msg_id.
+      }
+      final env = InnerEnvelope(
+        type: InnerType.text,
+        msgId: msgId,
+        timestampMs: record.timestampMs,
+        expirySeconds: record.expirySeconds,
+        replyTo: record.replyTo,
+        body: Uint8List.fromList(utf8.encode(record.text ?? '')),
+      );
+      if (!_seal(env)) {
+        return; // Protocol error already handled; stop draining.
+      }
+      await _advanceDelivery(record.id, DeliveryState.sent);
+    }
+    await _flushPendingReactions();
+  }
+
+  /// Re-sends offline-composed reactions (spec §3.4, §5.8, decision 3). A
+  /// REACTION is never ACKed, so there is no waiting→sent FSM — it is fire and
+  /// clear the marker. Referent gone/expired → drop the marker (spec §5.8).
+  Future<void> _flushPendingReactions() async {
+    if (_pendingReactions.isEmpty) {
+      return;
+    }
+    for (final entry in _pendingReactions.entries.toList()) {
+      final idx = _byRecordId[entry.key];
+      final referent = idx == null ? null : _records[idx];
+      final refMsgId = referent?.msgId;
+      if (referent == null || refMsgId == null || _isExpired(referent)) {
+        _pendingReactions.remove(entry.key);
+        continue;
+      }
+      final emoji = entry.value.emoji;
+      final op = emoji == null ? ReactionOp.remove : ReactionOp.add;
+      final ReactionBody body;
+      try {
+        body = ReactionBody(
+          refMsgId: refMsgId,
+          op: op,
+          // A remove carries a uniform filler (the wire ignores it, §5.8).
+          emoji: Uint8List.fromList(utf8.encode(emoji ?? '👍')),
+        );
+      } on InnerEnvelopeError {
+        _pendingReactions.remove(entry.key);
+        continue;
+      }
+      final ok = _seal(
+        InnerEnvelope(
+          type: InnerType.reaction,
+          msgId: _aead.randomBytes(msgIdBytes),
+          timestampMs: _nowMs(),
+          body: body.encode(),
+        ),
+      );
+      if (!ok) {
+        return; // Protocol error already handled.
+      }
+      _pendingReactions.remove(entry.key);
+    }
   }
 
   // ---- outbound -------------------------------------------------------
@@ -405,7 +582,14 @@ class SessionController {
       ),
     );
     if (!isLive) {
-      return; // Rides the outbox silently offline (spec §3.4).
+      // Rides the outbox silently offline (spec §3.4, decision 3): mark it
+      // pending (collapsed per referent — last write wins, §5.8) so the next
+      // live bridge re-sends the final own-reaction state.
+      _pendingReactions[_hex(referent.id)] = PendingReaction(
+        referentRecordId: referent.id,
+        emoji: newEmoji,
+      );
+      return;
     }
     _seal(
       InnerEnvelope(
@@ -432,6 +616,28 @@ class SessionController {
         body: ControlBody(
           rawType: ControlType.typing.wire,
           payload: Uint8List(0),
+        ).encode(),
+      ),
+    );
+  }
+
+  /// S12 seam: sends a device-token refresh CONTROL (§5.5, token_payload
+  /// §5.7) — the peer persists it as our new push address (present) or revokes
+  /// (absent). S12 supplies the wire path; S15 CALLS this with THIS device's
+  /// real APNs/FCM token once it acquires one at session start. No-op unless
+  /// live.
+  void sendTokenRefresh(TokenPayload token) {
+    if (_closed || !isLive) {
+      return;
+    }
+    _seal(
+      InnerEnvelope(
+        type: InnerType.control,
+        msgId: _aead.randomBytes(msgIdBytes),
+        timestampMs: _nowMs(),
+        body: ControlBody(
+          rawType: ControlType.tokenRefresh.wire,
+          payload: token.encode(),
         ).encode(),
       ),
     );
@@ -599,8 +805,20 @@ class SessionController {
         // TODO(S14): screenshot notice system line.
         break;
       case ControlType.tokenRefresh:
-        // TODO(S15): device-token refresh (per-channel push).
-        break;
+        // S12: peer rotated (or revoked) its device-token mid-session
+        // (§3.2.1/§5.5). The body already validated as a token_payload during
+        // decode, so this decode cannot structurally fail; guard defensively.
+        final TokenPayload token;
+        try {
+          token = TokenPayload.decode(Uint8List.fromList(control.payload));
+        } on TokenPayloadError {
+          _protocolError();
+          return;
+        }
+        _diag.log(DiagEvent.peerTokenRefreshed);
+        // Persistence (present→store, absent→revoke) is the presence lane's
+        // (peer_token_store); the connection lane only decodes and forwards.
+        _onPeerTokenRefresh?.call(token);
       case null:
         break; // Unknown control type: ignored (forward compat, spec §5.5).
     }
@@ -657,9 +875,13 @@ class SessionController {
       return;
     }
     // A bridge dying without a HANGUP is a connection loss (spec §3.3). If we
-    // already ended (HANGUP) this is a no-op.
+    // already ended (HANGUP) this is a no-op. `waiting` (a knock in flight)
+    // counts: the socket died mid-knock — honest connection loss, and the
+    // presence lane decides whether to recover (live-drop only) or not (a cold
+    // knock is never auto-retried).
     if (_lineState == SessionLineState.live ||
-        _lineState == SessionLineState.connecting) {
+        _lineState == SessionLineState.connecting ||
+        _lineState == SessionLineState.waiting) {
       _connectionLost();
     }
   }

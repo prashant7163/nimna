@@ -87,7 +87,41 @@ enum DiagEvent {
   /// destroyed and a relay TEARDOWN sent. Distinct from
   /// [pairingHandshakeFailed], which stays the S8/S9 pairing lane's event.
   /// Never surfaced to the user (silence doctrine); a local diagnostic only.
-  sessionProtocolError(18);
+  sessionProtocolError(18),
+
+  /// S12 presence events — events ONLY: no CRIDs, tokens, peer bytes, counts,
+  /// or attribution are representable here. FOLD HOTSPOT: wire ids 19–24 are
+  /// coordinated with S11's media events at merge (append-only; renumber only
+  /// if S11 claimed one first — nothing is shipped yet).
+
+  /// The knocker sent its ONE knock (spec §3.2). Never logged twice on its own
+  /// — the app never auto-retries a cold knock (§4). Carries nothing about the
+  /// peer, the channel, or whether a push token rode along.
+  knockSent(19),
+
+  /// A knock lapsed unanswered (the 60 s window closed with no pick-up). The
+  /// knocker renders exactly "No answer." — offline vs saw-and-ignored is
+  /// indistinguishable by construction, and this event preserves that: it says
+  /// only THAT a knock lapsed, never why (DECISIONS 2026-07-04).
+  knockLapsed(20),
+
+  /// A LIVE-session drop began bounded auto-recovery (string 10). Distinct
+  /// from a cold knock, which is never retried. No timing/peer detail.
+  sessionReconnecting(21),
+
+  /// Bounded auto-recovery re-established the line (a fresh knock+KK went
+  /// live within the window).
+  sessionRecovered(22),
+
+  /// The ~30 s background-grace timer expired and closed the live session
+  /// (client-side only; no relay state). Foregrounding cancels it silently and
+  /// logs nothing.
+  backgroundGraceExpired(23),
+
+  /// A peer device-token refresh CONTROL (§5.5, token_payload §5.7) was
+  /// received and persisted to the channel record. The event carries NO token
+  /// bytes — present-vs-absent is not even recorded (events only).
+  peerTokenRefreshed(24);
 
   const DiagEvent(this.id);
 
