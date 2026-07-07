@@ -99,6 +99,44 @@ class _ChevronPainter extends CustomPainter {
   bool shouldRepaint(_ChevronPainter oldDelegate) => color != oldDelegate.color;
 }
 
+/// The dismiss ✕ (hi-fi screen 09 navbar / F9.2: `m6 6 12 12M18 6 6 18`).
+/// Horizontally symmetric — no RTL concern; its trailing POSITION is set by
+/// the caller with a directional alignment.
+class CloseGlyph extends StatelessWidget {
+  const CloseGlyph({required this.color, this.size = 24, super.key});
+
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    size: Size.square(size),
+    painter: _ClosePainter(color: color),
+  );
+}
+
+class _ClosePainter extends CustomPainter {
+  const _ClosePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 24;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth * s
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawLine(Offset(6 * s, 6 * s), Offset(18 * s, 18 * s), paint);
+    canvas.drawLine(Offset(18 * s, 6 * s), Offset(6 * s, 18 * s), paint);
+  }
+
+  @override
+  bool shouldRepaint(_ClosePainter oldDelegate) => color != oldDelegate.color;
+}
+
 /// The PIN-pad backspace key (screen 12:
 /// `M9 6h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9L3.5 12 9 6ZM12 9.5l5 5M17 9.5l-5 5`).
 class BackspaceGlyph extends StatelessWidget {

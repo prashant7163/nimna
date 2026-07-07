@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Play Billing (S17 creation paywall, spec §10): required for
+         in_app_purchase_android. Grants no data access — it authorizes the
+         subscription purchase/query flow only. Entitlement is read from
+         Play's signed on-device cache (queryPurchasesAsync); no Nimna
+         server or flag is involved. -->
+    <uses-permission android:name="com.android.vending.BILLING" />
     <!-- Backup exclusion (spec §6): allowBackup=false kills auto-backup and
          the legacy transport everywhere; dataExtractionRules (API 31+)
          additionally excludes every domain from cloud-backup AND

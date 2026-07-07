@@ -68,6 +68,15 @@ dependencies:
   # ONE call site (join_entry/upload_source.dart). No telemetry/network
   # (SESSION-9 deps audit).
   pdfrx: 2.4.4
+  # Platform IAP (S17 paywall). First-party Flutter-team plugins; the app's
+  # ONLY billing surface. Fenced to lib/src/billing/store_entitlement_source
+  # (billing_fences_test). Pinned exact after a pin-time transitive
+  # no-telemetry audit (flutter pub deps + analytics/firebase/crashlytics/
+  # sentry/beacon grep) — clean. Sign-off: SESSION-17 intake (dependency
+  # proposal); app-architecture.md §1.
+  in_app_purchase: 3.2.4
+  in_app_purchase_storekit: 0.4.10+1
+  in_app_purchase_android: 0.4.0+11
 
 # Windows-only FFI (win32) has a resolution clash: file_picker 11 needs
 # win32 ^5.9 (its Windows COM picker uses 5.x APIs) while share_plus ^13.2

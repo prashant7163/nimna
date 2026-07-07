@@ -733,6 +733,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go back'**
   String get pairing_goBack;
+
+  /// F9.2 paywall headline (hi-fi screen 09 .display, verbatim; voice string 9 line 1). NO price number ever appears in copy (spec §10 numberless lock).
+  ///
+  /// In en, this message translates to:
+  /// **'One of you buys the line.'**
+  String get billing_headline;
+
+  /// F9.2 paywall sub-headline (hi-fi screen 09 .bodyLg, verbatim; voice string 9 line 1). The receiver-never-pays half of the asymmetry.
+  ///
+  /// In en, this message translates to:
+  /// **'The other never pays.'**
+  String get billing_subhead;
+
+  /// Paywall feature 1 title (hi-fi screen 09, verbatim). Condenses voice string 9's 'one yearly subscription'. No number, per the numberless lock.
+  ///
+  /// In en, this message translates to:
+  /// **'One subscription a year.'**
+  String get billing_pointSubscriptionTitle;
+
+  /// Paywall feature 1 caption (hi-fi screen 09, verbatim). Unlimited channel creation while subscribed (spec §10).
+  ///
+  /// In en, this message translates to:
+  /// **'As many lines as you care to create.'**
+  String get billing_pointSubscriptionCaption;
+
+  /// Paywall feature 2 title (hi-fi screen 09, verbatim). THE permanence guarantee at headline prominence, never fine print (spec §10).
+  ///
+  /// In en, this message translates to:
+  /// **'Every line is yours for good.'**
+  String get billing_pointPermanenceTitle;
+
+  /// Paywall feature 2 caption (hi-fi screen 09, verbatim). A lapse gates creation of NEW lines only; existing lines work forever (spec §10).
+  ///
+  /// In en, this message translates to:
+  /// **'If it lapses, everything you made keeps working — only new lines wait.'**
+  String get billing_pointPermanenceCaption;
+
+  /// Paywall feature 3 title (hi-fi screen 09, verbatim). Never 'anonymous' (account-less ≠ anonymity — voice word-ban).
+  ///
+  /// In en, this message translates to:
+  /// **'No account.'**
+  String get billing_pointNoAccountTitle;
+
+  /// Paywall feature 3 caption (hi-fi screen 09, verbatim). Store-mediated, no Nimna identity (spec §10).
+  ///
+  /// In en, this message translates to:
+  /// **'The receipt stays between you and the store.'**
+  String get billing_pointNoAccountCaption;
+
+  /// Paywall feature 4 title (hi-fi screen 09, verbatim). Receivers are never paywalled (spec §10).
+  ///
+  /// In en, this message translates to:
+  /// **'Joining is always free.'**
+  String get billing_pointJoiningFreeTitle;
+
+  /// Paywall feature 4 caption (hi-fi screen 09, verbatim).
+  ///
+  /// In en, this message translates to:
+  /// **'The person you invite never sees this screen.'**
+  String get billing_pointJoiningFreeCaption;
+
+  /// F9.2 primary CTA (hi-fi screen 09 '{STORE_PRICE} — start'). {price} is the store's localized price string (ProductDetails.price) — NEVER a hardcoded number (spec §10 numberless lock). The em-dash and 'start' are the fixed copy around it.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} — start'**
+  String billing_ctaStart(String price);
+
+  /// F9.2 ghost action (hi-fi screen 09, verbatim). Store-mediated restore — the only path to creation after reinstall/wipe (spec §10). Paywall-only; no in-app status screen (USER 2026-07-07).
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get billing_restore;
+
+  /// F9.2 closing micro line (hi-fi screen 09 .micro, verbatim; voice string 9 tail).
+  ///
+  /// In en, this message translates to:
+  /// **'We never learn who you are.'**
+  String get billing_noIdentityFootnote;
+
+  /// F9.5 in-progress caption while restore runs (wireframe f9 verbatim). Ellipsis included.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking with the store…'**
+  String get billing_restoreChecking;
+
+  /// CANONICAL toast (components.md Toast; F9.5 verbatim). Shown on successful restore, then creation proceeds. Auto-dismiss 3 s.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase restored.'**
+  String get billing_restoreSuccessToast;
+
+  /// F9.4 toast after a successful purchase (wireframe f9 verbatim), then the create flow opens. No celebration screen — the reward is being where you were going. Auto-dismiss 3 s.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription started.'**
+  String get billing_subscriptionStartedToast;
+
+  /// F9.5 factual one-liner when restore finds nothing (wireframe f9 verbatim). Stays on the page, no drama; the CTA remains available.
+  ///
+  /// In en, this message translates to:
+  /// **'The store has no subscription for this account.'**
+  String get billing_restoreNothing;
+
+  /// F9.5 edge when the store can't be reached during restore (wireframe f9 verbatim).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the store. Try again in a moment.'**
+  String get billing_storeUnreachable;
+
+  /// Fail-closed offline paywall state (CODE decision, SESSION-17): when the platform entitlement query can't resolve, the paywall shows this calm line instead of the buy CTA. It never blocks USING existing channels — only creation. On-voice; PM-reviewable at S16.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect to verify your subscription.'**
+  String get billing_reconnectToVerify;
+
+  /// Retry affordance on the fail-closed offline paywall state (re-runs the entitlement query). Functional verb, voice register (buttons are verbs). PM-reviewable at S16.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get billing_tryAgain;
+
+  /// Store-mandated auto-renew disclosure shown near the F9.2 CTA — renewal terms, charges the store account, how to cancel, plus the permanence reassurance. USER-approved 2026-07-07 12:39 (Option A + permanence). Contains NO price number (numberless lock). {store} is the platform store brand name, resolved at runtime (App Store on iOS / Google Play on Android) — a non-translated proper noun. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'One yearly subscription. It renews on its own and charges your {store} account until you cancel — anytime, in your account settings. Lines you\'ve already made stay yours either way.'**
+  String billing_autoRenewDisclosure(String store);
+
+  /// Final label — link affordance near the F9.2 CTA (store-mandated Terms of Use / EULA), part of the disclosure block. Destination lands at S19 (website TODO). Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Use'**
+  String get billing_termsLabel;
+
+  /// Final label — link affordance near the F9.2 CTA (store-mandated Privacy Policy), part of the disclosure block. Destination lands at S19 (website TODO). Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get billing_privacyLabel;
 }
 
 class _AppLocalizationsDelegate

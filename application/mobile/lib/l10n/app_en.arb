@@ -441,5 +441,109 @@
   "pairing_goBack": "Go back",
   "@pairing_goBack": {
     "description": "Canonical button verb (voice guide register notes). Dismisses the mismatch screen back to the channel list. S9."
+  },
+  "billing_headline": "One of you buys the line.",
+  "@billing_headline": {
+    "description": "F9.2 paywall headline (hi-fi screen 09 .display, verbatim; voice string 9 line 1). NO price number ever appears in copy (spec §10 numberless lock)."
+  },
+  "billing_subhead": "The other never pays.",
+  "@billing_subhead": {
+    "description": "F9.2 paywall sub-headline (hi-fi screen 09 .bodyLg, verbatim; voice string 9 line 1). The receiver-never-pays half of the asymmetry."
+  },
+  "billing_pointSubscriptionTitle": "One subscription a year.",
+  "@billing_pointSubscriptionTitle": {
+    "description": "Paywall feature 1 title (hi-fi screen 09, verbatim). Condenses voice string 9's 'one yearly subscription'. No number, per the numberless lock."
+  },
+  "billing_pointSubscriptionCaption": "As many lines as you care to create.",
+  "@billing_pointSubscriptionCaption": {
+    "description": "Paywall feature 1 caption (hi-fi screen 09, verbatim). Unlimited channel creation while subscribed (spec §10)."
+  },
+  "billing_pointPermanenceTitle": "Every line is yours for good.",
+  "@billing_pointPermanenceTitle": {
+    "description": "Paywall feature 2 title (hi-fi screen 09, verbatim). THE permanence guarantee at headline prominence, never fine print (spec §10)."
+  },
+  "billing_pointPermanenceCaption": "If it lapses, everything you made keeps working — only new lines wait.",
+  "@billing_pointPermanenceCaption": {
+    "description": "Paywall feature 2 caption (hi-fi screen 09, verbatim). A lapse gates creation of NEW lines only; existing lines work forever (spec §10)."
+  },
+  "billing_pointNoAccountTitle": "No account.",
+  "@billing_pointNoAccountTitle": {
+    "description": "Paywall feature 3 title (hi-fi screen 09, verbatim). Never 'anonymous' (account-less ≠ anonymity — voice word-ban)."
+  },
+  "billing_pointNoAccountCaption": "The receipt stays between you and the store.",
+  "@billing_pointNoAccountCaption": {
+    "description": "Paywall feature 3 caption (hi-fi screen 09, verbatim). Store-mediated, no Nimna identity (spec §10)."
+  },
+  "billing_pointJoiningFreeTitle": "Joining is always free.",
+  "@billing_pointJoiningFreeTitle": {
+    "description": "Paywall feature 4 title (hi-fi screen 09, verbatim). Receivers are never paywalled (spec §10)."
+  },
+  "billing_pointJoiningFreeCaption": "The person you invite never sees this screen.",
+  "@billing_pointJoiningFreeCaption": {
+    "description": "Paywall feature 4 caption (hi-fi screen 09, verbatim)."
+  },
+  "billing_ctaStart": "{price} — start",
+  "@billing_ctaStart": {
+    "description": "F9.2 primary CTA (hi-fi screen 09 '{STORE_PRICE} — start'). {price} is the store's localized price string (ProductDetails.price) — NEVER a hardcoded number (spec §10 numberless lock). The em-dash and 'start' are the fixed copy around it.",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "€19.99/year"
+      }
+    }
+  },
+  "billing_restore": "Restore",
+  "@billing_restore": {
+    "description": "F9.2 ghost action (hi-fi screen 09, verbatim). Store-mediated restore — the only path to creation after reinstall/wipe (spec §10). Paywall-only; no in-app status screen (USER 2026-07-07)."
+  },
+  "billing_noIdentityFootnote": "We never learn who you are.",
+  "@billing_noIdentityFootnote": {
+    "description": "F9.2 closing micro line (hi-fi screen 09 .micro, verbatim; voice string 9 tail)."
+  },
+  "billing_restoreChecking": "Checking with the store…",
+  "@billing_restoreChecking": {
+    "description": "F9.5 in-progress caption while restore runs (wireframe f9 verbatim). Ellipsis included."
+  },
+  "billing_restoreSuccessToast": "Purchase restored.",
+  "@billing_restoreSuccessToast": {
+    "description": "CANONICAL toast (components.md Toast; F9.5 verbatim). Shown on successful restore, then creation proceeds. Auto-dismiss 3 s."
+  },
+  "billing_subscriptionStartedToast": "Subscription started.",
+  "@billing_subscriptionStartedToast": {
+    "description": "F9.4 toast after a successful purchase (wireframe f9 verbatim), then the create flow opens. No celebration screen — the reward is being where you were going. Auto-dismiss 3 s."
+  },
+  "billing_restoreNothing": "The store has no subscription for this account.",
+  "@billing_restoreNothing": {
+    "description": "F9.5 factual one-liner when restore finds nothing (wireframe f9 verbatim). Stays on the page, no drama; the CTA remains available."
+  },
+  "billing_storeUnreachable": "Couldn't reach the store. Try again in a moment.",
+  "@billing_storeUnreachable": {
+    "description": "F9.5 edge when the store can't be reached during restore (wireframe f9 verbatim)."
+  },
+  "billing_reconnectToVerify": "Reconnect to verify your subscription.",
+  "@billing_reconnectToVerify": {
+    "description": "Fail-closed offline paywall state (CODE decision, SESSION-17): when the platform entitlement query can't resolve, the paywall shows this calm line instead of the buy CTA. It never blocks USING existing channels — only creation. On-voice; PM-reviewable at S16."
+  },
+  "billing_tryAgain": "Try again",
+  "@billing_tryAgain": {
+    "description": "Retry affordance on the fail-closed offline paywall state (re-runs the entitlement query). Functional verb, voice register (buttons are verbs). PM-reviewable at S16."
+  },
+  "billing_autoRenewDisclosure": "One yearly subscription. It renews on its own and charges your {store} account until you cancel — anytime, in your account settings. Lines you've already made stay yours either way.",
+  "@billing_autoRenewDisclosure": {
+    "description": "Store-mandated auto-renew disclosure shown near the F9.2 CTA — renewal terms, charges the store account, how to cancel, plus the permanence reassurance. USER-approved 2026-07-07 12:39 (Option A + permanence). Contains NO price number (numberless lock). {store} is the platform store brand name, resolved at runtime (App Store on iOS / Google Play on Android) — a non-translated proper noun. Enters the S16 crafted-translation pass.",
+    "placeholders": {
+      "store": {
+        "type": "String",
+        "example": "App Store"
+      }
+    }
+  },
+  "billing_termsLabel": "Terms of Use",
+  "@billing_termsLabel": {
+    "description": "Final label — link affordance near the F9.2 CTA (store-mandated Terms of Use / EULA), part of the disclosure block. Destination lands at S19 (website TODO). Enters the S16 crafted-translation pass."
+  },
+  "billing_privacyLabel": "Privacy Policy",
+  "@billing_privacyLabel": {
+    "description": "Final label — link affordance near the F9.2 CTA (store-mandated Privacy Policy), part of the disclosure block. Destination lands at S19 (website TODO). Enters the S16 crafted-translation pass."
   }
 }

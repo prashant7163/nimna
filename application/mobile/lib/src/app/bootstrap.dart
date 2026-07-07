@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:sqflite/sqflite.dart';
 
+import '../billing/billing_service.dart';
+import '../billing/entitlement_source.dart';
+import '../billing/store_entitlement_source.dart';
 import '../crypto/at_rest_aead.dart';
 import '../crypto/record_cipher.dart';
 import '../crypto/sodium_instance.dart';
@@ -40,6 +43,7 @@ Future<NimnaServices> bootstrapNimna({
   RelayConnector? relayConnector,
   LockConfigStore? lockConfigStore,
   BiometricGate? biometricGate,
+  EntitlementSource? entitlementSource,
   DateTime Function()? clock,
   int pinOpsLimit = PinVerifier.specOpsLimit,
   int pinMemLimit = PinVerifier.specMemLimitBytes,
@@ -110,6 +114,12 @@ Future<NimnaServices> bootstrapNimna({
     lockConfigStore: configStore,
     lockController: lockController,
   );
+
+  // S17 billing: production reads the platform's signed on-device
+  // entitlement cache (StoreEntitlementSource over in_app_purchase); tests
+  // inject a fake EntitlementSource. Nothing here persists an entitlement
+  // flag — permanence is structural (spec §10).
+  final billing = BillingService(entitlementSource ?? StoreEntitlementSource());
 
   // Lock first: with a lock enrolled this leaves the perimeter SEALED and
   // never reads the keystore; with the lock disabled it opens storage.
@@ -183,5 +193,6 @@ Future<NimnaServices> bootstrapNimna({
     joiner: joiner,
     lockController: lockController,
     wipe: wipe,
+    billing: billing,
   );
 }

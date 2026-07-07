@@ -1,8 +1,12 @@
 import 'package:flutter/widgets.dart';
 
 import '../../app/app_scope.dart';
+import '../../app/routes.dart';
 import '../../app/transitions.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../ui/screens/pairing/create_line_flow.dart';
+import '../../ui/screens/paywall/paywall_screen.dart';
+import '../../ui/widgets/nimna_toast.dart';
 import 'pending_pairing.dart';
 
 /// THE single entry point into code creation (S8 intake §4 — the G2
@@ -14,13 +18,37 @@ import 'pending_pairing.dart';
 /// source-scan test (test/pairing/single_call_site_test.dart) pins exactly
 /// one call site outside this file.
 ///
-/// S17 wires the paywall gate by editing exactly this function: the
-/// entitlement check goes in front of the route push (F9 intercept on
-/// failure). S8 ships creation ungated per the plan. Joining is never
-/// gated and never passes through here.
-Future<void> startCreateLine(BuildContext context) {
+/// S17 wires the paywall gate INSIDE this function (the single entry point,
+/// so no second ungated creation door can appear — single_call_site_test):
+/// the entitlement check runs at creation intent, on this device only, once
+/// (spec §10). Not entitled (or unresolved → fail-closed) opens F9; the
+/// paywall pops a non-dismissed [PaywallResult] only once the subscription
+/// is active (purchase or restore), and creation continues. Dismiss stops
+/// here — nothing was created. Joining is never gated and never passes
+/// through here; [resumeCreateLineIfPending] stays UNGATED (the code already
+/// exists).
+Future<void> startCreateLine(BuildContext context) async {
   final services = AppScope.of(context);
-  return Navigator.of(context).push(
+  final navigator = Navigator.of(context);
+
+  if (!await services.billing.hasActiveCreationEntitlement()) {
+    final result = await navigator.pushNamed<PaywallResult>(Routes.paywall);
+    if (result == null || result == PaywallResult.dismissed) {
+      return; // F9.2 ✕ / declined — no creation, nothing follows the user.
+    }
+    if (context.mounted) {
+      // F9.4 (purchase) / F9.5 (restore): one calm toast, then straight on
+      // to creating — no celebration screen.
+      showNimnaToast(
+        context,
+        result == PaywallResult.restored
+            ? AppLocalizations.of(context)!.billing_restoreSuccessToast
+            : AppLocalizations.of(context)!.billing_subscriptionStartedToast,
+      );
+    }
+  }
+
+  await navigator.push(
     NimnaPageRoute<void>(
       builder: (_) => CreateLineFlow(pairing: services.pairing),
     ),
