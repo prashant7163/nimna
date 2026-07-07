@@ -2,7 +2,9 @@ package vectors
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
+	"strings"
 
 	"nimna.app/test-vectors/generator/internal/framing"
 )
@@ -113,29 +115,30 @@ func envJSON(e framing.Envelope, text, acked, controlType, note string) (envelop
 		exp := e.ExpiryS
 		out.ExpiryS = &exp
 	}
+	if e.Flags&framing.FlagReplyTo != 0 {
+		out.ReplyTo = hexs(e.ReplyTo[:])
+	}
 	return out, enc, nil
 }
 
 func genFraming() (*framingFileJSON, error) {
 	file := &framingFileJSON{
-		Purpose: "Envelope encode/decode cases for every v0.2 inner type and " +
+		Purpose: "Envelope encode/decode cases for every v0.2.1 inner type and " +
 			"flag combination (plus invalid encodings that must be rejected), " +
-			"full MEDIA_CHUNK transfers with reassembly and content_hash, all " +
-			"three token_payload forms, and an outer-frame example for every " +
-			"frame_type. Known gap, tracked: spec v0.2.1's REACTION type " +
-			"(0x06) and reply_to flag (bit 2) are not yet covered — cases land " +
-			"with the first envelope-codec implementation (see " +
-			"docs/test-vectors/README.md); every invalid case below stays " +
-			"invalid under v0.2.1.",
-		Spec: SpecRef + " §5.1, §5.4, §5.5, §5.7",
+			"including REACTION (0x06) and the reply_to flag (bit 2) with " +
+			"expiry+reply_to ordering; full MEDIA_CHUNK transfers with " +
+			"reassembly and content_hash; all three token_payload forms; and " +
+			"an outer-frame example for every frame_type.",
+		Spec: SpecRef + " §5.1, §5.4, §5.5, §5.7, §5.8",
 		EnvelopeLayout: []string{
 			"offset 0: ver (1) = 0x01",
-			"offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK (v0.2 set; v0.2.1 adds 0x06 REACTION, cases pending)",
-			"offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, bit 3 and up reserved and must be 0 (v0.2.1 assigns bit 2 to reply_to, cases pending)",
+			"offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK, 0x06 REACTION (v0.2.1)",
+			"offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, bit 2 reply_to present (v0.2.1; TEXT and MEDIA_CHUNK manifest only), bits 3–7 reserved and must be 0",
 			"offset 3: msg_id (16)",
 			"offset 19: timestamp (8) — sender local time, Unix milliseconds, uint64 big-endian",
 			"offset 27: expiry_s (4) — present only if flags bit 0; all later offsets shift by 4",
-			"then: body per type",
+			"then reply_to (16) — present only if flags bit 2; in flag-bit order it follows expiry_s (offset 31) when both are present, else follows timestamp (offset 27)",
+			"then: body per type — REACTION body = ref_msg_id(16) ‖ op(1: 0x01 add / 0x00 remove) ‖ emoji_len(1) ‖ emoji(emoji_len, 1–64 bytes valid UTF-8)",
 		},
 	}
 	if err := addEnvelopeCases(file); err != nil {
@@ -196,6 +199,47 @@ func addEnvelopeCases(file *framingFileJSON) error {
 	readReceipt := fixed16("framing/read-receipt-of")
 	acked := fixed16("framing/acked-msg-id")
 	textUTF8 := "Grüße — ελληνικά — 日本語 — 🤫"
+
+	// v0.2.1 REACTION bodies (§5.8). ref_msg_id names a TEXT or manifest the
+	// recipient displays; the referent's existence is a receiver-state matter
+	// (silent-drop), never a structural check — so these are all structurally
+	// valid whatever ref_msg_id they carry.
+	reactRef := fixed16("framing/react-ref")
+	// "👍" is 4 UTF-8 bytes; a ZWJ family sequence is 20 bytes across 6 code
+	// points — proof that receivers must not grapheme-segment (§5.5).
+	zwjEmoji := "👩‍❤️‍👨"
+	emoji64 := strings.Repeat("👍", 16) // 4 bytes × 16 = exactly 64 bytes
+	reactAddBody, err := framing.EncodeReaction(framing.Reaction{
+		RefMsgID: reactRef, Op: framing.ReactionAdd, Emoji: []byte("👍"),
+	})
+	if err != nil {
+		return err
+	}
+	reactRemoveBody, err := framing.EncodeReaction(framing.Reaction{
+		RefMsgID: reactRef, Op: framing.ReactionRemove, Emoji: []byte("👍"),
+	})
+	if err != nil {
+		return err
+	}
+	reactZWJBody, err := framing.EncodeReaction(framing.Reaction{
+		RefMsgID: reactRef, Op: framing.ReactionAdd, Emoji: []byte(zwjEmoji),
+	})
+	if err != nil {
+		return err
+	}
+	react1Body, err := framing.EncodeReaction(framing.Reaction{
+		RefMsgID: reactRef, Op: framing.ReactionAdd, Emoji: []byte("!"),
+	})
+	if err != nil {
+		return err
+	}
+	react64Body, err := framing.EncodeReaction(framing.Reaction{
+		RefMsgID: reactRef, Op: framing.ReactionAdd, Emoji: []byte(emoji64),
+	})
+	if err != nil {
+		return err
+	}
+	replyRef := fixed16("framing/reply-ref")
 
 	valid := []spec{
 		{name: "text-min", text: "hi",
@@ -271,6 +315,45 @@ func addEnvelopeCases(file *framingFileJSON) error {
 				MsgID:       fixed16("framing/chunk-msg-id"),
 				TimestampMS: tsBase + 1500, Body: chunkBody},
 			note: "flags bit 1 clear: chunk; body = manifest_msg_id(16) ‖ chunk_index(4, 0-based) ‖ chunk_data"},
+		{name: "reaction-add",
+			env: framing.Envelope{Type: framing.TypeReaction, MsgID: fixed16("framing/react-add"),
+				TimestampMS: tsBase + 1800, Body: reactAddBody},
+			note: "REACTION (v0.2.1, §5.8); flags must be 0 (a reaction inherits its referent's expiry, never carries its own); body = ref_msg_id(16) ‖ op(1)=0x01 add ‖ emoji_len(1)=0x04 ‖ emoji(👍)"},
+		{name: "reaction-remove",
+			env: framing.Envelope{Type: framing.TypeReaction, MsgID: fixed16("framing/react-remove"),
+				TimestampMS: tsBase + 1810, Body: reactRemoveBody},
+			note: "REACTION remove (op=0x00): clears the sender's reaction unconditionally; the carried emoji keeps the body shape uniform and is not compared (§5.8)"},
+		{name: "reaction-emoji-multibyte",
+			env: framing.Envelope{Type: framing.TypeReaction, MsgID: fixed16("framing/react-zwj"),
+				TimestampMS: tsBase + 1820, Body: reactZWJBody},
+			note: "REACTION whose emoji is a 20-byte ZWJ sequence spanning six code points; receivers never grapheme-segment (§5.5), only emoji_len byte-length and UTF-8 validity are checked"},
+		{name: "reaction-emoji-1byte",
+			env: framing.Envelope{Type: framing.TypeReaction, MsgID: fixed16("framing/react-1byte"),
+				TimestampMS: tsBase + 1830, Body: react1Body},
+			note: "REACTION at the emoji_len=1 boundary (a single ASCII byte); structurally valid — the sender-side single-grapheme rule is a compose-time rule, not receiver-validated (§5.8)"},
+		{name: "reaction-emoji-64byte",
+			env: framing.Envelope{Type: framing.TypeReaction, MsgID: fixed16("framing/react-64byte"),
+				TimestampMS: tsBase + 1840, Body: react64Body},
+			note: "REACTION at the emoji_len=64 upper boundary (16×👍 = 64 bytes)"},
+		{name: "reply-to-text",
+			env: framing.Envelope{Type: framing.TypeText, Flags: framing.FlagReplyTo,
+				MsgID: fixed16("framing/reply-text"), TimestampMS: tsBase + 1850,
+				ReplyTo: replyRef, Body: []byte("quoting you")},
+			text: "quoting you",
+			note: "flags bit 2 (v0.2.1): reply_to(16) present at offset 27 (no expiry); the wire carries only the referenced msg_id — no quoted content (§5.8)"},
+		{name: "reply-to-manifest",
+			env: framing.Envelope{Type: framing.TypeMediaChunk,
+				Flags: framing.FlagManifest | framing.FlagReplyTo,
+				MsgID: fixed16("framing/reply-manifest"), TimestampMS: tsBase + 1860,
+				ReplyTo: replyRef, Body: manifestBody},
+			note: "reply_to legal on a MEDIA_CHUNK manifest (flags 0x06): marks the attachment as sent-in-reply; chunks never carry it (§5.8)"},
+		{name: "reply-to-and-expiry",
+			env: framing.Envelope{Type: framing.TypeText,
+				Flags: framing.FlagExpiry | framing.FlagReplyTo,
+				MsgID: fixed16("framing/reply-expiry"), TimestampMS: tsBase + 1870,
+				ExpiryS: 30, ReplyTo: replyRef, Body: []byte("vanishing reply")},
+			text: "vanishing reply",
+			note: "flags 0x05: expiry_s and reply_to compose freely in flag-bit order — expiry_s(4) at offset 27, reply_to(16) at offset 31, body at offset 47 (§5.5, §5.8)"},
 	}
 	for _, s := range valid {
 		e, _, err := envJSON(s.env, s.text, s.acked, s.controlType, "")
@@ -300,6 +383,24 @@ func addEnvelopeCases(file *framingFileJSON) error {
 	if err != nil {
 		return err
 	}
+
+	// Hand-built frame with an arbitrary type/flags and a raw (possibly
+	// malformed) trailer — the header is well-formed so decoding reaches the
+	// structural body/flag checks under test.
+	invalidMsgID := fixed16("framing/invalid-v021")
+	rawFrame := func(typ, flags byte, trailer []byte) []byte {
+		out := []byte{framing.Ver, typ, flags}
+		out = append(out, invalidMsgID[:]...)
+		out = binary.BigEndian.AppendUint64(out, tsBase+1900)
+		return append(out, trailer...)
+	}
+	// A 16-byte reply_to present on a type that may not carry it: the frame
+	// is long enough to parse the field, so the type/flag predicate (not
+	// truncation) is what rejects it.
+	replyToTrailer := func(body []byte) []byte {
+		return append(append([]byte{}, replyRef[:]...), body...)
+	}
+
 	invalid := []struct{ name, encoded, reason string }{
 		{"bad-version", mutate(func(b []byte) { b[0] = 0x02 }),
 			"ver must be 0x01"},
@@ -333,6 +434,47 @@ func addEnvelopeCases(file *framingFileJSON) error {
 			b[1] = framing.TypeControl
 			return hexs(b[:27])
 		}(), "CONTROL body must carry at least control_type"},
+		// REACTION structural violations (§5.8): deterministic byte-level
+		// malformation is a protocol error, distinct from the state-dependent
+		// silent-drop of a well-formed reaction with an unknown referent.
+		{"reaction-emoji-len-zero", hexs(rawFrame(framing.TypeReaction, 0x00,
+			append(append([]byte{}, reactRef[:]...), framing.ReactionAdd, 0x00))),
+			"emoji_len must be 1–64; 0 is out of range (body ref_msg_id(16) ‖ op ‖ emoji_len=0, no emoji)"},
+		{"reaction-emoji-len-65", hexs(rawFrame(framing.TypeReaction, 0x00,
+			append(append(append([]byte{}, reactRef[:]...), framing.ReactionAdd, 0x41), make([]byte, 65)...))),
+			"emoji_len must be 1–64; 65 is out of range"},
+		{"reaction-emoji-len-mismatch", hexs(rawFrame(framing.TypeReaction, 0x00,
+			append(append(append([]byte{}, reactRef[:]...), framing.ReactionAdd, 0x05), []byte("ab")...))),
+			"emoji_len (5) must equal the remaining body length (2)"},
+		{"reaction-bad-op", hexs(rawFrame(framing.TypeReaction, 0x00,
+			append(append(append([]byte{}, reactRef[:]...), 0x02, 0x04), []byte("👍")...))),
+			"op must be 0x00 (remove) or 0x01 (add); 0x02 is undefined"},
+		{"reaction-invalid-utf8", hexs(rawFrame(framing.TypeReaction, 0x00,
+			append(append(append([]byte{}, reactRef[:]...), framing.ReactionAdd, 0x02), 0xff, 0xfe))),
+			"emoji must be valid UTF-8; 0xff 0xfe is not"},
+		{"reaction-truncated-body", hexs(rawFrame(framing.TypeReaction, 0x00,
+			append(append([]byte{}, reactRef[:8]...), framing.ReactionAdd))),
+			"REACTION body shorter than the 18-byte minimum (ref_msg_id ‖ op ‖ emoji_len)"},
+		{"reaction-with-expiry-flag", hexs(rawFrame(framing.TypeReaction, framing.FlagExpiry,
+			append([]byte{0x00, 0x00, 0x00, 0x1e}, reactAddBody...))),
+			"a REACTION carries no flags — expiry (bit 0) is illegal; a reaction inherits its referent's expiry (§5.8)"},
+		// reply_to (bit 2) present on a type that may not carry it: the field
+		// is fully present (16 bytes), so the flag/type predicate rejects it.
+		{"reply-to-on-ack", hexs(rawFrame(framing.TypeAck, framing.FlagReplyTo,
+			replyToTrailer(acked[:]))),
+			"reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not ACK"},
+		{"reply-to-on-control", hexs(rawFrame(framing.TypeControl, framing.FlagReplyTo,
+			replyToTrailer([]byte{framing.ControlTyping}))),
+			"reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not CONTROL"},
+		{"reply-to-on-hangup", hexs(rawFrame(framing.TypeHangup, framing.FlagReplyTo,
+			replyToTrailer(nil))),
+			"reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not HANGUP"},
+		{"reply-to-on-reaction", hexs(rawFrame(framing.TypeReaction, framing.FlagReplyTo,
+			replyToTrailer(reactAddBody))),
+			"reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not REACTION"},
+		{"reply-to-truncated", hexs(rawFrame(framing.TypeText, framing.FlagReplyTo,
+			replyRef[:8])),
+			"flags bit 2 set but the frame ends before the 16-byte reply_to"},
 	}
 	for _, s := range invalid {
 		if _, err := framing.Decode(mustHexBytes(s.encoded)); err == nil {

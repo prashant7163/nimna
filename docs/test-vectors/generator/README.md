@@ -45,7 +45,7 @@ v0.53.0 (chacha20poly1305, argon2) — the relay had no x/crypto pin yet, so
 the current stable was pinned here first. Everything else is stdlib
 (`crypto/ecdh`, `crypto/hkdf`, `crypto/sha256`, `crypto/hmac`). No Noise
 library — the engine is implemented from the Noise specification per spec
-v0.2 §7, and validated against third-party vectors precisely because of
+v0.2.1 §7, and validated against third-party vectors precisely because of
 that.
 
 ## Determinism contract

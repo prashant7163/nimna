@@ -34,7 +34,7 @@ import (
 const WordlistSHA256 = "7aa57a4d3ecf6581729992bad9575bacdebf7c28378af2aec6a50f11aec326f5"
 
 // SpecRef names the spec version these vectors are generated from.
-const SpecRef = "nimna-protocol-spec-v0.2.md"
+const SpecRef = "nimna-protocol-spec-v0.2.1.md"
 
 // Generate writes all five JSON vector files into outDir, reading the
 // pinned wordlist from wordlistPath and verifying its SHA-256 first.

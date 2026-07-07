@@ -39,6 +39,7 @@ type envelopeJSON struct {
 	MsgID       string  `json:"msg_id"`
 	TimestampMS uint64  `json:"timestamp_ms"`
 	ExpiryS     *uint32 `json:"expiry_s,omitempty"`
+	ReplyTo     string  `json:"reply_to,omitempty"`
 	Body        string  `json:"body"`
 	Text        string  `json:"text,omitempty"`
 	AckedMsgID  string  `json:"acked_msg_id,omitempty"`
@@ -113,7 +114,7 @@ func genSessionHandshake(channels []channelInfo) (*sessionFileJSON, error) {
 		Purpose: "Deterministic KK session-handshake transcripts (S1/S2) and " +
 			"transport frames in both directions with per-frame keys before and " +
 			"after the per-message rekey, exact nonces, and inner-envelope plaintexts.",
-		Spec:         SpecRef + " §3.3.1, §5.4–§5.6",
+		Spec:         SpecRef + " §3.3.1, §5.4–§5.6, §5.8",
 		ProtocolName: noise.ProtocolName("KK"),
 		Notes: []string{
 			"The knocker is the Noise initiator (spec §3.3.1). Either side of the channel may knock; the two transcripts show both.",
@@ -147,9 +148,21 @@ func genSessionHandshake(channels []channelInfo) (*sessionFileJSON, error) {
 	msgID3 := fixed16("session1/msg-id-3")
 	msgID4 := fixed16("session1/msg-id-4")
 	msgID5 := fixed16("session1/msg-id-5")
+	msgID6 := fixed16("session1/msg-id-6")
+	msgID7 := fixed16("session1/msg-id-7")
 	text1 := "test message one"
 	text2 := "disappearing message — café ☕ üñî"
+	replyText := "and this replies to it"
 	expiry := uint32(30)
+	// A REACTION (v0.2.1, §5.8) reacting to the first TEXT (msgID1), and a
+	// reply_to-TEXT (msgID1) — both ride the KK transport + per-message rekey
+	// exactly like any envelope; to the relay they are opaque ciphertext.
+	reactionBody, err := framing.EncodeReaction(framing.Reaction{
+		RefMsgID: msgID1, Op: framing.ReactionAdd, Emoji: []byte("👍"),
+	})
+	if err != nil {
+		return nil, err
+	}
 	t1, err := sessionTranscript(sessionInputs{
 		name:              "knocker-is-joiner",
 		channelRef:        "statics from pairing-handshake.json transcript \"" + ch.pairTranscript + "\"; the joiner device (B) knocks",
@@ -192,6 +205,23 @@ func genSessionHandshake(channels []channelInfo) (*sessionFileJSON, error) {
 				},
 				controlType: "0x03 (screenshot notice, empty payload)",
 				note:        "CONTROL screenshot notice (spec §5.2)",
+			},
+			{
+				fromInitiator: true,
+				envelope: framing.Envelope{
+					Type: framing.TypeReaction, MsgID: msgID6,
+					TimestampMS: tsBase + 4500, Body: reactionBody,
+				},
+				note: "REACTION (v0.2.1, §5.8) on the first TEXT (msgID1): body = ref_msg_id(16)=msgID1 ‖ op(1)=0x01 add ‖ emoji_len(1)=0x04 ‖ 👍; flags are 0 and it is never ACKed or read-receipted",
+			},
+			{
+				fromInitiator: false,
+				envelope: framing.Envelope{
+					Type: framing.TypeText, Flags: framing.FlagReplyTo, MsgID: msgID7,
+					TimestampMS: tsBase + 4800, ReplyTo: msgID1, Body: []byte(replyText),
+				},
+				text: replyText,
+				note: "reply_to-TEXT (flags bit 2): reply_to(16)=msgID1 at offset 27, body at offset 43; the wire carries only the referenced msg_id, never quoted content (§5.8)",
 			},
 			{
 				fromInitiator: true,
@@ -435,6 +465,9 @@ func sessionTranscript(in sessionInputs) (*sessionTranscriptJSON, error) {
 			e := fs.envelope.ExpiryS
 			env.ExpiryS = &e
 		}
+		if fs.envelope.Flags&framing.FlagReplyTo != 0 {
+			env.ReplyTo = hexs(fs.envelope.ReplyTo[:])
+		}
 		frames = append(frames, transportFrameJSON{
 			Seq:                i + 1,
 			Direction:          dirName,
@@ -495,6 +528,8 @@ func envelopeTypeName(t byte) string {
 		return "0x04 (HANGUP)"
 	case framing.TypeMediaChunk:
 		return "0x05 (MEDIA_CHUNK)"
+	case framing.TypeReaction:
+		return "0x06 (REACTION)"
 	}
 	return fmt.Sprintf("0x%02x", t)
 }

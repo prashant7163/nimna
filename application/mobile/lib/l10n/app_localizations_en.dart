@@ -452,4 +452,85 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get billing_privacyLabel => 'Privacy Policy';
+
+  @override
+  String get session_lineOnline => 'On the line';
+
+  @override
+  String get session_lineOffline => 'Not on the line';
+
+  @override
+  String get session_lineLost => 'The line dropped.';
+
+  @override
+  String get session_lineDropped => 'The line dropped. Trying to reconnect…';
+
+  @override
+  String get session_lineRecovered => 'You\'re both here.';
+
+  @override
+  String get session_peerHungUp => 'They hung up.';
+
+  @override
+  String get session_youHungUp => 'You hung up.';
+
+  @override
+  String get chat_hangUp => 'Hang up';
+
+  @override
+  String get chat_waitingHeader => 'WAITING — ON YOUR PHONE ONLY';
+
+  @override
+  String get chat_peerOfflineHeadline => 'They\'re not on the line right now.';
+
+  @override
+  String get chat_peerOfflineBody =>
+      'Anything you write waits here — on your phone only — and goes through when you\'re both on.';
+
+  @override
+  String get chat_expiryDisclaimer =>
+      'Their app will delete this on schedule, and yours will too.\nA timer can\'t undo being read — a screenshot is still a screenshot. It\'s a courtesy between the two of you, not a guarantee.';
+
+  @override
+  String get chat_timerOff => 'Off';
+
+  @override
+  String chat_timerMinutes(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes min',
+      one: '1 min',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String chat_timerHours(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours hr',
+      one: '1 hr',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chat_timerButtonA11y => 'Disappearing timer';
+
+  @override
+  String get chat_composerA11y => 'Message';
+
+  @override
+  String get chat_sendA11y => 'Send';
+
+  @override
+  String get chat_deliveryWaitingA11y => 'Waiting. On your phone only.';
+
+  @override
+  String get chat_deliverySentA11y => 'Sent.';
+
+  @override
+  String get chat_deliveryDeliveredA11y => 'Delivered.';
 }

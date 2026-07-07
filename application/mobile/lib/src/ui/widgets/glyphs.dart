@@ -155,6 +155,90 @@ class BackspaceGlyph extends StatelessWidget {
   );
 }
 
+/// The composer send affordance (an up arrow: `M12 19V5M6 11l6-6 6 6`).
+/// Vertically oriented — no RTL concern.
+class SendGlyph extends StatelessWidget {
+  const SendGlyph({required this.color, this.size = 20, super.key});
+
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    size: Size.square(size),
+    painter: _SendPainter(color: color),
+  );
+}
+
+class _SendPainter extends CustomPainter {
+  const _SendPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 24;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth * s
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final path = Path()
+      ..moveTo(12 * s, 19 * s)
+      ..lineTo(12 * s, 5 * s)
+      ..moveTo(6 * s, 11 * s)
+      ..lineTo(12 * s, 5 * s)
+      ..lineTo(18 * s, 11 * s);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_SendPainter oldDelegate) => color != oldDelegate.color;
+}
+
+/// The disappearing-timer affordance (a clock ◷: circle + two hands).
+/// Radially symmetric — no RTL concern.
+class TimerGlyph extends StatelessWidget {
+  const TimerGlyph({required this.color, this.size = 22, super.key});
+
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    size: Size.square(size),
+    painter: _TimerPainter(color: color),
+  );
+}
+
+class _TimerPainter extends CustomPainter {
+  const _TimerPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 24;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth * s
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawCircle(Offset(12 * s, 13 * s), 8 * s, paint);
+    final hands = Path()
+      ..moveTo(12 * s, 13 * s)
+      ..lineTo(12 * s, 9 * s)
+      ..moveTo(12 * s, 13 * s)
+      ..lineTo(15 * s, 14 * s);
+    canvas.drawPath(hands, paint);
+  }
+
+  @override
+  bool shouldRepaint(_TimerPainter oldDelegate) => color != oldDelegate.color;
+}
+
 class _BackspacePainter extends CustomPainter {
   const _BackspacePainter({required this.color});
 

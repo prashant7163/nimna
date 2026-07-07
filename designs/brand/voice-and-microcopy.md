@@ -19,7 +19,7 @@ Nimna speaks like someone who has nothing to prove and nothing to hide. Plain wo
 
 ## The strings
 
-Strings 1–10 keep their original numbers (wireframe and screen annotations reference them); 11–18 are new with spec v0.1.1; 19–21 are new with spec v0.2.1 (self-join guard, replies, reactions).
+Strings 1–10 keep their original numbers (wireframe and screen annotations reference them); 11–18 are new with spec v0.1.1; 19–21 are new with spec v0.2.1 (self-join guard, replies, reactions); 22 is folded in at Session 10 (the authenticated-hangup line-state caption, already drawn in wireframe F5.4/F5.12).
 
 **1 · Onboarding — what it is**
 > A private line between two people.
@@ -63,6 +63,8 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 **10 · Connection drops mid-session**
 > The line dropped. Trying to reconnect…
 > *(on recovery)* You're both here.
+
+> *(rendering split, S10 — the same voice, two truths: `session_lineLost` "The line dropped." is the terminal caption when no reconnect is in flight; the fuller "…Trying to reconnect…" (`session_lineDropped`) + "You're both here." (`session_lineRecovered`) pair renders only while reconnect is genuinely attempted — wired S12. Translate all three; each must stay claim-accurate to its own state.)*
 
 **11 · Screenshot disclosure — onboarding, as informed consent** *(first sentence is canonical from spec §5.2, verbatim)*
 > Nimna can't stop a screenshot. It will always tell the other person.
@@ -113,6 +115,10 @@ Strings 1–10 keep their original numbers (wireframe and screen annotations ref
 > *(a11y, your chip)* You reacted {emoji}. Tap to remove.
 > *(a11y, their chip)* They reacted {emoji}.
 > *(a11y, the open-any-emoji affordance)* Choose another emoji
+
+**22 · Ending the line — hang up** *(the line-state caption after an authenticated HANGUP — spec §3.3; distinct from string 10's mid-session drop, which the relay can produce and which reads "connection lost." An authenticated HANGUP is one the relay cannot forge, so "ended" and "connection lost" stay honestly separate)*
+> *(the peer ended)* They hung up.
+> *(own side)* You hung up.
 
 ## Register notes
 

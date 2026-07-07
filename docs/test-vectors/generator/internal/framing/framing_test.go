@@ -3,9 +3,11 @@ package framing
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"math/rand"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -287,5 +289,222 @@ func TestManifestEncoding(t *testing.T) {
 	}
 	if _, err := ParseManifest(append(enc, 'x')); err == nil {
 		t.Fatal("mime_len mismatch accepted")
+	}
+}
+
+// rawFrame builds a well-formed envelope header (ver ‖ type ‖ flags ‖ msg_id ‖
+// timestamp) with an arbitrary trailer, so tests can reach the structural
+// body/flag checks with deliberately malformed content.
+func rawFrame(typ, flags byte, trailer []byte) []byte {
+	var mid [16]byte
+	copy(mid[:], bytes.Repeat([]byte{0x11}, 16))
+	out := []byte{Ver, typ, flags}
+	out = append(out, mid[:]...)
+	out = binary.BigEndian.AppendUint64(out, 42)
+	return append(out, trailer...)
+}
+
+func TestReactionEncoding(t *testing.T) {
+	var ref [16]byte
+	copy(ref[:], bytes.Repeat([]byte{0x22}, 16))
+	cases := []struct {
+		name  string
+		op    byte
+		emoji string
+	}{
+		{"add", ReactionAdd, "👍"},
+		{"remove", ReactionRemove, "👍"},
+		{"multibyte-zwj", ReactionAdd, "👩‍❤️‍👨"}, // 20 bytes, 6 code points
+		{"one-byte-boundary", ReactionAdd, "!"},
+		{"sixtyfour-byte-boundary", ReactionAdd, strings.Repeat("👍", 16)}, // exactly 64 bytes
+	}
+	for _, c := range cases {
+		body, err := EncodeReaction(Reaction{RefMsgID: ref, Op: c.op, Emoji: []byte(c.emoji)})
+		if err != nil {
+			t.Fatalf("%s: EncodeReaction: %v", c.name, err)
+		}
+		// Body layout: ref_msg_id(16) ‖ op(1) ‖ emoji_len(1) ‖ emoji.
+		if !bytes.Equal(body[:16], ref[:]) {
+			t.Fatalf("%s: ref_msg_id not at offset 0", c.name)
+		}
+		if body[16] != c.op {
+			t.Fatalf("%s: op not at offset 16", c.name)
+		}
+		if int(body[17]) != len(c.emoji) {
+			t.Fatalf("%s: emoji_len %d != byte length %d", c.name, body[17], len(c.emoji))
+		}
+		if !bytes.Equal(body[18:], []byte(c.emoji)) {
+			t.Fatalf("%s: emoji bytes mismatch", c.name)
+		}
+		r, err := ParseReaction(body)
+		if err != nil || r.Op != c.op || !bytes.Equal(r.Emoji, []byte(c.emoji)) || r.RefMsgID != ref {
+			t.Fatalf("%s: ParseReaction round-trip failed: %+v (%v)", c.name, r, err)
+		}
+		// Whole REACTION envelope must round-trip; flags stay 0.
+		e := Envelope{Type: TypeReaction, MsgID: ref, TimestampMS: 7, Body: body}
+		enc, err := Encode(e)
+		if err != nil {
+			t.Fatalf("%s: Encode envelope: %v", c.name, err)
+		}
+		dec, err := Decode(enc)
+		if err != nil || !reflect.DeepEqual(e, dec) {
+			t.Fatalf("%s: envelope round-trip failed: %v", c.name, err)
+		}
+	}
+}
+
+func TestReactionRejects(t *testing.T) {
+	var ref [16]byte
+	copy(ref[:], bytes.Repeat([]byte{0x33}, 16))
+	valid := func(op byte, emojiLen byte, emoji []byte) []byte {
+		return append(append(append([]byte{}, ref[:]...), op, emojiLen), emoji...)
+	}
+	bad := map[string][]byte{
+		"emoji_len=0":            valid(ReactionAdd, 0x00, nil),
+		"emoji_len=65":           valid(ReactionAdd, 65, make([]byte, 65)),
+		"emoji_len!=remaining":   valid(ReactionAdd, 5, []byte("ab")),
+		"bad-op":                 valid(0x02, 4, []byte("👍")),
+		"invalid-utf8":           valid(ReactionAdd, 2, []byte{0xff, 0xfe}),
+		"truncated-below-18":     append(append([]byte{}, ref[:8]...), ReactionAdd),
+		"emoji_len=0-with-bytes": valid(ReactionAdd, 0x00, []byte("👍")), // len says 0, 4 bytes follow
+	}
+	for name, body := range bad {
+		if _, err := ParseReaction(body); err == nil {
+			t.Fatalf("%s: ParseReaction accepted a malformed body", name)
+		}
+		// The same violation must be caught when the body rides a full frame.
+		if _, err := Decode(rawFrame(TypeReaction, 0x00, body)); err == nil {
+			t.Fatalf("%s: Decode accepted a malformed REACTION frame", name)
+		}
+	}
+	// A REACTION carries no flags: expiry (bit 0) and reply_to (bit 2) are both
+	// illegal, as is any reserved bit.
+	good := valid(ReactionAdd, 4, []byte("👍"))
+	for name, flags := range map[string]byte{
+		"expiry-flag":   FlagExpiry,
+		"reply-to-flag": FlagReplyTo,
+		"manifest-flag": FlagManifest,
+		"reserved-flag": 0x08,
+	} {
+		// For expiry/reply_to the field bytes must be present so the flag/type
+		// predicate (not truncation) is what rejects; build a trailer to suit.
+		var trailer []byte
+		switch flags {
+		case FlagExpiry:
+			trailer = append([]byte{0, 0, 0, 30}, good...)
+		case FlagReplyTo:
+			trailer = append(bytes.Repeat([]byte{0x44}, 16), good...)
+		default:
+			trailer = good
+		}
+		if _, err := Decode(rawFrame(TypeReaction, flags, trailer)); err == nil {
+			t.Fatalf("%s: Decode accepted a flagged REACTION", name)
+		}
+	}
+	// EncodeReaction rejects the same field violations at the source.
+	for name, r := range map[string]Reaction{
+		"bad-op":    {RefMsgID: ref, Op: 0x02, Emoji: []byte("👍")},
+		"empty":     {RefMsgID: ref, Op: ReactionAdd, Emoji: nil},
+		"too-long":  {RefMsgID: ref, Op: ReactionAdd, Emoji: make([]byte, 65)},
+		"bad-utf8":  {RefMsgID: ref, Op: ReactionAdd, Emoji: []byte{0xff}},
+		"remove-ok": {RefMsgID: ref, Op: ReactionRemove, Emoji: []byte("x")},
+	} {
+		_, err := EncodeReaction(r)
+		if name == "remove-ok" {
+			if err != nil {
+				t.Fatalf("%s: EncodeReaction rejected a valid reaction: %v", name, err)
+			}
+			continue
+		}
+		if err == nil {
+			t.Fatalf("%s: EncodeReaction accepted an invalid reaction", name)
+		}
+	}
+}
+
+func TestReplyToEncoding(t *testing.T) {
+	var mid, reply [16]byte
+	copy(mid[:], bytes.Repeat([]byte{0x55}, 16))
+	copy(reply[:], bytes.Repeat([]byte{0x66}, 16))
+
+	// reply_to only (bit 2): field at offset 27, body at 43.
+	e := Envelope{Type: TypeText, Flags: FlagReplyTo, MsgID: mid, TimestampMS: 1,
+		ReplyTo: reply, Body: []byte("x")}
+	enc, err := Encode(e)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(enc) != 27+16+1 || !bytes.Equal(enc[27:43], reply[:]) || enc[43] != 'x' {
+		t.Fatalf("reply_to must sit at offset 27 without expiry: %x", enc)
+	}
+	if dec, err := Decode(enc); err != nil || !reflect.DeepEqual(e, dec) {
+		t.Fatalf("reply_to-only round-trip failed: %v", err)
+	}
+
+	// expiry + reply_to (bits 0 and 2): expiry_s at 27, reply_to at 31, body 47.
+	e2 := Envelope{Type: TypeText, Flags: FlagExpiry | FlagReplyTo, MsgID: mid,
+		TimestampMS: 1, ExpiryS: 30, ReplyTo: reply, Body: []byte("x")}
+	enc2, err := Encode(e2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(enc2) != 27+4+16+1 {
+		t.Fatalf("expiry+reply_to length wrong: %d", len(enc2))
+	}
+	if !bytes.Equal(enc2[27:31], []byte{0, 0, 0, 30}) || !bytes.Equal(enc2[31:47], reply[:]) || enc2[47] != 'x' {
+		t.Fatalf("flag-bit order wrong (expiry@27, reply_to@31): %x", enc2)
+	}
+	if dec, err := Decode(enc2); err != nil || !reflect.DeepEqual(e2, dec) {
+		t.Fatalf("expiry+reply_to round-trip failed: %v", err)
+	}
+
+	// reply_to on a MEDIA_CHUNK manifest is legal (flags 0x06).
+	mBody, err := EncodeManifest(Manifest{ChunkCount: 1, TotalLen: 3,
+		ContentHash: sha256.Sum256([]byte("abc")), Mime: "text/plain"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	em := Envelope{Type: TypeMediaChunk, Flags: FlagManifest | FlagReplyTo, MsgID: mid,
+		TimestampMS: 1, ReplyTo: reply, Body: mBody}
+	encm, err := Encode(em)
+	if err != nil {
+		t.Fatalf("reply_to on manifest must encode: %v", err)
+	}
+	if dec, err := Decode(encm); err != nil || !reflect.DeepEqual(em, dec) {
+		t.Fatalf("reply_to-manifest round-trip failed: %v", err)
+	}
+}
+
+func TestReplyToRejects(t *testing.T) {
+	var reply, acked [16]byte
+	copy(reply[:], bytes.Repeat([]byte{0x77}, 16))
+	copy(acked[:], bytes.Repeat([]byte{0x88}, 16))
+	reaction := append(append(append([]byte{}, reply[:]...), ReactionAdd, 0x04), []byte("👍")...)
+
+	// reply_to (bit 2) present with a full 16-byte field on types that may not
+	// carry it: the flag/type predicate rejects, not truncation.
+	illegal := map[string][]byte{
+		"on-ack":      rawFrame(TypeAck, FlagReplyTo, append(append([]byte{}, reply[:]...), acked[:]...)),
+		"on-control":  rawFrame(TypeControl, FlagReplyTo, append(append([]byte{}, reply[:]...), ControlTyping)),
+		"on-hangup":   rawFrame(TypeHangup, FlagReplyTo, reply[:]),
+		"on-reaction": rawFrame(TypeReaction, FlagReplyTo, append(append([]byte{}, reply[:]...), reaction...)),
+	}
+	for name, frame := range illegal {
+		if _, err := Decode(frame); err == nil {
+			t.Fatalf("reply_to %s: Decode accepted an illegal reply_to", name)
+		}
+	}
+	// bit 2 set but the frame ends before the 16-byte reply_to.
+	if _, err := Decode(rawFrame(TypeText, FlagReplyTo, reply[:8])); err == nil {
+		t.Fatal("reply_to truncation accepted")
+	}
+	// Encode enforces the same predicate at the source.
+	for name, e := range map[string]Envelope{
+		"encode-on-ack":    {Type: TypeAck, Flags: FlagReplyTo, ReplyTo: reply, Body: acked[:]},
+		"encode-on-hangup": {Type: TypeHangup, Flags: FlagReplyTo, ReplyTo: reply},
+	} {
+		if _, err := Encode(e); err == nil {
+			t.Fatalf("%s: Encode accepted an illegal reply_to", name)
+		}
 	}
 }

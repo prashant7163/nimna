@@ -1,14 +1,15 @@
 {
-  "_purpose": "Envelope encode/decode cases for every v0.2 inner type and flag combination (plus invalid encodings that must be rejected), full MEDIA_CHUNK transfers with reassembly and content_hash, all three token_payload forms, and an outer-frame example for every frame_type. Known gap, tracked: spec v0.2.1's REACTION type (0x06) and reply_to flag (bit 2) are not yet covered — cases land with the first envelope-codec implementation (see docs/test-vectors/README.md); every invalid case below stays invalid under v0.2.1.",
-  "_spec": "nimna-protocol-spec-v0.2.md §5.1, §5.4, §5.5, §5.7",
+  "_purpose": "Envelope encode/decode cases for every v0.2.1 inner type and flag combination (plus invalid encodings that must be rejected), including REACTION (0x06) and the reply_to flag (bit 2) with expiry+reply_to ordering; full MEDIA_CHUNK transfers with reassembly and content_hash; all three token_payload forms; and an outer-frame example for every frame_type.",
+  "_spec": "nimna-protocol-spec-v0.2.1.md §5.1, §5.4, §5.5, §5.7, §5.8",
   "envelope_layout": [
     "offset 0: ver (1) = 0x01",
-    "offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK (v0.2 set; v0.2.1 adds 0x06 REACTION, cases pending)",
-    "offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, bit 3 and up reserved and must be 0 (v0.2.1 assigns bit 2 to reply_to, cases pending)",
+    "offset 1: type (1) — 0x01 TEXT, 0x02 ACK, 0x03 CONTROL, 0x04 HANGUP, 0x05 MEDIA_CHUNK, 0x06 REACTION (v0.2.1)",
+    "offset 2: flags (1) — bit 0 expiry present (TEXT and MEDIA_CHUNK manifest only), bit 1 MEDIA_CHUNK manifest, bit 2 reply_to present (v0.2.1; TEXT and MEDIA_CHUNK manifest only), bits 3–7 reserved and must be 0",
     "offset 3: msg_id (16)",
     "offset 19: timestamp (8) — sender local time, Unix milliseconds, uint64 big-endian",
     "offset 27: expiry_s (4) — present only if flags bit 0; all later offsets shift by 4",
-    "then: body per type"
+    "then reply_to (16) — present only if flags bit 2; in flag-bit order it follows expiry_s (offset 31) when both are present, else follows timestamp (offset 27)",
+    "then: body per type — REACTION body = ref_msg_id(16) ‖ op(1: 0x01 add / 0x00 remove) ‖ emoji_len(1) ‖ emoji(emoji_len, 1–64 bytes valid UTF-8)"
   ],
   "envelopes": [
     {
@@ -265,6 +266,132 @@
       "note": "flags bit 1 clear: chunk; body = manifest_msg_id(16) ‖ chunk_index(4, 0-based) ‖ chunk_data"
     },
     {
+      "name": "reaction-add",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x06 (REACTION)",
+        "flags": "0x00",
+        "msg_id": "b7ef966d02895a3621a8cc30a78332bf",
+        "timestamp_ms": 1783166401800,
+        "body": "4f2aed5baaa6a19a3b07f4ed80845fa10104f09f918d",
+        "encoded": "010600b7ef966d02895a3621a8cc30a78332bf0000019f2cfffd084f2aed5baaa6a19a3b07f4ed80845fa10104f09f918d"
+      },
+      "encoded": "010600b7ef966d02895a3621a8cc30a78332bf0000019f2cfffd084f2aed5baaa6a19a3b07f4ed80845fa10104f09f918d",
+      "note": "REACTION (v0.2.1, §5.8); flags must be 0 (a reaction inherits its referent's expiry, never carries its own); body = ref_msg_id(16) ‖ op(1)=0x01 add ‖ emoji_len(1)=0x04 ‖ emoji(👍)"
+    },
+    {
+      "name": "reaction-remove",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x06 (REACTION)",
+        "flags": "0x00",
+        "msg_id": "00ec6a1e6ecdb555c00663053cf84cf5",
+        "timestamp_ms": 1783166401810,
+        "body": "4f2aed5baaa6a19a3b07f4ed80845fa10004f09f918d",
+        "encoded": "01060000ec6a1e6ecdb555c00663053cf84cf50000019f2cfffd124f2aed5baaa6a19a3b07f4ed80845fa10004f09f918d"
+      },
+      "encoded": "01060000ec6a1e6ecdb555c00663053cf84cf50000019f2cfffd124f2aed5baaa6a19a3b07f4ed80845fa10004f09f918d",
+      "note": "REACTION remove (op=0x00): clears the sender's reaction unconditionally; the carried emoji keeps the body shape uniform and is not compared (§5.8)"
+    },
+    {
+      "name": "reaction-emoji-multibyte",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x06 (REACTION)",
+        "flags": "0x00",
+        "msg_id": "5d4fa787798a3bceaa0817e0e49678dd",
+        "timestamp_ms": 1783166401820,
+        "body": "4f2aed5baaa6a19a3b07f4ed80845fa10114f09f91a9e2808de29da4efb88fe2808df09f91a8",
+        "encoded": "0106005d4fa787798a3bceaa0817e0e49678dd0000019f2cfffd1c4f2aed5baaa6a19a3b07f4ed80845fa10114f09f91a9e2808de29da4efb88fe2808df09f91a8"
+      },
+      "encoded": "0106005d4fa787798a3bceaa0817e0e49678dd0000019f2cfffd1c4f2aed5baaa6a19a3b07f4ed80845fa10114f09f91a9e2808de29da4efb88fe2808df09f91a8",
+      "note": "REACTION whose emoji is a 20-byte ZWJ sequence spanning six code points; receivers never grapheme-segment (§5.5), only emoji_len byte-length and UTF-8 validity are checked"
+    },
+    {
+      "name": "reaction-emoji-1byte",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x06 (REACTION)",
+        "flags": "0x00",
+        "msg_id": "fa5590459e16685ef530ab7367663d9f",
+        "timestamp_ms": 1783166401830,
+        "body": "4f2aed5baaa6a19a3b07f4ed80845fa1010121",
+        "encoded": "010600fa5590459e16685ef530ab7367663d9f0000019f2cfffd264f2aed5baaa6a19a3b07f4ed80845fa1010121"
+      },
+      "encoded": "010600fa5590459e16685ef530ab7367663d9f0000019f2cfffd264f2aed5baaa6a19a3b07f4ed80845fa1010121",
+      "note": "REACTION at the emoji_len=1 boundary (a single ASCII byte); structurally valid — the sender-side single-grapheme rule is a compose-time rule, not receiver-validated (§5.8)"
+    },
+    {
+      "name": "reaction-emoji-64byte",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x06 (REACTION)",
+        "flags": "0x00",
+        "msg_id": "d7d2175a09e167eb0f454b163093e82e",
+        "timestamp_ms": 1783166401840,
+        "body": "4f2aed5baaa6a19a3b07f4ed80845fa10140f09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918d",
+        "encoded": "010600d7d2175a09e167eb0f454b163093e82e0000019f2cfffd304f2aed5baaa6a19a3b07f4ed80845fa10140f09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918d"
+      },
+      "encoded": "010600d7d2175a09e167eb0f454b163093e82e0000019f2cfffd304f2aed5baaa6a19a3b07f4ed80845fa10140f09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918df09f918d",
+      "note": "REACTION at the emoji_len=64 upper boundary (16×👍 = 64 bytes)"
+    },
+    {
+      "name": "reply-to-text",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x01 (TEXT)",
+        "flags": "0x04",
+        "msg_id": "ea674d10a5f6b506a7e4a3bdbb2af05f",
+        "timestamp_ms": 1783166401850,
+        "reply_to": "588370aada93cc9813d7a0aeebce9cdb",
+        "body": "71756f74696e6720796f75",
+        "text": "quoting you",
+        "encoded": "010104ea674d10a5f6b506a7e4a3bdbb2af05f0000019f2cfffd3a588370aada93cc9813d7a0aeebce9cdb71756f74696e6720796f75"
+      },
+      "encoded": "010104ea674d10a5f6b506a7e4a3bdbb2af05f0000019f2cfffd3a588370aada93cc9813d7a0aeebce9cdb71756f74696e6720796f75",
+      "note": "flags bit 2 (v0.2.1): reply_to(16) present at offset 27 (no expiry); the wire carries only the referenced msg_id — no quoted content (§5.8)"
+    },
+    {
+      "name": "reply-to-manifest",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x05 (MEDIA_CHUNK)",
+        "flags": "0x06",
+        "msg_id": "8f07365d85cd85f6d244b5dda9b51577",
+        "timestamp_ms": 1783166401860,
+        "reply_to": "588370aada93cc9813d7a0aeebce9cdb",
+        "body": "00000001000000000000001884d0e05bf83b835861c9d6496d35fa7825c56d3968e83a178687b675d66719e50a746578742f706c61696e",
+        "encoded": "0105068f07365d85cd85f6d244b5dda9b515770000019f2cfffd44588370aada93cc9813d7a0aeebce9cdb00000001000000000000001884d0e05bf83b835861c9d6496d35fa7825c56d3968e83a178687b675d66719e50a746578742f706c61696e"
+      },
+      "encoded": "0105068f07365d85cd85f6d244b5dda9b515770000019f2cfffd44588370aada93cc9813d7a0aeebce9cdb00000001000000000000001884d0e05bf83b835861c9d6496d35fa7825c56d3968e83a178687b675d66719e50a746578742f706c61696e",
+      "note": "reply_to legal on a MEDIA_CHUNK manifest (flags 0x06): marks the attachment as sent-in-reply; chunks never carry it (§5.8)"
+    },
+    {
+      "name": "reply-to-and-expiry",
+      "valid": true,
+      "envelope": {
+        "ver": "0x01",
+        "type": "0x01 (TEXT)",
+        "flags": "0x05",
+        "msg_id": "2c71e6f16eb32201d153d5a3b4fe7b78",
+        "timestamp_ms": 1783166401870,
+        "expiry_s": 30,
+        "reply_to": "588370aada93cc9813d7a0aeebce9cdb",
+        "body": "76616e697368696e67207265706c79",
+        "text": "vanishing reply",
+        "encoded": "0101052c71e6f16eb32201d153d5a3b4fe7b780000019f2cfffd4e0000001e588370aada93cc9813d7a0aeebce9cdb76616e697368696e67207265706c79"
+      },
+      "encoded": "0101052c71e6f16eb32201d153d5a3b4fe7b780000019f2cfffd4e0000001e588370aada93cc9813d7a0aeebce9cdb76616e697368696e67207265706c79",
+      "note": "flags 0x05: expiry_s and reply_to compose freely in flag-bit order — expiry_s(4) at offset 27, reply_to(16) at offset 31, body at offset 47 (§5.5, §5.8)"
+    },
+    {
       "name": "bad-version",
       "valid": false,
       "reason": "ver must be 0x01",
@@ -323,6 +450,78 @@
       "valid": false,
       "reason": "CONTROL body must carry at least control_type",
       "encoded": "010300095c33093b0c54b6bf1d0a13f5a38abe0000019f2cfffc40"
+    },
+    {
+      "name": "reaction-emoji-len-zero",
+      "valid": false,
+      "reason": "emoji_len must be 1–64; 0 is out of range (body ref_msg_id(16) ‖ op ‖ emoji_len=0, no emoji)",
+      "encoded": "0106000a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c4f2aed5baaa6a19a3b07f4ed80845fa10100"
+    },
+    {
+      "name": "reaction-emoji-len-65",
+      "valid": false,
+      "reason": "emoji_len must be 1–64; 65 is out of range",
+      "encoded": "0106000a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c4f2aed5baaa6a19a3b07f4ed80845fa101410000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "name": "reaction-emoji-len-mismatch",
+      "valid": false,
+      "reason": "emoji_len (5) must equal the remaining body length (2)",
+      "encoded": "0106000a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c4f2aed5baaa6a19a3b07f4ed80845fa101056162"
+    },
+    {
+      "name": "reaction-bad-op",
+      "valid": false,
+      "reason": "op must be 0x00 (remove) or 0x01 (add); 0x02 is undefined",
+      "encoded": "0106000a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c4f2aed5baaa6a19a3b07f4ed80845fa10204f09f918d"
+    },
+    {
+      "name": "reaction-invalid-utf8",
+      "valid": false,
+      "reason": "emoji must be valid UTF-8; 0xff 0xfe is not",
+      "encoded": "0106000a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c4f2aed5baaa6a19a3b07f4ed80845fa10102fffe"
+    },
+    {
+      "name": "reaction-truncated-body",
+      "valid": false,
+      "reason": "REACTION body shorter than the 18-byte minimum (ref_msg_id ‖ op ‖ emoji_len)",
+      "encoded": "0106000a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c4f2aed5baaa6a19a01"
+    },
+    {
+      "name": "reaction-with-expiry-flag",
+      "valid": false,
+      "reason": "a REACTION carries no flags — expiry (bit 0) is illegal; a reaction inherits its referent's expiry (§5.8)",
+      "encoded": "0106010a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c0000001e4f2aed5baaa6a19a3b07f4ed80845fa10104f09f918d"
+    },
+    {
+      "name": "reply-to-on-ack",
+      "valid": false,
+      "reason": "reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not ACK",
+      "encoded": "0102040a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c588370aada93cc9813d7a0aeebce9cdb53bbe2690a0cbd4fab24cd07d4d7727d"
+    },
+    {
+      "name": "reply-to-on-control",
+      "valid": false,
+      "reason": "reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not CONTROL",
+      "encoded": "0103040a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c588370aada93cc9813d7a0aeebce9cdb01"
+    },
+    {
+      "name": "reply-to-on-hangup",
+      "valid": false,
+      "reason": "reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not HANGUP",
+      "encoded": "0104040a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c588370aada93cc9813d7a0aeebce9cdb"
+    },
+    {
+      "name": "reply-to-on-reaction",
+      "valid": false,
+      "reason": "reply_to flag only valid on TEXT and MEDIA_CHUNK manifest, not REACTION",
+      "encoded": "0106040a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c588370aada93cc9813d7a0aeebce9cdb4f2aed5baaa6a19a3b07f4ed80845fa10104f09f918d"
+    },
+    {
+      "name": "reply-to-truncated",
+      "valid": false,
+      "reason": "flags bit 2 set but the frame ends before the 16-byte reply_to",
+      "encoded": "0101040a9896aa22f6961cbdcb7ab0b6aa95bf0000019f2cfffd6c588370aada93cc98"
     }
   ],
   "media_transfers": [

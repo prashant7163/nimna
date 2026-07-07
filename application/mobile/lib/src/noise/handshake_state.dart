@@ -3,10 +3,15 @@
 /// the local/remote statics and ephemerals and drives `WriteMessage` /
 /// `ReadMessage` for the message patterns the pairing driver hands it.
 ///
-/// PSK-pattern rule (Noise §9.2): every `e` token additionally calls
-/// `MixKey(e.public_key)`. This engine only ever runs `XXpsk2`, so the PSK
-/// rule is always active. Pure and locale-independent (all crypto is the
-/// S2-locked suite via [NoiseSymmetricState] and [x25519]).
+/// PSK-pattern rule (Noise §9.2): in psk patterns every `e` token
+/// additionally calls `MixKey(e.public_key)`. That rule is
+/// [mixKeyOnEphemeral] — `true` for `XXpsk2` (pairing, §3.1.3), `false` for
+/// `KK` (sessions, §3.3.1). The engine is otherwise pattern-agnostic: KK
+/// carries its two static public keys as pre-messages ([preMessagePublicKeys]
+/// mixed into `h`, initiator's first) and its peer static is known from
+/// pairing ([remoteStaticPublic]), so no `s` token ever crosses a KK frame.
+/// Pure and locale-independent (all crypto is the S2-locked suite via
+/// [NoiseSymmetricState] and [x25519]).
 library;
 
 import 'dart:typed_data';
@@ -28,10 +33,16 @@ const int _dhLen = 32;
 
 class NoiseHandshakeState {
   /// [prologue] is mixed into `h` immediately after protocol-name
-  /// initialization (Noise §5.3). For pairing this is `M0` (§3.1.3). A
-  /// pre-set [e] (test injection or a joiner that pre-committed its
-  /// ephemeral in `M0`) is reused by the first `e` token instead of a fresh
-  /// generation. [psk] is the code-derived pre-shared key (§3.1.2).
+  /// initialization (Noise §5.3). For pairing this is `M0` (§3.1.3); for KK
+  /// it is zero-length (§3.3.1). [preMessagePublicKeys] are then mixed into
+  /// `h` in order (Noise pre-message rule): empty for XXpsk2, the two static
+  /// public keys (initiator's first) for KK. A pre-set [e] (test injection or
+  /// a joiner that pre-committed its ephemeral in `M0`) is reused by the first
+  /// `e` token instead of a fresh generation. [remoteStaticPublic] pre-sets
+  /// the peer static known since pairing (KK); XXpsk2 leaves it null and
+  /// learns it from an `s` token. [psk] is the code-derived pre-shared key
+  /// (§3.1.2); null for KK. [mixKeyOnEphemeral] applies the psk-pattern `e`
+  /// rule (§9.2) — true for XXpsk2, false for KK.
   NoiseHandshakeState({
     required this._sodium,
     required AtRestAead aead,
@@ -39,20 +50,32 @@ class NoiseHandshakeState {
     required String protocolName,
     required Uint8List prologue,
     required this._staticKeyPair,
-    required this._psk,
+    this._psk,
     NoiseKeyPair? ephemeral,
+    Uint8List? remoteStaticPublic,
+    List<Uint8List> preMessagePublicKeys = const [],
+    this.mixKeyOnEphemeral = true,
   }) : _e = ephemeral,
+       _rs = remoteStaticPublic == null
+           ? null
+           : Uint8List.fromList(remoteStaticPublic),
        symm = NoiseSymmetricState.initialize(aead, protocolName) {
     symm.mixHash(prologue);
+    for (final pub in preMessagePublicKeys) {
+      symm.mixHash(pub);
+    }
   }
 
   final SodiumSumo _sodium;
   final NoiseRole role;
   final NoiseSymmetricState symm;
 
+  /// psk-pattern `e`/MixKey rule (Noise §9.2): true for XXpsk2, false for KK.
+  final bool mixKeyOnEphemeral;
+
   final NoiseKeyPair _staticKeyPair;
   NoiseKeyPair? _e;
-  final SecureKey _psk;
+  final SecureKey? _psk;
   Uint8List? _rs;
   Uint8List? _re;
 
@@ -78,7 +101,9 @@ class NoiseHandshakeState {
           final ePub = _e!.publicKey;
           buffer.add(ePub);
           symm.mixHash(ePub);
-          symm.mixKey(ePub); // PSK-pattern rule (§9.2).
+          if (mixKeyOnEphemeral) {
+            symm.mixKey(ePub); // psk-pattern rule (§9.2); XXpsk2 only.
+          }
         case NoiseToken.s:
           buffer.add(symm.encryptAndHash(_staticKeyPair.publicKey));
         case NoiseToken.ee:
@@ -114,7 +139,9 @@ class NoiseHandshakeState {
           final re = take(_dhLen);
           _re = re;
           symm.mixHash(re);
-          symm.mixKey(re); // PSK-pattern rule (§9.2).
+          if (mixKeyOnEphemeral) {
+            symm.mixKey(re); // psk-pattern rule (§9.2); XXpsk2 only.
+          }
         case NoiseToken.s:
           final len = symm.cipher.hasKey
               ? _dhLen + AtRestAead.macBytes
@@ -178,8 +205,12 @@ class NoiseHandshakeState {
   }
 
   void _mixPsk() {
-    _psk.runUnlockedSync((psk) {
-      symm.mixKeyAndHash(Uint8List.fromList(psk));
+    final psk = _psk;
+    if (psk == null) {
+      throw StateError('psk token in a pattern with no psk');
+    }
+    psk.runUnlockedSync((bytes) {
+      symm.mixKeyAndHash(Uint8List.fromList(bytes));
     });
   }
 

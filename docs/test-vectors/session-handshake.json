@@ -1,6 +1,6 @@
 {
   "_purpose": "Deterministic KK session-handshake transcripts (S1/S2) and transport frames in both directions with per-frame keys before and after the per-message rekey, exact nonces, and inner-envelope plaintexts.",
-  "_spec": "nimna-protocol-spec-v0.2.md §3.3.1, §5.4–§5.6",
+  "_spec": "nimna-protocol-spec-v0.2.1.md §3.3.1, §5.4–§5.6, §5.8",
   "protocol_name": "Noise_KK_25519_ChaChaPoly_SHA256",
   "notes": [
     "The knocker is the Noise initiator (spec §3.3.1). Either side of the channel may knock; the two transcripts show both.",
@@ -185,6 +185,52 @@
           "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
           "inner_envelope_plaintext": {
             "ver": "0x01",
+            "type": "0x06 (REACTION)",
+            "flags": "0x00",
+            "msg_id": "7510cd4f6cf6f69797eb0c52be2d0f4c",
+            "timestamp_ms": 1783166404500,
+            "body": "a3fe63928854403e30c0a7342aa600ee0104f09f918d",
+            "note": "REACTION (v0.2.1, §5.8) on the first TEXT (msgID1): body = ref_msg_id(16)=msgID1 ‖ op(1)=0x01 add ‖ emoji_len(1)=0x04 ‖ 👍; flags are 0 and it is never ACKed or read-receipted",
+            "encoded": "0106007510cd4f6cf6f69797eb0c52be2d0f4c0000019f2d000794a3fe63928854403e30c0a7342aa600ee0104f09f918d"
+          },
+          "session_data_payload": "913a4412f338b6bf3013f65dc9f3d2c221414ecd2608aa38c9e4e6babee0a15095a9ec2641db76309b0c8b8eda03b198114d2f6aa5b30e1a8dc9a0fb398f55bd20",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf92913a4412f338b6bf3013f65dc9f3d2c221414ecd2608aa38c9e4e6babee0a15095a9ec2641db76309b0c8b8eda03b198114d2f6aa5b30e1a8dc9a0fb398f55bd20",
+          "key_after_rekey": "46309441ed0bb963df05360fff3830261622a4ea052dc6ab1302fdc3f3397dea"
+        },
+        {
+          "seq": 6,
+          "direction": "responder->initiator",
+          "direction_constant": "0x00000001",
+          "counter": 2,
+          "nonce": "000000010000000000000002",
+          "key_before": "2d9e6edc1e6e8bb3c4e4a66dbaecdca5c64d706a5a1f84c85d063f13a62aa44e",
+          "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
+            "type": "0x01 (TEXT)",
+            "flags": "0x04",
+            "msg_id": "8284348a82c4740cb9b2d5b584383e7e",
+            "timestamp_ms": 1783166404800,
+            "reply_to": "a3fe63928854403e30c0a7342aa600ee",
+            "body": "616e642074686973207265706c69657320746f206974",
+            "text": "and this replies to it",
+            "note": "reply_to-TEXT (flags bit 2): reply_to(16)=msgID1 at offset 27, body at offset 43; the wire carries only the referenced msg_id, never quoted content (§5.8)",
+            "encoded": "0101048284348a82c4740cb9b2d5b584383e7e0000019f2d0008c0a3fe63928854403e30c0a7342aa600ee616e642074686973207265706c69657320746f206974"
+          },
+          "session_data_payload": "fa1e1be56ce418d23289d8f981eff473ed0906308b6ab293d6cb945a6bd017c0055116b2c5c840afd288e5fa03c0a7bdf75beb0480f875277184ff5a3e619799593762c03c7a0fb468c5135dd9b5a34a07",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf92fa1e1be56ce418d23289d8f981eff473ed0906308b6ab293d6cb945a6bd017c0055116b2c5c840afd288e5fa03c0a7bdf75beb0480f875277184ff5a3e619799593762c03c7a0fb468c5135dd9b5a34a07",
+          "key_after_rekey": "021605d426411763b791f093b2f7477841944eda7b71ff7d9a53a61ff88b411e"
+        },
+        {
+          "seq": 7,
+          "direction": "initiator->responder",
+          "direction_constant": "0x00000000",
+          "counter": 3,
+          "nonce": "000000000000000000000003",
+          "key_before": "46309441ed0bb963df05360fff3830261622a4ea052dc6ab1302fdc3f3397dea",
+          "ad_outer_header": "01213135feb1af5964ffa1ae0f169effaf92",
+          "inner_envelope_plaintext": {
+            "ver": "0x01",
             "type": "0x04 (HANGUP)",
             "flags": "0x00",
             "msg_id": "0907924b8f975da17d5bdb8fc74e1828",
@@ -193,9 +239,9 @@
             "note": "HANGUP: authenticated end-of-session, body empty; relay-plane TEARDOWN follows outside the encrypted channel",
             "encoded": "0104000907924b8f975da17d5bdb8fc74e18280000019f2d000988"
           },
-          "session_data_payload": "9138446ee467b25c51b8c0b779240fbb42562acd2608aa38c9eafa983c97cc836a540b94b5f1ebf4294ea0",
-          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf929138446ee467b25c51b8c0b779240fbb42562acd2608aa38c9eafa983c97cc836a540b94b5f1ebf4294ea0",
-          "key_after_rekey": "46309441ed0bb963df05360fff3830261622a4ea052dc6ab1302fdc3f3397dea"
+          "session_data_payload": "24baf0e3c3b87443cb43cdb3b206aae81ee75f216e94e0e57bc9f2d6da474f600ffec5703ca3ce72646181",
+          "outer_frame": "01213135feb1af5964ffa1ae0f169effaf9224baf0e3c3b87443cb43cdb3b206aae81ee75f216e94e0e57bc9f2d6da474f600ffec5703ca3ce72646181",
+          "key_after_rekey": "3e17b3ae7da02fe0d73156898c359634a57b61c1f9afe366ac43a652a327440a"
         }
       ]
     },

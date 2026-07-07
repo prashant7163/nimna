@@ -31,11 +31,28 @@ channel_identity.dart  §3.1.4/§3.1.5 — from the static-static ss (computed
                    CRID[16], and the 3-word safety phrase (uint64→base-1296
                    via BigInt; one global wordlist, identical in every
                    locale — protocol output, never UI copy).
+inner_envelope.dart  §5.5–§5.8 — the INNER envelope (the plaintext of every
+                   transport AEAD): InnerType (TEXT/ACK/CONTROL/HANGUP/
+                   MEDIA_CHUNK/REACTION), the header codec (ver‖type‖flags‖
+                   msg_id‖timestamp‖[expiry_s]‖[reply_to], flag-bit field
+                   order), and the per-type body codecs — AckBody,
+                   ControlBody (typing/read-receipt/screenshot/token-refresh;
+                   unknown control_type ignored, never an error), ManifestBody
+                   / ChunkBody (§5.1, full body surface — S11 consumes it).
+                   Full structural-error set → InnerEnvelopeError (no bytes).
+reaction_body.dart  §5.5/§5.8 — the REACTION body (ref_msg_id‖op‖emoji_len‖
+                   emoji): ReactionOp add/remove, 1–64-byte valid-UTF-8 emoji,
+                   NEVER grapheme-segmented (spec §5.5). Structural violations
+                   throw InnerEnvelopeError.
 ```
 
-**S10 checkpoint fence (binding):** the §5.5–§5.8 INNER envelope (TEXT/ACK/
-CONTROL/HANGUP/MEDIA_CHUNK/REACTION), nonce/key discipline, and reaction/
-reply codecs are NOT here and may not appear before S10. S9 adds only the
-pairing-plane slices above (M0, §5.7 token_payload, CRID, safety phrase);
-`test/pairing/single_call_site_test.dart` pins the fence (§5.7 token_payload
-is explicitly allowed — it is the handshake leaf, not the inner envelope).
+**S10 checkpoint (this session OPENS the S8/S9 fence):** the §5.5–§5.8 inner
+envelope, its body codecs, and the reaction/reply codecs are now implemented
+in `inner_envelope.dart` + `reaction_body.dart` — and ONLY there.
+`test/pairing/single_call_site_test.dart` now pins the codec's single home
+(no second definition may sprawl in the protocol tree). Transport-key STATE
+(nonce/counter/rekey, §5.6) is NOT here — it lives in `lib/src/noise`
+(`noise_transport.dart`) so this codec stays pure and stateless. §5.7
+token_payload (`token_payload.dart`) is reused verbatim by CONTROL
+token-refresh; the 18-byte §5.4 outer header (`outer_frame.dart`) is reused
+as the transport AEAD `ad`.

@@ -871,6 +871,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Privacy Policy'**
   String get billing_privacyLabel;
+
+  /// Session-status-line label when the live session is up (components.md session-status-indicator; wireframe F5.4 'On the line'). S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'On the line'**
+  String get session_lineOnline;
+
+  /// Session-status-line label when there is no live session (components.md session-status-indicator; wireframe F5.1/F5.12 'Not on the line'). S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on the line'**
+  String get session_lineOffline;
+
+  /// Voice guide string 10 — truthful terminal caption for a mid-session connection loss with NO reconnect in flight (bridge died without an authenticated HANGUP; the terminal SessionLineState.connectionLost). Canonical subset. The reconnecting variant is session_lineDropped, rendered only while a reconnect attempt is live (S12). S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'The line dropped.'**
+  String get session_lineLost;
+
+  /// Voice guide string 10, line 1 — the reconnecting caption, rendered only while a reconnect attempt is genuinely in flight (SessionLineState.reconnecting, wired S12). Not rendered in S10 — see session_lineLost for the terminal no-reconnect caption. Canonical, verbatim. The ellipsis is a single U+2026 character. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'The line dropped. Trying to reconnect…'**
+  String get session_lineDropped;
+
+  /// Voice guide string 10, line 2 — shown on reconnect recovery (wireframe F5.15), rendered only once reconnect exists (S12). Not rendered in S10. Canonical, verbatim. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re both here.'**
+  String get session_lineRecovered;
+
+  /// Voice guide string 22 — the line-state caption after the peer ends with an authenticated HANGUP (spec §3.3; wireframe F5.4/F5.12). Distinct from string 10's bridge-drop. Canonical, verbatim. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'They hung up.'**
+  String get session_peerHungUp;
+
+  /// Voice guide string 22 — the line-state caption after you end the session (wireframe F5.12). Canonical, verbatim. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'You hung up.'**
+  String get session_youHungUp;
+
+  /// Chat header action that ends the live session (voice register verb 'Hang up'). Wireframe F5.3/F5.4 header. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Hang up'**
+  String get chat_hangUp;
+
+  /// components.md chat-bubbles micro overline above the outbox group while the peer is offline (spec §3.4). Rendered in the micro style; the literal is already uppercase. The em dash is U+2014. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'WAITING — ON YOUR PHONE ONLY'**
+  String get chat_waitingHeader;
+
+  /// Voice guide string 5, line 1 — peer-offline compose-to-outbox headline (wireframe F5.1). Canonical, verbatim. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'re not on the line right now.'**
+  String get chat_peerOfflineHeadline;
+
+  /// Voice guide string 5, line 2 — peer-offline compose-to-outbox body (wireframe F5.1). Canonical, verbatim. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything you write waits here — on your phone only — and goes through when you\'re both on.'**
+  String get chat_peerOfflineBody;
+
+  /// Voice guide string 7 — the disappearing-message honor-system disclaimer, shown VERBATIM at the timer picker (wireframe F5.11; components.md). Canonical, verbatim — never softened. The line break separates the two sentences as designed; the em dash is U+2014. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Their app will delete this on schedule, and yours will too.\nA timer can\'t undo being read — a screenshot is still a screenshot. It\'s a courtesy between the two of you, not a guarantee.'**
+  String get chat_expiryDisclaimer;
+
+  /// Disappearing-timer preset: no expiry (USER-locked preset set Off/1min/15min/1hr/24hr; wireframe F5.11). S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get chat_timerOff;
+
+  /// Disappearing-timer preset label in minutes (1 min, 15 min) — locale-aware plural (wireframe F5.11). S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes, plural, =1{1 min} other{{minutes} min}}'**
+  String chat_timerMinutes(int minutes);
+
+  /// Disappearing-timer preset label in hours (1 hr, 24 hr) — locale-aware plural (wireframe F5.11). S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{1 hr} other{{hours} hr}}'**
+  String chat_timerHours(int hours);
+
+  /// A11y label for the composer's timer affordance (the ◷ glyph) that opens the preset picker (wireframe F5.11). Functional label. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Disappearing timer'**
+  String get chat_timerButtonA11y;
+
+  /// A11y label for the composer text field. Functional label. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get chat_composerA11y;
+
+  /// A11y label for the composer send affordance (the ↑ glyph). Functional label; voice register verb. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get chat_sendA11y;
+
+  /// A11y label for a message in the waiting (local-only outbox) delivery state (components.md chat-bubbles; spec §3.4). Functional label. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting. On your phone only.'**
+  String get chat_deliveryWaitingA11y;
+
+  /// A11y label for a message that has left this phone but is not yet ACKed (components.md chat-bubbles delivery states). Functional label. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent.'**
+  String get chat_deliverySentA11y;
+
+  /// A11y label for a message the peer has ACKed (spec §3.3 client ACK; components.md delivery states — the ✓ glyph). Functional label. S10 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered.'**
+  String get chat_deliveryDeliveredA11y;
 }
 
 class _AppLocalizationsDelegate
