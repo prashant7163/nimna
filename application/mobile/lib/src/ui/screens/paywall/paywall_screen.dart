@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
@@ -7,6 +8,11 @@ import '../../theme/nimna_tokens.dart';
 import '../../widgets/glyphs.dart';
 import '../../widgets/nimna_symbol.dart';
 import '../../widgets/nimna_toast.dart';
+
+// Platform store brand names — non-translated proper nouns, resolved into the
+// {store} slot of the auto-renew disclosure (USER-approved 2026-07-07 12:39).
+const String _kAppStore = 'App Store';
+const String _kGooglePlay = 'Google Play';
 
 /// What the paywall hands back to the creation gate
 /// (`create_line_entry.dart`). Anything other than [dismissed] means the
@@ -25,8 +31,9 @@ enum PaywallResult { dismissed, purchased, restored }
 /// The permanence guarantee rides at feature prominence, never fine print.
 /// No number is ever hardcoded: the CTA renders `ProductDetails.price` from
 /// the store (spec §10 numberless lock). The store-mandated auto-renew
-/// disclosure + Terms/Privacy links sit beside the CTA — the disclosure copy
-/// is PROVISIONAL, awaiting USER sign-off (SESSION-17 pre-merge blocker).
+/// disclosure (USER-approved 2026-07-07 12:39; `{store}` resolves to the
+/// platform store brand) + Terms/Privacy links sit beside the CTA, in the
+/// PM-confirmed order: honesty line → disclosure → Terms · Privacy.
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
 
@@ -235,19 +242,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
     NimnaTokens tokens,
     TextTheme text,
   ) {
+    final isBuy = _status == EntitlementStatus.inactive && _price != null;
     final children = <Widget>[];
 
-    if (_status == EntitlementStatus.inactive && _price != null) {
-      // Buy state (F9.2).
+    if (isBuy) {
+      // Buy state (F9.2): CTA then the ghost Restore (screen 09 order).
       children.add(
         FilledButton(
           onPressed: _busy ? null : _buy,
           child: Text(l10n.billing_ctaStart(_price!)),
         ),
       );
-      children.add(const SizedBox(height: 10));
-      children.add(_DisclosureBlock(tokens: tokens, text: text, l10n: l10n));
-      children.add(const SizedBox(height: 10));
+      children.add(const SizedBox(height: 8));
       children.add(_restoreButton(l10n, tokens));
     } else if (_status == null) {
       // Brief loading — reserve the CTA height quietly, no spinner (no
@@ -284,7 +290,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
       );
     }
 
-    children.add(const SizedBox(height: 4));
+    // Honesty line (screen 09 footnote) — present in every state.
+    children.add(const SizedBox(height: 8));
     children.add(
       Text(
         l10n.billing_noIdentityFootnote,
@@ -292,6 +299,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
         textAlign: TextAlign.center,
       ),
     );
+
+    // Store-mandated disclosure + Terms/Privacy — only beside the buy CTA,
+    // and AFTER the honesty line (PM-confirmed order 2026-07-07): honesty →
+    // disclosure → Terms · Privacy. {store} resolves to the platform store
+    // brand name (a non-translated proper noun).
+    if (isBuy) {
+      final storeName = defaultTargetPlatform == TargetPlatform.android
+          ? _kGooglePlay
+          : _kAppStore;
+      children.add(const SizedBox(height: 10));
+      children.add(
+        Text(
+          l10n.billing_autoRenewDisclosure(storeName),
+          style: text.bodySmall?.copyWith(color: tokens.textTertiary),
+          textAlign: TextAlign.center,
+        ),
+      );
+      children.add(const SizedBox(height: 6));
+      children.add(_DisclosureLinks(tokens: tokens, l10n: l10n));
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -342,50 +369,33 @@ class _FeaturePoint extends StatelessWidget {
   }
 }
 
-/// Store-mandated auto-renew disclosure + Terms/Privacy links, beside the CTA
-/// (USER 2026-07-07 12:24). The disclosure copy is PROVISIONAL — awaiting
-/// USER sign-off; the link destinations land at S19 (website). This block is
-/// a SESSION-17 pre-merge blocker: it must not ship with placeholder copy.
-class _DisclosureBlock extends StatelessWidget {
-  const _DisclosureBlock({
-    required this.tokens,
-    required this.text,
-    required this.l10n,
-  });
+/// Terms/Privacy link row beside the CTA (store-mandated; final labels,
+/// USER-approved). Destinations land at S19 (website). The middot is a layout
+/// separator, not a translated string.
+class _DisclosureLinks extends StatelessWidget {
+  const _DisclosureLinks({required this.tokens, required this.l10n});
 
   final NimnaTokens tokens;
-  final TextTheme text;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          l10n.billing_autoRenewDisclosure,
-          style: text.bodySmall?.copyWith(color: tokens.textTertiary),
-          textAlign: TextAlign.center,
+        _DisclosureLink(label: l10n.billing_termsLabel, tokens: tokens),
+        // Decorative separator dot (no user-facing string — the app's dot
+        // motif, not copy).
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          width: 3,
+          height: 3,
+          decoration: BoxDecoration(
+            color: tokens.textTertiary,
+            borderRadius: BorderRadius.circular(NimnaRadius.full),
+          ),
         ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _DisclosureLink(label: l10n.billing_termsOfUse, tokens: tokens),
-            // Decorative separator dot (no user-facing string — the app's
-            // dot motif, not copy).
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              width: 3,
-              height: 3,
-              decoration: BoxDecoration(
-                color: tokens.textTertiary,
-                borderRadius: BorderRadius.circular(NimnaRadius.full),
-              ),
-            ),
-            _DisclosureLink(label: l10n.billing_privacyPolicy, tokens: tokens),
-          ],
-        ),
+        _DisclosureLink(label: l10n.billing_privacyLabel, tokens: tokens),
       ],
     );
   }

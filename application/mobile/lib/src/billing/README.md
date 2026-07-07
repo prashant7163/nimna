@@ -56,8 +56,11 @@ disabled at product config. Sandbox subscribe/lapse/restore on device is the
 QA done-check hand step (`ios/nimna_creation.storekit` / Play static
 responses).
 
-## Pre-merge blocker
+## Disclosure copy
 
-The paywall's store-mandated auto-renew disclosure copy
-(`billing_autoRenewDisclosure`) is **PROVISIONAL — awaiting USER sign-off**.
-See `progress/SESSION-17.md`.
+The paywall's store-mandated auto-renew disclosure
+(`billing_autoRenewDisclosure`) is **USER-approved (2026-07-07 12:39)**. It
+carries a runtime `{store}` placeholder resolved to the platform store brand
+(`App Store` / `Google Play`). The Terms/Privacy labels are final; their
+destinations are the S19 website (`TODO(S19)`). No `PROVISIONAL` text remains
+in the `billing_*` namespace (scan-enforced by `billing_fences_test`).

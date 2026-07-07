@@ -342,12 +342,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get billing_tryAgain => 'Try again';
 
   @override
-  String get billing_autoRenewDisclosure =>
-      'PROVISIONAL — awaiting USER sign-off. This is a yearly subscription that renews automatically until you cancel. Your app-store account is charged at each renewal. Manage or cancel anytime in your store account settings.';
+  String billing_autoRenewDisclosure(String store) {
+    return 'One yearly subscription. It renews on its own and charges your $store account until you cancel — anytime, in your account settings. Lines you\'ve already made stay yours either way.';
+  }
 
   @override
-  String get billing_termsOfUse => 'Terms of Use';
+  String get billing_termsLabel => 'Terms of Use';
 
   @override
-  String get billing_privacyPolicy => 'Privacy Policy';
+  String get billing_privacyLabel => 'Privacy Policy';
 }

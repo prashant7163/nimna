@@ -674,23 +674,23 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get billing_tryAgain;
 
-  /// PROVISIONAL PLACEHOLDER — NOT final. Store-mandated auto-renewing-subscription disclosure shown near the F9.2 CTA. Awaiting USER sign-off (SESSION-17 pre-merge blocker). Do not translate or ship as final.
+  /// Store-mandated auto-renew disclosure shown near the F9.2 CTA — renewal terms, charges the store account, how to cancel, plus the permanence reassurance. USER-approved 2026-07-07 12:39 (Option A + permanence). Contains NO price number (numberless lock). {store} is the platform store brand name, resolved at runtime (App Store on iOS / Google Play on Android) — a non-translated proper noun. Enters the S16 crafted-translation pass.
   ///
   /// In en, this message translates to:
-  /// **'PROVISIONAL — awaiting USER sign-off. This is a yearly subscription that renews automatically until you cancel. Your app-store account is charged at each renewal. Manage or cancel anytime in your store account settings.'**
-  String get billing_autoRenewDisclosure;
+  /// **'One yearly subscription. It renews on its own and charges your {store} account until you cancel — anytime, in your account settings. Lines you\'ve already made stay yours either way.'**
+  String billing_autoRenewDisclosure(String store);
 
-  /// Link affordance near the F9.2 CTA (store-mandated Terms of Use / EULA), part of the disclosure block (USER 2026-07-07 12:24). Destination lands at S19 (website). Label is provisional pending the same USER sign-off as billing_autoRenewDisclosure.
+  /// Final label — link affordance near the F9.2 CTA (store-mandated Terms of Use / EULA), part of the disclosure block. Destination lands at S19 (website TODO). Enters the S16 crafted-translation pass.
   ///
   /// In en, this message translates to:
   /// **'Terms of Use'**
-  String get billing_termsOfUse;
+  String get billing_termsLabel;
 
-  /// Link affordance near the F9.2 CTA (store-mandated Privacy Policy), part of the disclosure block (USER 2026-07-07 12:24). Destination lands at S19 (website). Label is provisional pending the same USER sign-off as billing_autoRenewDisclosure.
+  /// Final label — link affordance near the F9.2 CTA (store-mandated Privacy Policy), part of the disclosure block. Destination lands at S19 (website TODO). Enters the S16 crafted-translation pass.
   ///
   /// In en, this message translates to:
   /// **'Privacy Policy'**
-  String get billing_privacyPolicy;
+  String get billing_privacyLabel;
 }
 
 class _AppLocalizationsDelegate

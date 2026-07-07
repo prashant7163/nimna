@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nimna/l10n/app_localizations_en.dart';
@@ -74,6 +76,17 @@ void main() {
     // The banned word never appears on-voice ("unlock" was only the mockup
     // page title, never a rendered label).
     expect(find.textContaining('unlock'), findsNothing);
+
+    // Store-mandated disclosure (final, USER-approved) with {store} resolved
+    // to the running platform's brand + the final Terms/Privacy labels.
+    final store = defaultTargetPlatform == TargetPlatform.android
+        ? 'Google Play'
+        : 'App Store';
+    expect(find.text(en.billing_autoRenewDisclosure(store)), findsOneWidget);
+    expect(find.text(en.billing_termsLabel), findsOneWidget);
+    expect(find.text(en.billing_privacyLabel), findsOneWidget);
+    // No provisional placeholder text survives on the rendered paywall.
+    expect(find.textContaining('PROVISIONAL'), findsNothing);
   });
 
   testWidgets('entitled: Create goes straight to the create flow', (

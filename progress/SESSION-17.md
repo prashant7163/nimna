@@ -96,17 +96,29 @@ existing channels work forever.
 
 ## Implementation (CODE, 2026-07-07)
 
-### ⚠ PRE-MERGE BLOCKER — provisional disclosure copy (USER checkpoint)
+### ✅ PRE-MERGE BLOCKER — RESOLVED (USER sign-off 2026-07-07 12:39)
 
-The store-mandated auto-renew disclosure beside the CTA is built as STRUCTURE
-+ a clearly-flagged PLACEHOLDER, not final copy. ARB key
-`billing_autoRenewDisclosure` carries an `@_comment`: *"PROVISIONAL — awaiting
-USER sign-off, do not translate/ship as final."* The paywall layout holds the
-disclosure block + `Terms of Use` / `Privacy Policy` link affordances
-(destinations are a `TODO(S19)` no-op — legal/FAQ live on the website at S19,
-USER 2026-07-07). **This session MUST NOT merge until PM's drafted disclosure
-wording is USER-approved and swapped in** (then it enters the S16 crafted
-translation pass). No final legal copy was invented.
+The store-mandated auto-renew disclosure is now the **USER-approved final
+wording** (2026-07-07 12:39, Option A + permanence reassurance):
+
+> "One yearly subscription. It renews on its own and charges your {store}
+> account until you cancel — anytime, in your account settings. Lines you've
+> already made stay yours either way."
+
+`{store}` is a real ARB placeholder (`type: String`) resolved at runtime to
+the platform store brand — **App Store** (iOS) / **Google Play** (Android),
+non-translated proper nouns (`_kAppStore` / `_kGooglePlay` via
+`defaultTargetPlatform`). The provisional `@_comment` is gone; the description
+records the sign-off and S16 translation entry. `billing_termsLabel` /
+`billing_privacyLabel` are final labels (destinations remain the S19 website
+`TODO(S19)` no-op). Rendering order below the CTA (PM-confirmed): honesty line
+"We never learn who you are." → disclosure → "Terms of Use · Privacy Policy"
+(middot is a layout separator, not a string). **No `PROVISIONAL` text remains
+in the `billing_*` namespace** — enforced by a new `billing_fences_test`
+JSON scan (scoped to billing keys; unrelated S13 design-loop flags are out of
+lane). Non-EN ARBs stay `@@locale`-only per the S16 convention (the generated
+non-EN lookup classes carry the EN fallback, matching S8/S13). This clears the
+last pre-merge blocker; S17 is ready for code-review.
 
 ### Files created
 

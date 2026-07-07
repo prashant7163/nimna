@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -42,6 +43,34 @@ void main() {
       reason:
           'in_app_purchase is fenced to $storeModule (SESSION-17). The store '
           'SDK must never leak past the EntitlementSource seam. Offenders: '
+          '$offenders',
+    );
+  });
+
+  test('no PROVISIONAL placeholder survives in the billing ARB namespace', () {
+    // The paywall disclosure was USER-approved 2026-07-07 12:39; the
+    // pre-merge-blocker placeholder must be fully gone from every billing_*
+    // key and its metadata. Scoped to the billing namespace on purpose —
+    // other sessions legitimately carry their own PROVISIONAL design-loop
+    // flags (e.g. S13), which are out of this lane.
+    final arb =
+        jsonDecode(File('lib/l10n/app_en.arb').readAsStringSync())
+            as Map<String, dynamic>;
+    final offenders = <String>[];
+    arb.forEach((key, value) {
+      if (!key.toLowerCase().contains('billing')) {
+        return;
+      }
+      if (jsonEncode(value).contains('PROVISIONAL')) {
+        offenders.add(key);
+      }
+    });
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'PROVISIONAL text still present in a billing_* ARB entry (S17 '
+          'pre-merge blocker was cleared 2026-07-07 12:39). Offenders: '
           '$offenders',
     );
   });
