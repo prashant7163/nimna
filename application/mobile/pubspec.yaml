@@ -21,12 +21,17 @@ dependencies:
   crypto: ^3.0.7
   # SQLite via the platform library; stores only ciphertext blobs + integers.
   sqflite: ^2.4.3
-  # Exactly ONE item: the wrapped 32-byte master key (Keychain / Keystore).
+  # Exactly TWO items (Keychain / Keystore): the wrapped 32-byte master key
+  # and the lock config (nimna/lock/v1, lib/src/lock/lock_config_store.dart).
   flutter_secure_storage: ^10.3.1
   # Directory resolution only.
   path_provider: ^2.1.6
   # Path joins (already transitive via sqflite; imported directly).
   path: ^1.9.1
+  # OS biometric prompt only (S13 app lock). Sign-off: SESSION-13 intake §4.
+  # Fence: ONE call site (lib/src/lock/biometric_gate.dart), biometricOnly —
+  # the fallback is Nimna's own PIN pad, never the OS device credential.
+  local_auth: ^3.0.1
   # Version dictated by the Flutter SDK pin, per Flutter guidance.
   intl: any
   # Dart-team static annotations only (@visibleForTesting on the reduced

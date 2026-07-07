@@ -27,7 +27,8 @@ src/ui/              screens + widgets
                                     verbatim); S8: Create a code live via
                                     the G2 single entry, Enter a code still
                                     an S9 stub, boot-time pending-pairing
-                                    resume on first frame
+                                    resume on first frame; S13: the F4 footer
+                                    Settings entry row
   screens/pairing/          the F2 initiator flow surfaces (S8):
                             create_line_flow.dart (phase-switching host +
                             lifecycle forwarding), create_code_setup_screen
@@ -36,10 +37,20 @@ src/ui/              screens + widgets
                             F2.3 share sheet w/ string 13, back-confirm,
                             waiting/bridged hold), code_ended_screen
                             (F2.8 expired · spent)
-  widgets/                  qr_card (CustomPainter over the qr matrix,
-                            true-white card), idle_line (dotted line
-                            motif), nimna_toast (custom overlay toast),
-                            nimna_back_button (painter chevron)
+  screens/settings/    S13: settings_root_screen.dart (F8.1) and
+                       app_lock_setup_screen.dart (F8.2 choose→confirm→
+                       enroll; current-PIN gate → manage/turn-off)
+  widgets/             S8 pairing widgets: qr_card (CustomPainter over the
+                       qr matrix, true-white card), idle_line (dotted line
+                       motif), nimna_toast (custom overlay toast),
+                       nimna_back_button (painter chevron). S13 shared
+                       design-system widgets: glyphs.dart (CustomPainter
+                       icons, RTL-mirrored), nav_bar.dart, nimna_symbol.dart
+                       (dot·line·dot), pin_pad.dart (PinDots + PinPad),
+                       nimna_toggle.dart, destructive_hold_button.dart
+                       (hold-to-wipe: burn, release-cancels, fires exactly
+                       once), wipe_sheet.dart (full F8.3/string 8 +
+                       per-channel F7.2 variants over one body)
 src/pairing/         pairing flows — S8: initiator/ only (controller,
                      pending-pairings record, single-entry
                      create_line_entry, share + qr fenced call sites);
@@ -49,6 +60,25 @@ src/protocol/        PURE §3.1.1/§3.1.2/§5.4 codec & derivation,
                      see src/protocol/README.md
 src/transport/       dart:io WebSocket relay transport + no-hammer
                      backoff policy; see src/transport/README.md
+src/lock/            S13 — the app-lock domain tier (imports storage/keys +
+                     crypto, never ui):
+  lock_controller.dart   state machine over KeyService: the only path to
+                         open() once lock is enabled; seal on lifecycle
+                         `hidden` (never `inactive`); in-memory escalating
+                         retry delay (5 free, 1 s doubling, 30 s cap)
+  lock_config_store.dart LockConfig blob (ver‖flags‖pin_len‖salt‖verifier)
+                         + the SECOND (and last) flutter_secure_storage
+                         call site — scope amendment, intake §3
+  pin_verifier.dart      Argon2id verifier (spec §7 locked params, sodium
+                         sumo pwhash) — gate-not-key; no byte-returning
+                         API (test-enforced)
+  biometric_gate.dart    the ONE local_auth call site; biometricOnly, PIN
+                         pad is the fallback, never the OS credential
+src/wipe/            S13 — wipe_service.dart: thin orchestration over the
+                     S7 key-destruction-first primitives (zero new
+                     destruction logic); full wipe also deletes the lock
+                     config + reopens fresh; pre-channel-wipe hook seam
+                     for the future session layer
 src/domain/          models + repositories (record (de)serialization,
                      CRID index built at unlock, per-channel seq counter)
 src/storage/         everything persistent

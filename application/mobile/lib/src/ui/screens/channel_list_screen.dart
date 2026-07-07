@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../app/routes.dart';
 import '../../pairing/initiator/create_line_entry.dart';
 import '../theme/nimna_tokens.dart';
+import '../widgets/glyphs.dart';
 
 /// The channel-list scaffold in its empty state (wireframe F4.4),
 /// rendering voice-guide string 4 VERBATIM from the EN ARB. From S8,
@@ -77,6 +79,33 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
                 child: Text(l10n.actionEnterCode),
               ),
               const Spacer(flex: 3),
+              // F4 list footer (wireframe F4.4): the Settings entry row.
+              Semantics(
+                button: true,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.of(context).pushNamed(Routes.settings),
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minHeight: NimnaSpacing.listRowSettings,
+                    ),
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.settings_title,
+                            style: text.bodySmall?.copyWith(
+                              color: tokens.textSecondary,
+                            ),
+                          ),
+                        ),
+                        ChevronGlyph(color: tokens.textTertiary),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

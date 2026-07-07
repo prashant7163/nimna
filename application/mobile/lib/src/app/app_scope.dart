@@ -1,9 +1,11 @@
 import 'package:flutter/widgets.dart';
 
 import '../diag/diag.dart';
+import '../lock/lock_controller.dart';
 import '../pairing/initiator/pairing_initiator_service.dart';
 import '../storage/keys/key_service.dart';
 import '../storage/storage_service.dart';
+import '../wipe/wipe_service.dart';
 
 /// Constructor-injected singleton services (app-architecture.md §8.2 —
 /// zero-dependency state management: ChangeNotifier services through one
@@ -14,12 +16,16 @@ class NimnaServices {
     required this.storage,
     required this.diag,
     required this.pairing,
+    required this.lockController,
+    required this.wipe,
   });
 
   final KeyService keyService;
   final StorageService storage;
   final Diag diag;
   final PairingInitiatorService pairing;
+  final LockController lockController;
+  final WipeService wipe;
 }
 
 /// The one DI surface. `AppScope.of(context)` anywhere below the app root.

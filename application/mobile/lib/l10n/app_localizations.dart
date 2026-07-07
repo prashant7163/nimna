@@ -343,6 +343,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That didn\'t finish. The code is spent — make a new one.'**
   String get pairing_spentBody;
+
+  /// F8.1 header, and the F4 list-footer entry row that opens it. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings_title;
+
+  /// F8.1 row label. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'App lock'**
+  String get settings_rowAppLock;
+
+  /// F8.1 App-lock row caption while the lock is off, verbatim from the wireframe. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Off — a PIN or your face, before anything shows'**
+  String get settings_rowAppLockOff;
+
+  /// App-lock row value when the lock is on without biometrics (hi-fi screen 08 renders the on-state as 'On'). S13.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get settings_rowAppLockOn;
+
+  /// App-lock row caption when lock + biometric are on, verbatim from F8.2's exit note. NOTE: 'Face ID' is the iOS name; the Android biometric naming question is flagged in progress/SESSION-13.md for the design loop. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'On — PIN + Face ID'**
+  String get settings_rowAppLockOnBiometric;
+
+  /// F8.1 row label. The row is a per-line directory, not a master switch (spec section 3.2.2); target screen ships with a later session — inert row in S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settings_rowNotifications;
+
+  /// F8.1 Notifications row caption, verbatim from the wireframe. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Per line, off unless you turn them on'**
+  String get settings_rowNotificationsCaption;
+
+  /// F8.1 row label; the F8.4 relay-info screen ships with a later session — inert row in S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Relay'**
+  String get settings_rowRelay;
+
+  /// F8.1 Relay row caption — the relay host name. NEVER TRANSLATE: identical in every locale (it is an address, not copy). S13.
+  ///
+  /// In en, this message translates to:
+  /// **'relay.nimna.app'**
+  String get settings_rowRelayCaption;
+
+  /// F8.1 row label; opens the standard OSS license list. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Licenses'**
+  String get settings_rowLicenses;
+
+  /// F8.1 destructive row label, verbatim; sits apart at the bottom, danger-toned. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Wipe everything'**
+  String get settings_rowWipeEverything;
+
+  /// F8.1 Wipe-everything row caption, verbatim from the wireframe. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Every line, every message — this phone.'**
+  String get settings_rowWipeEverythingCaption;
+
+  /// F8.2 setup headline, verbatim. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a PIN'**
+  String get lock_choosePinTitle;
+
+  /// F8.2 setup caption, verbatim — the zero-leak promise stated where the lock is set. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'When locked, the screen shows only the symbol and this pad. Nothing else — not even how many lines you have.'**
+  String get lock_choosePinCaption;
+
+  /// PROVISIONAL (S13 CODE, flagged for the design loop): F8.2 specifies 'PIN entered twice (confirm step, same frame pattern)' but carries no confirm-step headline. Voice register: short, plain, no scolding.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter it again'**
+  String get lock_confirmPinTitle;
+
+  /// PROVISIONAL (S13 CODE, flagged for the design loop): confirm-step mismatch line; no artifact carries one. Follows the error register: state what happened and what to do, never blame.
+  ///
+  /// In en, this message translates to:
+  /// **'Those didn\'t match — start again.'**
+  String get lock_confirmPinMismatch;
+
+  /// PROVISIONAL (S13 CODE, flagged for the design loop): advances Choose-a-PIN to the confirm step. Needed because the pad accepts 4-8 digits (wireframes README) so the choose step cannot auto-submit. Register: buttons are verbs, one or two words.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get lock_actionNext;
+
+  /// PROVISIONAL (S13 CODE, flagged for the design loop): headline of the current-PIN gate required before changing or turning off the lock (F8.2 edge: 'Turning lock OFF later requires the current PIN first').
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your PIN'**
+  String get lock_enterPinTitle;
+
+  /// PROVISIONAL (S13 CODE, flagged for the design loop): removes the app lock, offered only after the current PIN is verified. Register: buttons are verbs, one or two words.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get lock_actionTurnOff;
+
+  /// F8.2 biometric toggle label, verbatim. Row hidden when no biometric hardware. NOTE: 'Face ID' is the iOS name; Android naming flagged in progress/SESSION-13.md for the design loop. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock with Face ID'**
+  String get lock_biometricToggleLabel;
+
+  /// F8.2 biometric toggle caption, verbatim. The toggle ships ON in the setup flow (spec section 6: strongly recommended). S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended. Falls back to your PIN.'**
+  String get lock_biometricToggleCaption;
+
+  /// F8.2 bottom caption, verbatim — the no-recovery consequence stated at setup time, not discovered later (spec section 6.1). S13.
+  ///
+  /// In en, this message translates to:
+  /// **'There\'s no way to recover a forgotten PIN — there\'s no account to prove you\'re you. Forgetting it means reinstalling, which wipes this phone\'s lines.'**
+  String get lock_noRecoveryCaption;
+
+  /// PROVISIONAL (S13 CODE, flagged for the design loop): the OS biometric prompt's purpose line (local_auth localizedReason; iOS pairs with NSFaceIDUsageDescription). Phone-call register, no fear.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock your lines.'**
+  String get lock_biometricPromptReason;
+
+  /// PROVISIONAL (S13 CODE, flagged for the design loop): a11y label for the PIN pad backspace key (screen 12 shows only the glyph).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get lock_keypadDeleteA11y;
+
+  /// CANONICAL voice string 8 line 1, verbatim. Hi-fi screen 08 renders 'everything' at weight 600 — see wipe_fullTitleEmphasis. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Wipe everything?'**
+  String get wipe_fullTitle;
+
+  /// The substring of wipe_fullTitle rendered at weight 600 (hi-fi screen 08). Must appear verbatim inside wipe_fullTitle in every locale; if absent at runtime the title renders unemphasized. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'everything'**
+  String get wipe_fullTitleEmphasis;
+
+  /// CANONICAL voice string 8 body, verbatim. Never edit outside a voice-guide change. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys and messages are destroyed on this phone. There is no backup, anywhere, by design — nothing can bring them back.'**
+  String get wipe_fullBody;
+
+  /// Destructive-hold button label, verbatim from hi-fi screen 08 and F7.2/F7.3 (supersedes F8.3's earlier 'Wipe now' label — the hold IS the confirmation). S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to wipe'**
+  String get wipe_holdToWipe;
+
+  /// Full-wipe hold caption, verbatim from hi-fi screen 08 (supersedes the F8.3 wireframe wording). 2.5 s is USER-settled (2026-07-03). S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold for 2½ seconds. Release to cancel.'**
+  String get wipe_fullHoldCaption;
+
+  /// CANONICAL voice string 8 safe action, verbatim — a warm word, never 'Cancel' (voice register notes). S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get wipe_actionKeep;
+
+  /// F7.2 per-channel wipe sheet headline, verbatim. The F7 host screen ships with a later session; the sheet is the S13 reusable component. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Wipe this line?'**
+  String get wipe_channelTitle;
+
+  /// F7.2 per-channel wipe sheet body, verbatim. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Keys and messages for this line are destroyed on this phone. Nothing can bring them back.'**
+  String get wipe_channelBody;
+
+  /// F7.2 honest cross-device note, verbatim — prevents a false belief the UI could never correct later. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Their phone keeps its side unless they wipe too.'**
+  String get wipe_channelPeerNote;
+
+  /// F7.2 hold caption, verbatim. 1.5 s is USER-settled (2026-07-03), deliberately shorter than the 2.5 s full wipe. S13.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold for 1.5 seconds. Let go to keep everything.'**
+  String get wipe_channelHoldCaption;
+
+  /// CANONICAL toast copy (components.md Toast; F7.2 exit), verbatim. Consumed by the F7 host screen's session; the key lands with the S13 wipe seam.
+  ///
+  /// In en, this message translates to:
+  /// **'Channel wiped.'**
+  String get wipe_channelWipedToast;
 }
 
 class _AppLocalizationsDelegate

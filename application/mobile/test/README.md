@@ -72,6 +72,25 @@ privacy/
                                mirror): fake code/label/body/token/key-hex
                                driven through real flows → absent from the
                                decrypted dump AND the raw log bytes
+lock/                      S13 app lock
+  pin_verifier_test.dart   Argon2id round-trip (reduced-cost lane), spec §7
+                           param pins, tagged `production-cost` lane
+                           (dart_test.yaml), structural fence scans (no
+                           byte-returning API; pwhash only here;
+                           constant-time compare in use)
+  lock_controller_test.dart  lock-enabled cold start reads the keystore
+                             ZERO times before a successful verify
+                             (recording keystore), wrong PIN stays sealed,
+                             escalating-delay schedule + pad disarm/rearm,
+                             biometric verdict == correct PIN, turn-off
+                             requires the current PIN
+wipe/                      S13 panic wipe
+  wipe_service_test.dart   planted-marker full-wipe audit (zero residual
+                           bytes; lock config dies too; fresh-install diag
+                           shape), destruction-ORDER probe (keystore entry
+                           dies while files still exist), interrupted-wipe
+                           (post-step-1 ciphertext undecryptable under any
+                           future MK), per-channel wipe + pre-wipe hook
 ui/
   tokens_drift_test.dart   reads ../../designs/system/tokens.json and
                            asserts every constant in nimna_tokens.dart
@@ -85,6 +104,18 @@ ui/
                            back-confirm vocabulary, 320 px narrow-frame
                            survival (wide test font = length stress)
   no_hardcoded_strings_test.dart  grep safety net for Text('...') literals
+  lock_gate_test.dart      S13: seal on `hidden` (zero content widgets on
+                           the sealed surface), `inactive` never seals,
+                           PIN-pad unlock restores the tree, biometric
+                           auto-prompt (ARB reason string)
+  wipe_sheet_test.dart     S13 hold semantics: release at 99% ⇒ no call +
+                           track reset; completion ⇒ exactly one call +
+                           sheet closes; 1.5 s / 2.5 s durations pinned;
+                           sheet strings from the ARB in five locales
+  settings_flow_test.dart  S13 F8 flows: root rows (five locales), PIN
+                           choose→confirm enroll + mismatch restart,
+                           biometric recommended-on, turn-off gated by the
+                           current PIN, wipe row raises the string-8 sheet
 ```
 
 Device-attached coverage lives in `../integration_test/` (see its README);
