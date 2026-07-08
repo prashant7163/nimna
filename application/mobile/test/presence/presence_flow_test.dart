@@ -28,15 +28,24 @@ import '../helpers/test_env.dart';
 /// KNOCK push payload, and bounded live-drop reconnect. Every assertion drives
 /// real SessionControllers built through the launcher over an in-memory relay.
 void main() {
-  Future<void> settle() async {
-    for (var i = 0; i < 40; i++) {
-      await Future<void>.delayed(Duration.zero);
-    }
-  }
-
-  Future<void> pumpUntil(bool Function() done, {int max = 3000}) async {
-    for (var i = 0; i < max && !done(); i++) {
-      await Future<void>.delayed(Duration.zero);
+  // Waits until [done] on a real WALL-CLOCK deadline, polling with a small
+  // NON-ZERO delay. This is deliberately NOT a fixed count of
+  // `Future.delayed(Duration.zero)` ticks: a zero-duration delay does not
+  // yield the CPU, so on an oversubscribed host the main isolate burns the
+  // whole cap near-instantly while a descheduled sqflite FFI isolate never
+  // gets to commit the trailing delivery-state / persistence write — the
+  // assertion then fires early (the residual flake QA caught at ~1/32). A
+  // real 1 ms delay actually yields the CPU, so a starved isolate gets
+  // scheduled and its write lands well before the generous deadline; a
+  // healthy run resolves in a few milliseconds and never approaches it.
+  Future<void> pumpUntil(
+    bool Function() done, {
+    Duration timeout = const Duration(seconds: 30),
+    Duration interval = const Duration(milliseconds: 1),
+  }) async {
+    final deadline = DateTime.now().add(timeout);
+    while (!done() && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(interval);
     }
   }
 
@@ -438,9 +447,11 @@ void main() {
     // The socket dies mid-knock → connectionLost, but the line was NEVER live.
     await env.bridge.killKnocker();
     await pumpUntil(() => knocker.lineState == SessionLineState.connectionLost);
-    // Give the coordinator's listener turns to (not) react before asserting
-    // absence of a reconnect.
-    await settle();
+    // Give the coordinator's listener real wall-clock time to run (it decides
+    // NOT to reconnect). A real delay yields the CPU so the main isolate drains
+    // the SessionEnded event; if the `_hasBeenLive` gate were removed, the
+    // listener would synchronously flip the phase to `reconnecting` here.
+    await Future<void>.delayed(const Duration(milliseconds: 100));
 
     expect(knocker.lineState, SessionLineState.connectionLost);
     // The cold-vs-live gate (`_hasBeenLive`) blocks recovery entirely: the
@@ -504,13 +515,15 @@ class _Env {
     // Drain trailing fire-and-forget persistence before the sqflite DBs close.
     // Production persists received messages, delivery-state advances, reaction
     // updates, and token refreshes via `unawaited(...)`; closing the DB while
-    // one is in flight throws `database has already been closed`. First pump the
-    // event loop so any multi-step write progresses through its awaits, then a
-    // serialized DB read per party flushes anything still queued (sqflite runs
-    // one op at a time, FIFO — a read completes only behind prior writes). This
-    // is TEARDOWN hygiene only; assertions wait on real state via `pumpUntil`.
-    for (var i = 0; i < 200; i++) {
-      await Future<void>.delayed(Duration.zero);
+    // one is in flight throws `database has already been closed`. Yield real
+    // wall-clock time (NON-ZERO delays — a starved sqflite FFI isolate only
+    // gets scheduled by real time, not by zero-duration ticks) so any
+    // multi-step write progresses through its awaits, then a serialized DB read
+    // per party flushes anything still queued (sqflite runs one op at a time,
+    // FIFO — a read completes only behind prior writes). TEARDOWN hygiene only;
+    // assertions wait on real state via `pumpUntil`.
+    for (var i = 0; i < 20; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
     }
     await knocker.drainWrites();
     await accepter.drainWrites();

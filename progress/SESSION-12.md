@@ -499,6 +499,21 @@ Per PM ruling, the push-toggle mount stays deferred to S16 F7 (model + tile
 unchanged) and the offline-reaction restart-durability flag stays a fold/S11
 item — both untouched.
 
+### Done-check de-flake (test-only; production `session_controller.dart` correct, untouched)
+QA found the core done-check test non-deterministic under full-suite CPU load.
+Two passes:
+- **Pass 1 (2026-07-07):** replaced fixed-turn `settle()` waits with condition
+  waits + a teardown DB-queue drain. Cut the flake from ~30% but a ~3% residual
+  remained (QA: 1/32).
+- **Pass 2 (2026-07-08):** root-caused the residual — `pumpUntil` polled with
+  `Future.delayed(Duration.zero)`, which does NOT yield the CPU, so on an
+  oversubscribed host the main isolate burned the tick cap while the descheduled
+  sqflite FFI isolate never committed the trailing delivery-state write.
+  Rewrote `pumpUntil` to a real WALL-CLOCK deadline (~30 s) polled with a NON-ZERO
+  1 ms delay (which actually yields the CPU so a starved isolate is scheduled and
+  its write lands; a healthy run resolves in ms). Applied the same non-zero yield
+  to the teardown drain. All async end-state waits in the flow tests now use it.
+
 ## QA done-check
 
 ## Next / follow-ups
