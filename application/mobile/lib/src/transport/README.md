@@ -21,3 +21,16 @@ relay_socket.dart  RelayConfig (URL always injected; dev default
 Connection failures surface as one indistinct `RelayUnreachableError` —
 no addresses, no reasons, nothing loggable. Locale-independent; no Flutter
 imports.
+
+## Oversized-frame bound — accepted residual (§4/§5.4)
+
+`OuterFrame.decode` rejects any frame larger than `outerMaxFrame` (128 KiB,
+the §4 mirror of the relay's `wire.MaxFrame`) with `OuterFrameError`, so we
+never copy/forward or do downstream work on an oversized frame. That
+decode-time check is the enforcement point: `dart:io`'s `WebSocket` buffers
+each inbound message **whole** and exposes **no** settable inbound
+message-size cap (unlike Go's `Conn.SetReadLimit`). So a hostile/compelled
+relay can still make the runtime buffer one oversized message once before we
+reject it — nuisance-grade, non-amplifying (the payload also fails AEAD), and
+accepted for v1. A future raw-socket transport could set a socket read limit;
+not worth swapping `dart:io` for now.

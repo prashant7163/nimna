@@ -27,3 +27,10 @@ protocol-parsing surface in the relay module:
   valid boundaries (1-byte and max-uint16 tokens, big-endian length
   pinned), encode/parse round trip, and conformance against the committed
   KNOCK vectors in `framing.json`.
+- `fuzz_test.go` — native Go fuzz targets (S18 adversarial pass, §18-C)
+  over both parsers: `FuzzParse` (outer frame) and `FuzzParseKnockPayload`
+  (KNOCK payload), seeded from the committed vectors plus the table-driven
+  invalid cases. Shared invariant: the parser never panics, never accepts
+  an out-of-spec frame, and every accepted frame round-trips byte-for-byte
+  (`Encode(Parse(b)) == b`). Zero fuzz iterations under `go test` (seed
+  corpus only); real fuzzing under `go test -fuzz=FuzzParse` etc.

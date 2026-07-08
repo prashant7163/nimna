@@ -342,6 +342,89 @@ void main() {
     },
   );
 
+  test('§3.1.6 single fail-closed attempt: a wrong code burns the pairing — '
+      'exactly one handshake, no retry oracle for a later valid M2', () async {
+    final controller = makeController();
+    final code = PairingCode.canonicalize('7Q2M4K9XV')!;
+    final todaySecrets = deriveRendezvous(
+      sodium: sodium,
+      code: code,
+      utcDate: utcDateString(now),
+      cost: Argon2Cost.reducedTestOnly,
+    );
+    addTearDown(todaySecrets.dispose);
+
+    await controller.join(code);
+    final conn = connector.latest;
+    conn.deliver(
+      OuterFrame(type: FrameType.topicBridged, routingId: todaySecrets.topic),
+    );
+    await waitUntil(() => pairFrames(conn).isNotEmpty);
+
+    // Exactly ONE handshake message goes out — the single attempt (§3.1.6).
+    expect(pairFrames(conn), hasLength(1)); // M1
+    final m1 = pairFrames(conn).single.payload;
+
+    // Two responders read that one M1 (both can — M1 is pre-psk): one holds the
+    // CORRECT psk (what a "corrected" retry would use), one holds a WRONG psk
+    // (the wrong code / a codeless MITM). Only the wrong one's M2 fails the
+    // joiner's psk check.
+    final creatorStatic = generateNoiseKeyPair(sodium);
+    final wrongStatic = generateNoiseKeyPair(sodium);
+    final realResponder = NoiseResponderHandshake(
+      sodium: sodium,
+      aead: aead,
+      staticKeyPair: creatorStatic,
+      psk: todaySecrets.psk,
+      tokenPayload: const TokenPayload.absent(),
+    );
+    final wrongResponder = NoiseResponderHandshake(
+      sodium: sodium,
+      aead: aead,
+      staticKeyPair: wrongStatic,
+      psk: sodium.secureRandom(32),
+      tokenPayload: const TokenPayload.absent(),
+    );
+    addTearDown(() {
+      creatorStatic.dispose();
+      wrongStatic.dispose();
+      realResponder.dispose();
+      wrongResponder.dispose();
+    });
+    realResponder.readM1(m1);
+    wrongResponder.readM1(m1);
+
+    // The wrong-code M2 fails closed: the attempt is spent, nothing persisted,
+    // and the relay channel is torn down (topic freed, psk + handshake wiped).
+    conn.deliver(
+      OuterFrame(
+        type: FrameType.pairData,
+        routingId: todaySecrets.topic,
+        payload: wrongResponder.writeM2(),
+      ),
+    );
+    await waitUntil(() => controller.phase == JoinPhase.entry);
+    expect(controller.entryError, JoinEntryError.spent);
+    expect(services.storage.channels.all, isEmpty);
+    expect(conn.closedByClient, isTrue);
+
+    // No retry oracle: the pairing object is gone, so a now-CORRECT M2 has no
+    // channel to arrive on — a grinder cannot resubmit against the same
+    // rendezvous/PSK. The single attempt is final.
+    expect(
+      () => conn.deliver(
+        OuterFrame(
+          type: FrameType.pairData,
+          routingId: todaySecrets.topic,
+          payload: realResponder.writeM2(),
+        ),
+      ),
+      throwsStateError,
+    );
+    // Still exactly one handshake message ever sent — no M3, no second attempt.
+    expect(pairFrames(conn), hasLength(1));
+  });
+
   test('offline edge: nothing sent, entry error set', () async {
     connector.failNextAttempts = 1;
     final controller = makeController();

@@ -31,8 +31,23 @@ jobs:
         run: go build ./...
       - name: test (RFC + third-party Noise vectors + regeneration guard)
         run: go test ./...
+      - name: generator stays flynn/noise-free (canonical vectors produced independently)
+        # The vector-production path must be provably independent of the S18
+        # oracle library, so "the vectors were not produced with flynn/noise's
+        # help" is a structural fact. (s18-noise-oracle-design.md §1.4 layer c.)
+        run: "! grep -q 'flynn/noise' go.sum"
       - name: regenerate and diff (vectors must never drift from the generator)
         run: |
           go run . -dir ..
           git diff --exit-code -- ..
           test -z "$(git status --porcelain -- ..)"
+      - name: oracle module builds and passes (independent flynn/noise cross-check)
+        # The one allowed home for flynn/noise: an isolated module that
+        # cross-verifies the committed vectors as an independent Noise engine.
+        # (s18-noise-oracle-design.md §1.4 layer d.)
+        working-directory: docs/test-vectors/oracle
+        run: |
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go build ./...
+          go test ./...

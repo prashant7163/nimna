@@ -98,3 +98,16 @@ The generator's Noise engine additionally passes 64 committed third-party
 vectors (cacophony + snow) for the suite `25519_ChaChaPoly_SHA256` —
 coverage details and licenses in
 [`generator/testdata/README.md`](generator/testdata/README.md).
+
+## Independent oracle (S18)
+
+[`oracle/`](oracle/README.md) is a separate, **test-only** Go module that
+cross-verifies `pairing-handshake.json` and `session-handshake.json` with
+[`github.com/flynn/noise`](https://github.com/flynn/noise) — the reference Go
+Noise library — as an *independent* implementation (XXpsk2 + KK, both roles:
+byte-equal messages, handshake hashes, Split keys; plus an independent SHA-256
+commitment recompute and an x/crypto transport re-wrap for the pieces flynn
+cannot mirror). flynn/noise (BSD-3) is quarantined to that module and never
+enters the relay or generator graph — three CI dep-graph guards enforce it.
+This complements, and is independent of, the generator that *produces* the
+vectors.

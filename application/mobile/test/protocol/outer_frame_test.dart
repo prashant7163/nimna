@@ -102,4 +102,31 @@ void main() {
       );
     });
   });
+
+  // §18-C upper bound. The parser rejects any frame larger than [outerMaxFrame]
+  // (128 KiB) with OuterFrameError — the §4 mirror of the relay's ErrOversize
+  // (application/relay/internal/wire/wire.go). The suite previously tested only
+  // the LOWER bound (short header). The bound is on the TOTAL frame incl. the
+  // 18-byte header, so exactly 131072 is accepted and 131073 is rejected.
+  group('upper bound (§18-C oversized frame)', () {
+    Uint8List frameOfTotalLength(int total) => Uint8List(total)
+      ..[0] = protocolVersion
+      ..[1] = FrameType.sessionData.wire;
+
+    test('a frame at exactly MaxFrame (128 KiB) decodes', () {
+      expect(outerMaxFrame, 131072);
+      final f = OuterFrame.decode(frameOfTotalLength(outerMaxFrame));
+      expect(f.type, FrameType.sessionData);
+      expect(f.payload, hasLength(outerMaxFrame - outerHeaderBytes));
+    });
+
+    test('an over-MaxFrame frame is rejected with OuterFrameError (mirrors '
+        'the relay ErrOversize)', () {
+      expect(
+        () => OuterFrame.decode(frameOfTotalLength(outerMaxFrame + 1)),
+        throwsA(isA<OuterFrameError>()),
+        reason: '131073 bytes exceeds the 128 KiB total-frame bound',
+      );
+    });
+  });
 }

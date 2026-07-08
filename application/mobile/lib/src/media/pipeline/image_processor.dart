@@ -82,6 +82,10 @@ abstract final class ImageProcessor {
     var image = img.bakeOrientation(decoded);
     // Structural strip: a fresh, empty ExifData carries no GPS/make/model/time.
     image.exif = img.ExifData();
+    // The decoder copies the source ICC_PROFILE APP2 onto image.iccProfile and
+    // encodeJpg/encodePng re-emit any non-null profile — clear it so the output
+    // carries no (identifying-capable) colour profile either (spec §5.1).
+    image.iccProfile = null;
     if (!originalQuality) {
       image = _downscale(image);
     }
