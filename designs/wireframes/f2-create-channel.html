@@ -246,8 +246,8 @@
     </div>
     <div class="anno">
       <div class="r"><span class="k">Purpose</span><span>The MITM defense working as designed (spec §3.1.5, §9). Tone stays level: state what it can mean, state what was done (everything discarded), point forward. No sirens, no red.</span></div>
-      <div class="r"><span class="k">Entry points</span><span>They don't match on F2.6 (or on the joiner's F3.4 — both sides land on their own copy of this screen once either declines).</span></div>
-      <div class="r"><span class="k">Exit points</span><span>Make a new code → F2.1. Not now → F4. Either way the discarded pairing is unrecoverable — keypairs deleted on both sides.</span></div>
+      <div class="r"><span class="k">Entry points</span><span>They don't match on F2.6 (or on the joiner's F3.4). The device whose human taps "They don't match" lands here — a decline is a LOCAL act; the peer is NOT signalled on the wire and does not land here from the other's decline (DECISIONS 2026-07-07 12:24, spec §3.1.6). The out-of-band human comparison is what tells the other person.</span></div>
+      <div class="r"><span class="k">Exit points</span><span>Make a new code → F2.1. Not now → F4. Either way THIS device's discarded pairing is unrecoverable — its keypair is deleted; the peer receives no wire notification of the decline.</span></div>
       <div class="r"><span class="k">Edge cases</span><span>False alarm (misread word) → cost is one minute: make a new code. Design accepts false positives cheerfully; the asymmetry (cheap redo vs. silent interception) is the whole point.</span></div>
     </div>
   </section>

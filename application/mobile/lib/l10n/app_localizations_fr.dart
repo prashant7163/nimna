@@ -760,4 +760,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get diag_shareEmpty => 'Nothing to share yet.';
+
+  @override
+  String get notifications_emptyBody =>
+      'Notifications turn on per line. You have none yet.';
 }

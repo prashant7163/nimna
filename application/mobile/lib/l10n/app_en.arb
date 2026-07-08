@@ -922,5 +922,9 @@
   "diag_shareEmpty": "Nothing to share yet.",
   "@diag_shareEmpty": {
     "description": "Diagnostics export empty state — the log holds no records yet. Calm, factual. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "notifications_emptyBody": "Notifications turn on per line. You have none yet.",
+  "@notifications_emptyBody": {
+    "description": "Empty state body of the per-line notifications directory (Settings → Notifications) when no lines exist yet — reached with zero channels or a sealed store. Pairs with the canonical channelListEmptyHeadline 'No lines yet.' as the headline. Design-silent, PM-crafted to the voice guide: calm, present-tense, no CTA (this screen has no create affordance), never manufactured optimism. S16 net-new (Phase 2 empty-state sweep). Enters the S16 crafted-translation pass."
   }
 }

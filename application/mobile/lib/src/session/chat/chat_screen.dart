@@ -369,6 +369,9 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Semantics(
                 button: true,
+                // Name the icon-only affordance for screen readers (framework
+                // localized back tooltip; same precedent as NimnaBackButton).
+                label: MaterialLocalizations.of(context).backButtonTooltip,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   // Leaving the screen is not hanging up (wireframe F5.4).

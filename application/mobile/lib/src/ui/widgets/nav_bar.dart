@@ -22,6 +22,10 @@ class NimnaNavBar extends StatelessWidget {
           children: [
             Semantics(
               button: true,
+              // Icon-only affordance: name it for screen readers via the
+              // framework's localized back tooltip (same precedent as
+              // NimnaBackButton), so navigation isn't an unnamed "button".
+              label: MaterialLocalizations.of(context).backButtonTooltip,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => Navigator.of(context).maybePop(),

@@ -49,24 +49,26 @@ class NotificationsDirectoryScreen extends StatelessWidget {
             ),
             const SizedBox(height: NimnaSpacing.base * 2),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: NimnaSpacing.screenMargin,
-                ),
-                children: [
-                  for (final record in lines)
-                    _LineRow(
-                      label: record.label,
-                      onTap: () => Navigator.of(context).pushNamed(
-                        Routes.channelNotifications,
-                        arguments: ChannelNotificationsArgs(
-                          channelId: record.id,
-                          label: record.label,
-                        ),
+              child: lines.isEmpty
+                  ? _EmptyDirectory(tokens: tokens, text: text, l10n: l10n)
+                  : ListView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: NimnaSpacing.screenMargin,
                       ),
+                      children: [
+                        for (final record in lines)
+                          _LineRow(
+                            label: record.label,
+                            onTap: () => Navigator.of(context).pushNamed(
+                              Routes.channelNotifications,
+                              arguments: ChannelNotificationsArgs(
+                                channelId: record.id,
+                                label: record.label,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ],
         ),
@@ -112,6 +114,46 @@ class _LineRow extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The directory's honest empty state (no lines yet — zero channels, or the
+/// store sealed). Reuses the canonical "No lines yet." headline with a
+/// directory-specific calm body; no CTA (this screen never creates a line).
+class _EmptyDirectory extends StatelessWidget {
+  const _EmptyDirectory({
+    required this.tokens,
+    required this.text,
+    required this.l10n,
+  });
+
+  final NimnaTokens tokens;
+  final TextTheme text;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: NimnaSpacing.screenMargin,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            l10n.channelListEmptyHeadline,
+            style: text.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: NimnaSpacing.base * 2),
+          Text(
+            l10n.notifications_emptyBody,
+            style: text.bodyMedium?.copyWith(color: tokens.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

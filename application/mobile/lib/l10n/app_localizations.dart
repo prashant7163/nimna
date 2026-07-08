@@ -1381,6 +1381,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing to share yet.'**
   String get diag_shareEmpty;
+
+  /// Empty state body of the per-line notifications directory (Settings → Notifications) when no lines exist yet — reached with zero channels or a sealed store. Pairs with the canonical channelListEmptyHeadline 'No lines yet.' as the headline. Design-silent, PM-crafted to the voice guide: calm, present-tense, no CTA (this screen has no create affordance), never manufactured optimism. S16 net-new (Phase 2 empty-state sweep). Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications turn on per line. You have none yet.'**
+  String get notifications_emptyBody;
 }
 
 class _AppLocalizationsDelegate
