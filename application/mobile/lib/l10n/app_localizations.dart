@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Create a Nimna code, or enter one you\'ve been given.'**
   String get channelListEmptyBody;
 
+  /// F4 populated channel-row status subtitle for a line you are not currently on (designs/screens/04-channel-list.html, verbatim). The only row status S16 renders: presence is per-open-line, so the list holds no live connection and every row reads 'Quiet' until you open it. The design's 'On the line' / 'Waiting: N' / 'Knocking…' row statuses presuppose list-level presence memory (an always-listening or persisted-knock-count model) out of S16 scope — flagged for S18. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet'**
+  String get channelListStatusQuiet;
+
   /// Primary action on the empty channel list (voice guide register notes: buttons are verbs, one or two words). Gated by subscription from S12; stub in S7.
   ///
   /// In en, this message translates to:
@@ -551,7 +557,7 @@ abstract class AppLocalizations {
   /// CANONICAL toast copy (components.md Toast; F7.2 exit), verbatim. Consumed by the F7 host screen's session; the key lands with the S13 wipe seam.
   ///
   /// In en, this message translates to:
-  /// **'Channel wiped.'**
+  /// **'Line wiped.'**
   String get wipe_channelWipedToast;
 
   /// F3.1 join-screen headline, verbatim. S9.
@@ -1142,6 +1148,12 @@ abstract class AppLocalizations {
   /// **'No answer.'**
   String get knock_noAnswer;
 
+  /// The primary Knock verb — the chat-header affordance on the 'Not on the line' surface (wireframe F5.1; designs/wireframes/f5-chat-session.html '<btn ghost small>Knock</btn>'; voice register verb 'Knock', voice guide line 127). Opens the 60 s knock window; distinct from knock_again ('Knock again'), which appears only after a lapse. Canonical, verbatim. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Knock'**
+  String get knock_knock;
+
   /// The manual re-knock affordance (wireframe F5.13) — appears ONLY after a lapse, never during the countdown. A deliberate human re-knock; the app never auto-retries (spec §4, voice register verb 'Knock'). S12 net-new. Enters the S16 crafted-translation pass.
   ///
   /// In en, this message translates to:
@@ -1249,6 +1261,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Line settings — this phone only'**
   String get channelSettings_subtitle;
+
+  /// F1.1 headline — voice guide string 1, line 1, verbatim. The first thing a new user reads before any ask (spec §5.2 informed-consent flow). S16 net-new onboarding host. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'A private line between two people.'**
+  String get onboarding_whatItIsHeadline;
+
+  /// F1.1 body — voice guide string 1, line 2, verbatim. States the architecture as fact (no accounts / no cloud). S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'No accounts. No cloud. Messages live on your two phones, nowhere else.'**
+  String get onboarding_whatItIsBody;
+
+  /// F1.2 headline (wireframe F1.2). Teaches the one ritual — the Nimna code — as a codeword game, not a security procedure. In UI the code is only ever the 'Nimna code' (spec §2). S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair once with a code.'**
+  String get onboarding_pairingHeadline;
+
+  /// F1.2 body — voice guide string 2, verbatim (two lines, \n between). The em dash is U+2014; apostrophes are straight ASCII. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair once with a Nimna code you share however you like — read aloud, on paper, or as the QR shown right beside it.\nAfter that, the code is gone for good. The line is yours.'**
+  String get onboarding_pairingBody;
+
+  /// F1.3 headline (wireframe F1.3). The honesty beat, stated as a plain title, not a claim. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'What we cannot see'**
+  String get onboarding_cannotSeeHeadline;
+
+  /// F1.3 body — voice guide string 3, verbatim (two lines, \n between). Facts, not vows. Straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'We can\'t read your messages. We can\'t recover them either.\nThere is nothing to hand over, because nothing is kept.'**
+  String get onboarding_cannotSeeBody;
+
+  /// F1.3 caption (wireframe F1.3) — volunteers the honest metadata limit (relay sees IPs/timing/sizes, never content; spec §4) instead of hiding it. The honesty checklist forbids drifting toward 'no one can see anything'. The em dash is U+2014; the arrow is U+2192. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'The relay does see connection times, IP addresses, and message sizes — never content. Details live in Settings → Relay.'**
+  String get onboarding_cannotSeeRelayNote;
+
+  /// F1.1–F1.3 primary action — advance to the next onboarding screen (register verb). S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboarding_next;
+
+  /// F1.1–F1.3 secondary action — skip onboarding to the empty channel list (F4.4). The last screen (F1.4, the screenshot terms) has NO skip. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onboarding_skip;
+
+  /// F1.4 sole primary action — finish onboarding and enter the app (register verb). No skip on the consent screen. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get onboarding_start;
+
+  /// F6.3 live-knock countdown caption (wireframe F6.3, screen 06) — the knock's remaining life at the relay (spec §3.2, 60 s). Attribution-neutral, states only time. {seconds} is the integer seconds remaining. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Lapses in {seconds}s'**
+  String knock_lapsesInSeconds(int seconds);
+
+  /// F7 read-receipts toggle label (wireframe F7.1). Per-line, DEFAULT OFF (opt-in, spec §5; USER 2026-07-07). S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Read receipts'**
+  String get settings_readReceiptsLabel;
+
+  /// F7 read-receipts toggle caption (wireframe F7.1, verbatim). Honest and in-place: the caption IS the disclosure. Straight ASCII quotes/apostrophes. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll see \"Seen\" under messages you\'ve read. This line only.'**
+  String get settings_readReceiptsCaption;
+
+  /// F7 typing-indicator toggle label (wireframe F7.1). Per-line OFF switch; typing is DEFAULT ON (USER 2026-07-07). S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing indicator'**
+  String get settings_typingLabel;
+
+  /// F7 typing-indicator toggle caption (wireframe F7.1, verbatim). Straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'ll see when you\'re writing. This line only.'**
+  String get settings_typingCaption;
+
+  /// The read-receipt indicator rendered under your latest sent message once the peer's app reports it read (CONTROL 0x02, spec §5). Shown only when the peer opted into read receipts. A single plain word, never a claim of more. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Seen'**
+  String get session_readReceiptSeen;
+
+  /// F8.1 settings row (design-silent, PM-crafted to the voice guide) — opens the diagnostics export. The local diagnostic log is event codes and timestamps only, never content; nothing auto-uploads. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Share diagnostics'**
+  String get settings_rowDiagnostics;
+
+  /// F8.1 diagnostics row caption (design-silent, PM-crafted). States what the log is (codes + times, no content) and that nothing auto-uploads (spec §6 local ring-buffer; honesty doctrine). The em dash is U+2014; straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Event codes and times only — never your messages. Nothing leaves your phone unless you send it.'**
+  String get settings_rowDiagnosticsCaption;
+
+  /// Nav-bar title of the diagnostics export screen (design-silent, PM-crafted). S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get diag_shareTitle;
+
+  /// Diagnostics export screen explainer (design-silent, PM-crafted to the voice guide honesty bar). Describes the structurally content-free log (app-architecture §6) and that nothing auto-uploads. The em dash is U+2014; straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a technical record of what the app did — event codes and times, nothing more. No messages, no names, no codes, no addresses are in it, and it can\'t hold them. It stays on your phone unless you choose to share it.'**
+  String get diag_shareExplainer;
+
+  /// Diagnostics export primary action — hand the rendered log to the OS share sheet (register verb). A single deliberate user tap; no network from the app. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the log'**
+  String get diag_shareAction;
+
+  /// Diagnostics export empty state — the log holds no records yet. Calm, factual. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to share yet.'**
+  String get diag_shareEmpty;
+
+  /// Empty state body of the per-line notifications directory (Settings → Notifications) when no lines exist yet — reached with zero channels or a sealed store. Pairs with the canonical channelListEmptyHeadline 'No lines yet.' as the headline. Design-silent, PM-crafted to the voice guide: calm, present-tense, no CTA (this screen has no create affordance), never manufactured optimism. S16 net-new (Phase 2 empty-state sweep). Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications turn on per line. You have none yet.'**
+  String get notifications_emptyBody;
 }
 
 class _AppLocalizationsDelegate

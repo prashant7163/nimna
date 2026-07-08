@@ -107,6 +107,32 @@ void main() {
     expect(s.accepter.controller.messages, isEmpty);
   });
 
+  test('read receipts (F7): receiver opt-in ⇒ sender sees "Seen" via CONTROL '
+      '0x02', () async {
+    // The ACCEPTER opts into read receipts; the KNOCKER's sent message should
+    // be marked seen once the accepter reads it. Default-OFF stays silent.
+    final s = await liveSession();
+    addTearDown(s.dispose);
+    final on = await _Session.establish(
+      sodium,
+      aead,
+      accepterReadReceipts: true,
+    );
+    addTearDown(on.dispose);
+
+    // Receipts OFF (default): the sender never sees "Seen".
+    await s.knocker.controller.sendText('Off by default.');
+    await settle();
+    expect(s.knocker.controller.peerSawLatestOutbound, isFalse);
+
+    // Receipts ON (accepter opted in): the sender's message becomes seen.
+    await on.knocker.controller.sendText('You there?');
+    await pumpUntil(() => on.knocker.controller.peerSawLatestOutbound);
+    expect(on.knocker.controller.peerSawLatestOutbound, isTrue);
+    // Read receipts are never ACKed and add no message (spec §5).
+    expect(on.knocker.controller.messages, hasLength(1));
+  });
+
   test('screenshot round trip: CONTROL 0x03 → peer system line, own recorded '
       '(S14, spec §5.2)', () async {
     final s = await liveSession();
@@ -410,6 +436,7 @@ class _Session {
     SodiumSumo sodium,
     AtRestAead aead, {
     DateTime Function()? clock,
+    bool accepterReadReceipts = false,
   }) async {
     final knockerStatic = generateNoiseKeyPair(sodium);
     final accepterStatic = generateNoiseKeyPair(sodium);
@@ -435,6 +462,7 @@ class _Session {
       crid: crid,
       connector: _BridgeConnector(bridge, knocker: false),
       clock: clock,
+      readReceiptsEnabled: accepterReadReceipts,
     );
 
     // Accepter registers/listens first, then the knocker knocks. S12: the
@@ -482,6 +510,7 @@ class _Party {
     required Uint8List crid,
     required RelayConnector connector,
     DateTime Function()? clock,
+    bool readReceiptsEnabled = false,
   }) async {
     final device = TestDevice.create();
     final services = await device.boot();
@@ -510,6 +539,7 @@ class _Party {
       role: role,
       diag: Diag(aead: aead),
       clock: clock,
+      readReceiptsEnabled: readReceiptsEnabled,
     );
     return _Party(device: device, controller: controller);
   }

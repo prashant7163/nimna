@@ -6,13 +6,17 @@ import 'package:sodium/sodium_sumo.dart';
 import '../../crypto/at_rest_aead.dart';
 import '../../diag/diag.dart';
 import '../../diag/diag_events.dart';
+import '../../domain/models/channel_record.dart';
 import '../../noise/dh.dart';
 import '../../noise/xxpsk2.dart';
+import '../../protocol/channel_identity.dart';
 import '../../protocol/outer_frame.dart';
 import '../../protocol/pairing_code.dart';
 import '../../protocol/rendezvous.dart';
 import '../../protocol/token_payload.dart';
+import '../../storage/storage_service.dart';
 import '../../transport/relay_socket.dart';
+import '../joiner/safety_phrase_wordlist.dart';
 import 'pending_pairing.dart';
 
 /// TTL presets offered at generation (F2.1; S8 intake §5 CODE decision).
@@ -47,6 +51,22 @@ enum CreateLinePhase {
   /// the F2.4→F2.5 boundary; the S9 responder engine attaches here.
   bridged,
 
+  /// F2.6 — the handshake finished; the safety phrase is shown, awaiting
+  /// match / don't-match (the closing ritual of pairing, spec §3.1.5).
+  verifying,
+
+  /// F2.7 — "They match": naming the line (label is local-only) before the
+  /// sole persistence point.
+  naming,
+
+  /// The channel is persisted; the flow is complete (→ F4/F5). The code has
+  /// done its job and is discarded.
+  finalized,
+
+  /// F2.9 — "They don't match": the pairing is thrown away LOCALLY (USER
+  /// decision — no peer wire signal; the copy must NOT imply the peer is told).
+  mismatch,
+
   /// F2.8 — TTL lapsed unused; code and keypair discarded.
   expired,
 
@@ -68,15 +88,46 @@ class CreateLineController extends ChangeNotifier {
     required this._connector,
     required this._store,
     required this._diag,
+    StorageService? storage,
+    AtRestAead? aead,
+    Future<List<String>> Function()? wordlistLoader,
     DateTime Function()? clock,
     this.backgroundGrace = const Duration(seconds: 30),
-  }) : _clock = clock ?? DateTime.now;
+    // The finalize deps below are assigned in the initializer list rather than
+    // as `this._x` formals so the public constructor keeps typed, meaningfully
+    // named parameters (storage/aead/wordlistLoader) for call sites.
+  }) : _clock = clock ?? DateTime.now,
+       _storage = storage,
+       // ignore: prefer_initializing_formals
+       _wordlistLoader = wordlistLoader {
+    // Finalize (F2.6/F2.7 — S16) is enabled when the creation composition root
+    // supplies storage: the controller then drives the from-spec responder
+    // itself, computes the safety phrase, and persists the channel on a match.
+    // Absent storage (older tests that only exercise S8's setup→bridge hold),
+    // behaviour is exactly S8's — the external attachResponder seam still works.
+    if (aead != null) {
+      _aead = aead;
+    }
+    _finalizeEnabled = storage != null;
+  }
 
   final SodiumSumo _sodium;
   final RelayConnector _connector;
   final PendingPairingStore _store;
   final Diag _diag;
   final DateTime Function() _clock;
+
+  /// S16 finalize deps (F2.6/F2.7). Null in the S8-era setup/hold tests.
+  final StorageService? _storage;
+  final Future<List<String>> Function()? _wordlistLoader;
+  bool _finalizeEnabled = false;
+
+  List<String>? _safetyPhrase;
+
+  /// The three safety-phrase words (F2.6), available in [CreateLinePhase]
+  /// `verifying`. Protocol output, one global wordlist, identical in every
+  /// locale (spec §3.1.4) — never localized copy.
+  List<String>? get safetyPhrase => _safetyPhrase;
 
   /// How long the socket is held after backgrounding before it closes
   /// (spec §3.3 ~30 s; symmetric by policy).
@@ -256,6 +307,100 @@ class CreateLineController extends ChangeNotifier {
     await _discard(CreateLinePhase.cancelled);
   }
 
+  /// After a valid handshake (F2.5→F2.6): the relay is no longer needed, so
+  /// the connection closes; the safety phrase is derived from the shared key
+  /// material (identical on both ends — spec §3.1.4, order-independent salt)
+  /// and shown for verification. Locale-independent protocol output.
+  Future<void> _onHandshakeComplete() async {
+    await _closeConnection();
+    _expiryTimer?.cancel();
+    final material = _material;
+    final pending = _pending;
+    if (material == null || pending == null) {
+      return;
+    }
+    final words = await (_wordlistLoader ?? _defaultWordlist)();
+    if (_disposed) {
+      return;
+    }
+    _safetyPhrase = safetyPhraseWords(
+      ss: material.ss,
+      aPublic: pending.publicKey,
+      bPublic: material.peerStaticPublic,
+      wordlist: words,
+    );
+    _phase = CreateLinePhase.verifying;
+    notifyListeners();
+  }
+
+  /// F2.6 "They match" → name the line (F2.7). The channel is NOT yet
+  /// persisted; it is written only at [finish], strictly after this match.
+  void confirmMatch() {
+    if (_phase != CreateLinePhase.verifying) {
+      return;
+    }
+    _phase = CreateLinePhase.naming;
+    notifyListeners();
+  }
+
+  /// F2.6 "They don't match" → F2.9. A LOCAL-ONLY silent discard (USER
+  /// decision): NO peer wire signal is ever sent (the relay connection was
+  /// already closed at handshake completion), and nothing was persisted, so a
+  /// decline leaves nothing to un-persist. The mismatch copy must never imply
+  /// the peer is told.
+  Future<void> declineMismatch() async {
+    if (_phase != CreateLinePhase.verifying) {
+      return;
+    }
+    await _discard(CreateLinePhase.mismatch);
+  }
+
+  /// F2.7 "Done" → persist the channel locally with [label] (label is
+  /// local-only, spec §6). The sole persistence point, always after a match.
+  /// Mirrors the joiner's finalize; the creator's own static keypair is the
+  /// pending record's (it was the Noise responder's static, §3.1.3).
+  Future<void> finish(String label) async {
+    final storage = _storage;
+    final material = _material;
+    final pending = _pending;
+    if (_phase != CreateLinePhase.naming ||
+        storage == null ||
+        material == null ||
+        pending == null) {
+      return;
+    }
+    final aead = _aead ??= AtRestAead(_sodium);
+    final record = ChannelRecord(
+      id: aead.randomBytes(16),
+      // create() takes ownership of these buffers (moved into SecureKeys,
+      // zeroized); pending.secretKey.extractBytes() copies, so the pending
+      // record's own disposal below is safe.
+      ownStaticPrivate: pending.secretKey.extractBytes(),
+      ownStaticPublic: Uint8List.fromList(pending.publicKey),
+      peerStaticPublic: material.peerStaticPublic,
+      crid: material.crid,
+      label: label,
+      cdk: aead.randomBytes(32),
+      createdAtMs: _clock().toUtc().millisecondsSinceEpoch,
+      // Persist the §5.7 present-form token if the joiner shared one (§3.2.1);
+      // S9 ships push-off, so no present token exists yet — no retrofit.
+      peerDeviceToken: material.peerToken.isPresent
+          ? material.peerToken.encode()
+          : null,
+    );
+    await storage.channels.create(record);
+    _diag.log(DiagEvent.pairingFinalized);
+    // The code has done its job: discard it and all key material, land on
+    // `finalized`.
+    await _discard(CreateLinePhase.finalized);
+  }
+
+  /// Default wordlist loader (the pinned global EFF list, spec §3.1.4) — the
+  /// same source the joiner uses. Tests inject a substitute via
+  /// [CreateLineController]'s `wordlistLoader`.
+  static Future<List<String>> _defaultWordlist() =>
+      SafetyPhraseWordlist.load().then((w) => w.words);
+
   /// Wall-clock expiry check — run on every resume/launch and by the
   /// foreground timer.
   Future<void> checkExpiryNow() async {
@@ -335,14 +480,14 @@ class CreateLineController extends ChangeNotifier {
           _expiryTimer?.cancel();
           _phase = CreateLinePhase.bridged;
           _diag.log(DiagEvent.pairingBridged);
-          if (_responderEnabled) {
+          if (_responderEnabled || _finalizeEnabled) {
             _startResponder();
           }
           notifyListeners();
         }
       case FrameType.pairData:
         if (_phase == CreateLinePhase.bridged) {
-          if (_responderEnabled) {
+          if (_responderEnabled || _finalizeEnabled) {
             _driveResponder(frame.payload);
           } else {
             pairDataFrames.add(frame.payload);
@@ -401,7 +546,14 @@ class CreateLineController extends ChangeNotifier {
         );
         _sendPairData(responder.writeM4(header));
         _material = responder.finalizeChannel();
-        _onResponderComplete?.call(_material!);
+        if (_onResponderComplete != null) {
+          // External seam (the end-to-end pairing test drives its own finalize).
+          _onResponderComplete!.call(_material!);
+        } else if (_finalizeEnabled) {
+          // Production (S16): the controller finalizes itself — compute the
+          // safety phrase and advance to F2.6.
+          unawaited(_onHandshakeComplete());
+        }
       }
       _responderStep++;
     } on PairingHandshakeError {

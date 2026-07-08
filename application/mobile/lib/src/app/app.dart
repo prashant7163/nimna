@@ -76,7 +76,13 @@ class _NimnaAppState extends State<NimnaApp> with WidgetsBindingObserver {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         onGenerateRoute: onGenerateRoute,
-        initialRoute: Routes.channelList,
+        // F1 first-run gate (S16): a fresh install lands on onboarding; every
+        // later launch (the marker is set) goes straight to the channel list.
+        // Read synchronously at build — a plaintext marker outside the lock
+        // perimeter, so it is available before any unlock.
+        initialRoute: widget.services.firstRun.hasSeenOnboarding()
+            ? Routes.channelList
+            : Routes.onboarding,
         // LockGate wraps the Navigator itself: sealed ⇒ the whole subtree
         // is replaced (zero-leak rule), never a route stacked above.
         builder: (context, navigator) => LockGate(

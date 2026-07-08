@@ -8,6 +8,7 @@ import 'package:nimna/src/crypto/record_cipher.dart';
 import 'package:nimna/src/crypto/sodium_instance.dart';
 import 'package:nimna/src/lock/biometric_gate.dart';
 import 'package:nimna/src/lock/lock_config_store.dart';
+import 'package:nimna/src/push/push_service.dart';
 import 'package:nimna/src/storage/keys/master_key_store.dart';
 import 'package:nimna/src/storage/store_root.dart';
 import 'package:sodium/sodium_sumo.dart';
@@ -129,7 +130,14 @@ class TestDevice {
 
   StoreRoot get storeRoot => StoreRoot.at(rootDir);
 
-  Future<NimnaServices> boot({MasterKeyStore? masterKeyStore}) async {
+  /// [onboardingSeen] defaults TRUE: the vast majority of app-level tests
+  /// predate the F1 first-run gate and expect to land on the channel list, so
+  /// boot marks onboarding seen. Onboarding-flow tests pass `false`.
+  Future<NimnaServices> boot({
+    MasterKeyStore? masterKeyStore,
+    PushService? pushService,
+    bool onboardingSeen = true,
+  }) async {
     if (!_ffiInitialized) {
       sqfliteFfiInit();
       _ffiInitialized = true;
@@ -147,7 +155,13 @@ class TestDevice {
       pinMemLimit: testPinMemLimit,
       lockScheduler: lockScheduler,
       observeLifecycle: observeLifecycle,
+      // S16: a spy PushService lets the bootstrap-level bind test assert the
+      // SessionLauncher's onSessionBound hook fired at the composition root.
+      pushService: pushService,
     );
+    if (onboardingSeen) {
+      await services.firstRun.markSeen();
+    }
     _services = services;
     return services;
   }

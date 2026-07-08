@@ -20,6 +20,7 @@ import '../../app/transitions.dart';
 import '../../media/pipeline/media_export.dart';
 import '../../media/ui/attach_sheet.dart';
 import '../../media/ui/media_viewer.dart';
+import '../../presence/reconnect_coordinator.dart' show ReconnectPhase;
 import '../../screenshot/screenshot_detector.dart';
 import '../../screenshot/screenshot_notice.dart';
 import '../../screenshot/screenshot_system_line.dart';
@@ -49,11 +50,51 @@ class ChatScreen extends StatefulWidget {
     required this.label,
     this.screenshotDetector,
     this.sensitiveAnalyzer,
+    this.onKnock,
+    this.knockDeadline,
+    this.knockLapsed = false,
+    this.knockStaleHint = false,
+    this.reconnectPhase,
+    this.autoStart = true,
     super.key,
   });
 
   final SessionController controller;
   final String label;
+
+  /// S16 presence choreography (all optional; a bare ChatScreen renders exactly
+  /// as before). The coordinating [LinePresence] wraps this screen and maps the
+  /// knock/reconnect controllers → these props. When any is set, the pre-live
+  /// surfaces (F5.1 "Not on the line", screen-11 waiting, F5.13 "No answer.")
+  /// render; when all are unset/false the live chat renders unchanged.
+
+  /// F5.1/F5.13 — the Knock affordance in the header (voice string, verb
+  /// "Knock" / after a lapse "Knock again"). Null when live or when this screen
+  /// is used standalone (e.g. the push-tap incoming-knock pick-up path). Its
+  /// presence also flags the "compose-while-not-on-the-line" surface (§3.4).
+  final VoidCallback? onKnock;
+
+  /// Screen 11 (chat-waiting) — the moment the current knock lapses; drives the
+  /// F5 countdown (knock_lapsesInSeconds) and the waiting caption. Null unless a
+  /// knock is in flight.
+  final DateTime? knockDeadline;
+
+  /// F5.13 — the knock's 60 s window closed unanswered: render "No answer." and
+  /// re-label the Knock affordance "Knock again". Never an attribution.
+  final bool knockLapsed;
+
+  /// F5.14 — the §6.1 local stale-knock hint after repeated unanswered knocks
+  /// (no wire signal, no attribution).
+  final bool knockStaleHint;
+
+  /// F5.15 — a LIVE-session drop is auto-recovering; overrides the status line
+  /// with the reconnect caption (dropped/recovered/lost). Null/idle otherwise.
+  final ReconnectPhase? reconnectPhase;
+
+  /// Whether the screen kicks the connection lane itself on mount. True for the
+  /// standalone /chat route (S10); [LinePresence] owns the lifecycle and passes
+  /// false so the CRID is never registered on two connections at once.
+  final bool autoStart;
 
   /// S14 (spec §5.2): local screenshot detection. Injected in tests; defaults
   /// to the platform detector. The screen owns its lifecycle — it observes ONLY
@@ -79,10 +120,16 @@ class _ChatScreenState extends State<ChatScreen> {
   StreamSubscription<void>? _screenshotSub;
   late final SensitiveContentAnalyzer _analyzer;
 
+  /// A 1 s repaint tick, live ONLY while a knock countdown is on screen
+  /// (knockDeadline set) — the same lightweight ticker pattern the knock
+  /// screen uses. No timer runs in the steady live/idle chat.
+  Timer? _countdownTick;
+
   @override
   void initState() {
     super.initState();
     _sub = widget.controller.events.listen(_onEvent);
+    _syncCountdownTick();
     // Screenshot detection is on ONLY while this screen is mounted — spec
     // §5.2's "detection fires only while content is on screen inside the app".
     _detector = widget.screenshotDetector ?? PlatformScreenshotDetector();
@@ -92,18 +139,51 @@ class _ChatScreenState extends State<ChatScreen> {
       widget.controller.noticeLocalScreenshot();
     });
     unawaited(_detector.start());
-    // Kick the live path (register CRID / knock / accept). A no-op if already
-    // established. TODO(S12): the entry point owns start() once presence lands.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.controller.lineState == SessionLineState.offline) {
-        unawaited(widget.controller.start());
-      }
-    });
+    // Kick the live path (register CRID / knock / accept) ONLY when this screen
+    // owns the lifecycle (the standalone /chat route, S10). Under [LinePresence]
+    // (S16) the coordinator owns start(), so autoStart is false — the CRID is
+    // never registered on two connections at once (the one-CRID invariant).
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (widget.controller.lineState == SessionLineState.offline) {
+          unawaited(widget.controller.start());
+        }
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A reconnect swaps in a FRESH controller (keys die per session, §3.3.1);
+    // re-subscribe so the thread follows the live controller. The screen holds
+    // no protocol state, so nothing else migrates.
+    if (!identical(widget.controller, oldWidget.controller)) {
+      _sub?.cancel();
+      _sub = widget.controller.events.listen(_onEvent);
+    }
+    _syncCountdownTick();
+  }
+
+  /// Runs a 1 s repaint tick only while a knock countdown is on screen.
+  void _syncCountdownTick() {
+    final wantTick = widget.knockDeadline != null;
+    if (wantTick && _countdownTick == null) {
+      _countdownTick = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+    } else if (!wantTick) {
+      _countdownTick?.cancel();
+      _countdownTick = null;
+    }
   }
 
   @override
   void dispose() {
     _sub?.cancel();
+    _countdownTick?.cancel();
     unawaited(_screenshotSub?.cancel());
     unawaited(_detector.stop());
     unawaited(_detector.dispose());
@@ -237,6 +317,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           children: [
             _header(context, tokens, l10n),
+            _presenceBanner(tokens, l10n),
             Expanded(
               child: ListView(
                 controller: _scroll,
@@ -264,8 +345,26 @@ class _ChatScreenState extends State<ChatScreen> {
   /// order (never re-sorted), with each screenshot system line interleaved just
   /// AFTER its anchor message (spec §5.2, string 12). A notice anchored to null
   /// leads the thread; one whose anchor was deleted/purged falls to the end.
+  /// Whether the coordinator has this screen in a "not on the line" posture
+  /// (listening / knocking / lapsed) — the §3.4 compose-while-offline surface.
+  bool get _notOnLine =>
+      (widget.onKnock != null ||
+          widget.knockDeadline != null ||
+          widget.knockLapsed) &&
+      widget.controller.lineState != SessionLineState.live;
+
   List<Widget> _threadChildren() {
     final messages = widget.controller.messages;
+    // F5.1 — nothing written yet and not on the line: the compose-to-outbox
+    // explainer (they're not on the line; anything you write waits on your
+    // phone). Only in the plain listening state — the waiting/lapsed banners
+    // above already carry their own copy.
+    if (_notOnLine &&
+        messages.isEmpty &&
+        widget.knockDeadline == null &&
+        !widget.knockLapsed) {
+      return [_peerOfflineEmptyState()];
+    }
     final notices = widget.controller.screenshotNotices;
     final present = <String, List<ScreenshotNotice>>{};
     final leading = <ScreenshotNotice>[];
@@ -288,6 +387,11 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     final children = <Widget>[];
+    // F5.1 — the outbox header over messages waiting on your phone while not on
+    // the line (spec §3.4, "WAITING — ON YOUR PHONE ONLY").
+    if (_notOnLine && messages.isNotEmpty) {
+      children.add(_waitingHeader());
+    }
     for (final n in leading) {
       children.add(systemLine(n));
     }
@@ -315,6 +419,14 @@ class _ChatScreenState extends State<ChatScreen> {
           children.add(systemLine(n));
         }
       }
+      // F7 read receipts: a single right-aligned "Seen" caption under the
+      // latest sent message the peer has read (spec §5). Only ever present when
+      // the PEER opted into receipts; silent otherwise. Never a per-message
+      // badge — one caption, iMessage-style.
+      final seenAnchor = widget.controller.latestSeenOutboundRecordId;
+      if (seenAnchor != null && _hex(seenAnchor) == _hex(m.recordId)) {
+        children.add(_seenCaption());
+      }
     }
     for (final n in trailing) {
       children.add(systemLine(n));
@@ -323,6 +435,63 @@ class _ChatScreenState extends State<ChatScreen> {
       children.add(const PeerTypingBubble());
     }
     return children;
+  }
+
+  /// F5.1 — the empty-thread "not on the line" explainer (compose-to-outbox,
+  /// spec §3.4). Centered; every string ARB-sourced.
+  Widget _peerOfflineEmptyState() {
+    final tokens = Theme.of(context).extension<NimnaTokens>()!;
+    final l10n = AppLocalizations.of(context)!;
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: NimnaSpacing.base * 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.chat_peerOfflineHeadline,
+            textAlign: TextAlign.center,
+            style: text.titleMedium?.copyWith(color: tokens.textPrimary),
+          ),
+          const SizedBox(height: NimnaSpacing.base * 2),
+          Text(
+            l10n.chat_peerOfflineBody,
+            textAlign: TextAlign.center,
+            style: text.bodyMedium?.copyWith(color: tokens.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// F5.1 — the outbox header shown over messages waiting on your phone.
+  Widget _waitingHeader() {
+    final tokens = Theme.of(context).extension<NimnaTokens>()!;
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: NimnaSpacing.base * 2),
+      child: Center(
+        child: Text(
+          l10n.chat_waitingHeader,
+          style: NimnaText.caption.copyWith(color: tokens.textTertiary),
+        ),
+      ),
+    );
+  }
+
+  Widget _seenCaption() {
+    final tokens = Theme.of(context).extension<NimnaTokens>()!;
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(top: 2, bottom: 4),
+      child: Align(
+        alignment: AlignmentDirectional.centerEnd,
+        child: Text(
+          l10n.session_readReceiptSeen,
+          style: NimnaText.caption.copyWith(color: tokens.textTertiary),
+        ),
+      ),
+    );
   }
 
   Widget _header(
@@ -346,6 +515,9 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               Semantics(
                 button: true,
+                // Name the icon-only affordance for screen readers (framework
+                // localized back tooltip; same precedent as NimnaBackButton).
+                label: MaterialLocalizations.of(context).backButtonTooltip,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   // Leaving the screen is not hanging up (wireframe F5.4).
@@ -382,6 +554,29 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                   ),
+                )
+              // F5.1/F5.13 — the Knock affordance (wireframe F5 chathead). Only
+              // when not live and a coordinator wired it; "Knock again" after a
+              // lapse. A deliberate human tap — the app never knocks for you.
+              else if (widget.onKnock != null && widget.knockDeadline == null)
+                Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: widget.onKnock,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: NimnaSpacing.base * 2,
+                        vertical: NimnaSpacing.base * 2,
+                      ),
+                      child: Text(
+                        widget.knockLapsed
+                            ? l10n.knock_again
+                            : l10n.knock_knock,
+                        style: NimnaText.label.copyWith(color: tokens.lineLive),
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -396,6 +591,27 @@ class _ChatScreenState extends State<ChatScreen> {
     final state = widget.controller.lineState;
     final String label;
     final Color color;
+    // F5.15 — a live-drop recovery (reconnect_coordinator phase) overrides the
+    // controller's line state with the honest reconnect caption. No controller
+    // ever sets SessionLineState.reconnecting; the PHASE is the source of truth.
+    final phase = widget.reconnectPhase;
+    if (phase != null && phase != ReconnectPhase.idle) {
+      switch (phase) {
+        case ReconnectPhase.reconnecting:
+          label = l10n.session_lineDropped;
+          color = tokens.lineIdle;
+        case ReconnectPhase.recovered:
+          label = l10n.session_lineRecovered;
+          color = tokens.lineLive;
+        case ReconnectPhase.lost:
+          label = l10n.session_lineLost;
+          color = tokens.lineIdle;
+        case ReconnectPhase.idle:
+          label = l10n.session_lineOnline;
+          color = tokens.lineLive;
+      }
+      return _statusRow(tokens, label, color);
+    }
     switch (state) {
       case SessionLineState.live:
         label = l10n.session_lineOnline;
@@ -429,6 +645,10 @@ class _ChatScreenState extends State<ChatScreen> {
         label = l10n.session_lineOffline;
         color = tokens.lineIdle;
     }
+    return _statusRow(tokens, label, color);
+  }
+
+  Widget _statusRow(NimnaTokens tokens, String label, Color color) {
     return Row(
       children: [
         Container(width: 24, height: NimnaLine.thickness, color: color),
@@ -438,6 +658,58 @@ class _ChatScreenState extends State<ChatScreen> {
           style: NimnaText.caption.copyWith(color: tokens.textSecondary),
         ),
       ],
+    );
+  }
+
+  /// The presence banner between the header and the thread (S16). It renders the
+  /// two distinct "not on the line" surfaces the design keeps apart:
+  ///  - screen 11 (knock in flight): knock_waitingCaption + a live countdown.
+  ///  - F5.13 (lapsed): "No answer." (+ the §6.1 stale hint when repeated).
+  /// Empty (a zero-height box) in the steady live/idle chat.
+  Widget _presenceBanner(NimnaTokens tokens, AppLocalizations l10n) {
+    final deadline = widget.knockDeadline;
+    final List<Widget> lines;
+    if (deadline != null) {
+      final remaining = deadline.difference(DateTime.now()).inSeconds;
+      lines = [
+        Text(
+          l10n.knock_waitingCaption,
+          style: NimnaText.caption.copyWith(color: tokens.textSecondary),
+        ),
+        const SizedBox(height: NimnaSpacing.base),
+        Text(
+          l10n.knock_lapsesInSeconds(remaining < 0 ? 0 : remaining),
+          style: NimnaText.caption.copyWith(color: tokens.textTertiary),
+        ),
+      ];
+    } else if (widget.knockLapsed) {
+      lines = [
+        Text(
+          l10n.knock_noAnswer,
+          style: NimnaText.caption.copyWith(color: tokens.textSecondary),
+        ),
+        if (widget.knockStaleHint) ...[
+          const SizedBox(height: NimnaSpacing.base),
+          Text(
+            l10n.knock_staleHint,
+            style: NimnaText.caption.copyWith(color: tokens.textTertiary),
+          ),
+        ],
+      ];
+    } else {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        NimnaSpacing.screenMargin,
+        0,
+        NimnaSpacing.screenMargin,
+        NimnaSpacing.base * 2,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: lines,
+      ),
     );
   }
 

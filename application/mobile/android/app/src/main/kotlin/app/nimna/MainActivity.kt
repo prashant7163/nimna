@@ -46,6 +46,12 @@ class MainActivity : FlutterFragmentActivity() {
                     unregisterCaptureCallback()
                     result.success(null)
                 }
+                // S16 (F1.4 onboarding): report the OS API level so Dart can
+                // render the Android-13-and-older screenshot caveat
+                // conditionally (SDK_INT < 34 == no detection floor). No
+                // permission, no telemetry — a single integer already public
+                // to any app.
+                "getSdkInt" -> result.success(Build.VERSION.SDK_INT)
                 else -> result.notImplemented()
             }
         }

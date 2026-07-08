@@ -5,23 +5,30 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../app/app_scope.dart';
+import '../../../domain/channel_repository.dart';
 import '../../../presence/push_opt_in.dart';
 import '../../../presence/push_opt_in_tile.dart';
 import '../../theme/nimna_tokens.dart';
 import '../../widgets/nav_bar.dart';
+import '../../widgets/nimna_toggle.dart';
 
-/// A MINIMAL, F7-consistent per-line settings surface (S15) — the reachable
-/// mount that makes the `PushOptInTile` live end-to-end (requirement 4). The
-/// FULL F7 (label edit · read receipts · typing · per-line wipe) is S16; this
-/// surface ships only the push toggle so push is actually usable/testable now.
+/// F7 — the per-line channel settings (wireframe F7.1, spec §6). Everything
+/// here is per-channel and stored ONLY on this phone. Three toggles, each with
+/// string-verbatim honesty in place (the caption IS the disclosure, never a
+/// one-time dialog):
 ///
-/// The toggle writes through [PushOptIn.setEnabled] (persisted inside the
-/// channel-record ciphertext) and notifies [PushService.onOptInChanged], which
-/// acquires THIS device's own token on opt-in (the honest moment for the OS
-/// permission prompt) and announces / revokes it on any live session. Push is
-/// per-line, opt-IN, DEFAULT OFF; off is pure burner-line mode.
+///  - **Notify me when they knock** (push) — opt-IN, DEFAULT OFF (string 18).
+///  - **Read receipts** — opt-IN, DEFAULT OFF (USER 2026-07-07): when on, the
+///    peer sees "Seen" under messages you read. Rides CONTROL 0x02.
+///  - **Typing indicator** — DEFAULT ON (USER 2026-07-07); this is the OFF
+///    switch (the F7 mitigation for the keystroke-timing leak). Rides
+///    CONTROL 0x01.
 ///
-/// Every string is ARB-sourced; the channel [label] is local user data.
+/// Receipts/typing are honored by the peer's app, not enforced (same honor
+/// system as disappearing messages). A change persists into the channel record
+/// ciphertext and takes effect from the NEXT session start (the live session's
+/// preferences are captured at launch). Every string is ARB-sourced; the label
+/// is local user data; layout survives German-length copy.
 class ChannelNotificationsScreen extends StatefulWidget {
   const ChannelNotificationsScreen({
     required this.channelId,
@@ -31,7 +38,7 @@ class ChannelNotificationsScreen extends StatefulWidget {
 
   final Uint8List channelId;
 
-  /// The channel's local label (F7 header "‹ {label}"). Local-only (spec §6).
+  /// The channel's local label (F7 header). Local-only (spec §6).
   final String label;
 
   @override
@@ -41,8 +48,12 @@ class ChannelNotificationsScreen extends StatefulWidget {
 
 class _ChannelNotificationsScreenState
     extends State<ChannelNotificationsScreen> {
-  bool _enabled = false;
+  bool _push = false;
+  bool _readReceipts = false;
+  bool _typing = true;
   bool _read = false;
+
+  ChannelRepository get _channels => AppScope.of(context).storage.channels;
 
   @override
   void didChangeDependencies() {
@@ -51,17 +62,17 @@ class _ChannelNotificationsScreenState
       return;
     }
     _read = true;
-    // A fresh PushOptIn over the currently-open channel repo (the perimeter is
-    // open while this screen shows) — never a captured, stale repo. Read here
-    // (not initState) so the AppScope inherited-widget lookup is legal.
-    _enabled = PushOptIn(
-      AppScope.of(context).storage.channels,
-    ).isEnabled(widget.channelId);
+    // Read against the currently-open channel repo (the perimeter is open while
+    // this screen shows) — never a captured, stale repo.
+    final record = _channels.byId(widget.channelId);
+    _push = PushOptIn(_channels).isEnabled(widget.channelId);
+    _readReceipts = record?.readReceiptsOptIn ?? false;
+    _typing = record?.typingEnabled ?? true;
   }
 
-  Future<void> _onChanged(bool value) async {
+  Future<void> _onPushChanged(bool value) async {
     final services = AppScope.of(context);
-    setState(() => _enabled = value);
+    setState(() => _push = value);
     await PushOptIn(
       services.storage.channels,
     ).setEnabled(widget.channelId, enabled: value);
@@ -70,6 +81,22 @@ class _ChannelNotificationsScreenState
     unawaited(
       services.pushService.onOptInChanged(widget.channelId, enabled: value),
     );
+  }
+
+  Future<void> _onReadReceiptsChanged(bool value) async {
+    setState(() => _readReceipts = value);
+    final record = _channels.byId(widget.channelId);
+    if (record != null && record.readReceiptsOptIn != value) {
+      await _channels.update(record.copyWith(readReceiptsOptIn: value));
+    }
+  }
+
+  Future<void> _onTypingChanged(bool value) async {
+    setState(() => _typing = value);
+    final record = _channels.byId(widget.channelId);
+    if (record != null && record.typingEnabled != value) {
+      await _channels.update(record.copyWith(typingEnabled: value));
+    }
   }
 
   @override
@@ -95,10 +122,87 @@ class _ChannelNotificationsScreenState
                     style: text.bodySmall?.copyWith(color: tokens.textTertiary),
                   ),
                   const SizedBox(height: NimnaSpacing.base * 2),
-                  PushOptInTile(enabled: _enabled, onChanged: _onChanged),
+                  PushOptInTile(enabled: _push, onChanged: _onPushChanged),
+                  _ToggleRow(
+                    label: l10n.settings_readReceiptsLabel,
+                    caption: l10n.settings_readReceiptsCaption,
+                    value: _readReceipts,
+                    onChanged: (v) => unawaited(_onReadReceiptsChanged(v)),
+                  ),
+                  _ToggleRow(
+                    label: l10n.settings_typingLabel,
+                    caption: l10n.settings_typingCaption,
+                    value: _typing,
+                    onChanged: (v) => unawaited(_onTypingChanged(v)),
+                    hairline: false,
+                  ),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One per-line toggle row (F7 `.setrow` + toggle): label + always-visible
+/// honesty caption + [NimnaToggle]. Mirrors [PushOptInTile]'s shape so the
+/// three rows read as one list. Caption wraps — survives German-length copy.
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
+    required this.label,
+    required this.caption,
+    required this.value,
+    required this.onChanged,
+    this.hairline = true,
+  });
+
+  final String label;
+  final String caption;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final bool hairline;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<NimnaTokens>()!;
+    final text = Theme.of(context).textTheme;
+    return Semantics(
+      container: true,
+      toggled: value,
+      label: label,
+      child: Container(
+        constraints: const BoxConstraints(
+          minHeight: NimnaSpacing.listRowSettings,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: NimnaSpacing.base * 3.5),
+        decoration: BoxDecoration(
+          border: hairline
+              ? Border(bottom: BorderSide(color: tokens.hairline))
+              : null,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: text.labelLarge?.copyWith(color: tokens.textPrimary),
+                  ),
+                  const SizedBox(height: NimnaSpacing.base * 0.5),
+                  Text(
+                    caption,
+                    style: text.bodySmall?.copyWith(color: tokens.textTertiary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: NimnaSpacing.base * 3),
+            NimnaToggle(value: value, onChanged: onChanged),
           ],
         ),
       ),

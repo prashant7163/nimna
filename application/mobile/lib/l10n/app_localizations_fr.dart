@@ -12,35 +12,38 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'nimna';
 
   @override
-  String get channelListEmptyHeadline => 'No lines yet.';
+  String get channelListEmptyHeadline => 'Aucune ligne pour l\'instant.';
 
   @override
   String get channelListEmptyBody =>
-      'Create a Nimna code, or enter one you\'ve been given.';
+      'Créez un code Nimna, ou saisissez celui qu\'on vous a donné.';
 
   @override
-  String get actionCreateCode => 'Create a code';
+  String get channelListStatusQuiet => 'Silencieuse';
 
   @override
-  String get actionEnterCode => 'Enter a code';
+  String get actionCreateCode => 'Créer un code';
 
   @override
-  String get chat_messageActionReply => 'Reply';
+  String get actionEnterCode => 'Saisir un code';
 
   @override
-  String get chat_messageActionReact => 'React';
+  String get chat_messageActionReply => 'Répondre';
 
   @override
-  String get chat_messageActionDelete => 'Delete';
+  String get chat_messageActionReact => 'Réagir';
 
   @override
-  String get chat_replyingToLabel => 'Replying to';
+  String get chat_messageActionDelete => 'Supprimer';
 
   @override
-  String get chat_replyCancelA11y => 'Cancel reply';
+  String get chat_replyingToLabel => 'En réponse à';
 
   @override
-  String get chat_replyTombstone => 'Message no longer available.';
+  String get chat_replyCancelA11y => 'Annuler la réponse';
+
+  @override
+  String get chat_replyTombstone => 'Message plus disponible.';
 
   @override
   String get chat_replyPreviewPhoto => 'Photo';
@@ -50,449 +53,457 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String chat_reactionOwnA11y(String emoji) {
-    return 'You reacted $emoji. Tap to remove.';
+    return 'Vous avez réagi $emoji. Touchez pour retirer.';
   }
 
   @override
   String chat_reactionPeerA11y(String emoji) {
-    return 'They reacted $emoji.';
+    return 'L\'autre personne a réagi $emoji.';
   }
 
   @override
-  String get chat_reactionPickMoreA11y => 'Choose another emoji';
+  String get chat_reactionPickMoreA11y => 'Choisir un autre emoji';
 
   @override
   String get pairing_selfJoinOwnCode =>
-      'This is your own Nimna code — share it with the other person.';
+      'C\'est votre propre code Nimna — partagez-le avec l\'autre personne.';
 
   @override
-  String get pairing_createTitle => 'Create a code';
+  String get pairing_createTitle => 'Créer un code';
 
   @override
   String get pairing_createIntro =>
-      'A code pairs your phone with one other. Share it however you like — in person is safest.';
+      'Un code associe votre téléphone à un seul autre. Partagez-le comme vous voulez — en personne, c\'est le plus sûr.';
 
   @override
-  String get pairing_ttlLabel => 'Code works for';
+  String get pairing_ttlLabel => 'Le code fonctionne pendant';
 
   @override
-  String get pairing_ttlHint => 'Shorter is safer. One use, either way.';
+  String get pairing_ttlHint =>
+      'Plus court, plus sûr. Une seule utilisation, dans tous les cas.';
 
   @override
   String pairing_ttlHours(int hours) {
     String _temp0 = intl.Intl.pluralLogic(
       hours,
       locale: localeName,
-      other: '$hours hours',
-      one: '1 hour',
+      other: '$hours heures',
+      one: '1 heure',
     );
     return '$_temp0';
   }
 
   @override
   String get pairing_offlineError =>
-      'You\'re offline. A code needs the relay listening for it — try again when you\'re connected.';
+      'Vous êtes hors connexion. Un code a besoin que le relais soit à l\'écoute — réessayez dès que vous avez une connexion.';
 
   @override
   String get pairing_shareBriefing =>
-      'Works once, expires in 24h — share it like a password.';
+      'Fonctionne une fois, expire dans 24 h — partagez-le comme un mot de passe.';
 
   @override
   String get pairing_eitherFormPairs =>
-      'The words or the square — either one pairs you.';
+      'Les mots ou le carré — l\'un comme l\'autre vous associe.';
 
   @override
-  String get pairing_copyAction => 'Copy';
+  String get pairing_copyAction => 'Copier';
 
   @override
-  String get pairing_shareAction => 'Share…';
+  String get pairing_shareAction => 'Partager…';
 
   @override
-  String get pairing_codeCopiedToast => 'Code copied.';
+  String get pairing_codeCopiedToast => 'Code copié.';
 
   @override
-  String get pairing_shareAsText => 'Share the code as text';
+  String get pairing_shareAsText => 'Partager le code en texte';
 
   @override
-  String get pairing_shareQrAsImage => 'Share the QR as an image';
+  String get pairing_shareQrAsImage => 'Partager le QR en image';
 
   @override
-  String get pairing_copyCode => 'Copy code';
+  String get pairing_copyCode => 'Copier le code';
 
   @override
-  String get pairing_waitingForJoin => 'Waiting for them to join…';
+  String get pairing_waitingForJoin =>
+      'En attente que l\'autre personne rejoigne…';
 
   @override
   String pairing_waitLifetime(int hours) {
     String _temp0 = intl.Intl.pluralLogic(
       hours,
       locale: localeName,
-      other: '$hours hours',
-      one: '1 hour',
+      other: '$hours heures',
+      one: '1 heure',
     );
-    return 'Your code works for $_temp0 — come back anytime. Pairing completes when you\'re both here.';
+    return 'Votre code fonctionne pendant $_temp0 — revenez quand vous voulez. L\'association se termine quand vous êtes tous les deux là.';
   }
 
   @override
-  String get pairing_cancelCode => 'Cancel this code';
+  String get pairing_cancelCode => 'Annuler ce code';
 
   @override
   String get pairing_stopWaitingConfirm =>
-      'Stop waiting? The code stops working.';
+      'Arrêter d\'attendre ? Le code cesse de fonctionner.';
 
   @override
-  String get pairing_notNow => 'Not now';
+  String get pairing_notNow => 'Pas maintenant';
 
   @override
-  String get pairing_expiredHeadline => 'This code expired unused.';
+  String get pairing_expiredHeadline => 'Ce code a expiré sans être utilisé.';
 
   @override
   String get pairing_expiredBody =>
-      'Nothing was created. Make a new one whenever you\'re ready.';
+      'Rien n\'a été créé. Faites-en un nouveau quand vous voulez.';
 
   @override
-  String get pairing_makeNewCode => 'Make a new code';
+  String get pairing_makeNewCode => 'Créer un nouveau code';
 
   @override
   String get pairing_spentBody =>
-      'That didn\'t finish. The code is spent — make a new one.';
+      'Ça ne s\'est pas terminé. Le code est épuisé — créez-en un nouveau.';
 
   @override
-  String get settings_title => 'Settings';
+  String get settings_title => 'Réglages';
 
   @override
-  String get settings_rowAppLock => 'App lock';
+  String get settings_rowAppLock => 'Verrouillage de l\'app';
 
   @override
   String get settings_rowAppLockOff =>
-      'Off — a PIN or your face, before anything shows';
+      'Désactivé — un code PIN ou votre visage, avant que rien ne s\'affiche';
 
   @override
-  String get settings_rowAppLockOn => 'On';
+  String get settings_rowAppLockOn => 'Activé';
 
   @override
-  String get settings_rowAppLockOnBiometric => 'On — PIN + Face ID';
+  String get settings_rowAppLockOnBiometric => 'Activé — code PIN + Face ID';
 
   @override
   String get settings_rowNotifications => 'Notifications';
 
   @override
   String get settings_rowNotificationsCaption =>
-      'Per line, off unless you turn them on';
+      'Par ligne, désactivées sauf si vous les activez';
 
   @override
-  String get settings_rowRelay => 'Relay';
+  String get settings_rowRelay => 'Relais';
 
   @override
   String get settings_rowRelayCaption => 'relay.nimna.app';
 
   @override
-  String get settings_rowLicenses => 'Licenses';
+  String get settings_rowLicenses => 'Licences';
 
   @override
-  String get settings_rowWipeEverything => 'Wipe everything';
+  String get settings_rowWipeEverything => 'Tout effacer';
 
   @override
   String get settings_rowWipeEverythingCaption =>
-      'Every line, every message — this phone.';
+      'Chaque ligne, chaque message — ce téléphone.';
 
   @override
-  String get lock_choosePinTitle => 'Choose a PIN';
+  String get lock_choosePinTitle => 'Choisir un code PIN';
 
   @override
   String get lock_choosePinCaption =>
-      'When locked, the screen shows only the symbol and this pad. Nothing else — not even how many lines you have.';
+      'Une fois verrouillé, l\'écran n\'affiche que le symbole et ce clavier. Rien d\'autre — pas même le nombre de lignes que vous avez.';
 
   @override
-  String get lock_confirmPinTitle => 'Enter it again';
+  String get lock_confirmPinTitle => 'Saisissez-le à nouveau';
 
   @override
-  String get lock_confirmPinMismatch => 'Those didn\'t match — start again.';
+  String get lock_confirmPinMismatch => 'Ça ne correspond pas — recommencez.';
 
   @override
-  String get lock_actionNext => 'Next';
+  String get lock_actionNext => 'Suivant';
 
   @override
-  String get lock_enterPinTitle => 'Enter your PIN';
+  String get lock_enterPinTitle => 'Saisissez votre code PIN';
 
   @override
-  String get lock_actionTurnOff => 'Turn off';
+  String get lock_actionTurnOff => 'Désactiver';
 
   @override
-  String get lock_biometricToggleLabel => 'Unlock with Face ID';
+  String get lock_biometricToggleLabel => 'Déverrouiller avec Face ID';
 
   @override
   String get lock_biometricToggleCaption =>
-      'Recommended. Falls back to your PIN.';
+      'Recommandé. À défaut, votre code PIN.';
 
   @override
   String get lock_noRecoveryCaption =>
-      'There\'s no way to recover a forgotten PIN — there\'s no account to prove you\'re you. Forgetting it means reinstalling, which wipes this phone\'s lines.';
+      'Il n\'existe aucun moyen de récupérer un code PIN oublié — il n\'y a pas de compte pour prouver que c\'est bien vous. L\'oublier signifie réinstaller, ce qui efface les lignes de ce téléphone.';
 
   @override
-  String get lock_biometricPromptReason => 'Unlock your lines.';
+  String get lock_biometricPromptReason => 'Déverrouillez vos lignes.';
 
   @override
-  String get lock_keypadDeleteA11y => 'Delete';
+  String get lock_keypadDeleteA11y => 'Supprimer';
 
   @override
-  String get wipe_fullTitle => 'Wipe everything?';
+  String get wipe_fullTitle => 'Tout effacer ?';
 
   @override
-  String get wipe_fullTitleEmphasis => 'everything';
+  String get wipe_fullTitleEmphasis => 'Tout';
 
   @override
   String get wipe_fullBody =>
-      'Keys and messages are destroyed on this phone. There is no backup, anywhere, by design — nothing can bring them back.';
+      'Les clés et les messages sont détruits sur ce téléphone. Il n\'existe aucune sauvegarde, nulle part, par conception — rien ne peut les ramener.';
 
   @override
-  String get wipe_holdToWipe => 'Hold to wipe';
+  String get wipe_holdToWipe => 'Maintenez pour effacer';
 
   @override
-  String get wipe_fullHoldCaption => 'Hold for 2½ seconds. Release to cancel.';
+  String get wipe_fullHoldCaption =>
+      'Maintenez pendant 2,5 secondes. Relâchez pour annuler.';
 
   @override
-  String get wipe_actionKeep => 'Keep';
+  String get wipe_actionKeep => 'Garder';
 
   @override
-  String get wipe_channelTitle => 'Wipe this line?';
+  String get wipe_channelTitle => 'Effacer cette ligne ?';
 
   @override
   String get wipe_channelBody =>
-      'Keys and messages for this line are destroyed on this phone. Nothing can bring them back.';
+      'Les clés et les messages de cette ligne sont détruits sur ce téléphone. Rien ne peut les ramener.';
 
   @override
   String get wipe_channelPeerNote =>
-      'Their phone keeps its side unless they wipe too.';
+      'Son téléphone conserve son côté, à moins que l\'autre personne l\'efface aussi.';
 
   @override
   String get wipe_channelHoldCaption =>
-      'Hold for 1.5 seconds. Let go to keep everything.';
+      'Maintenez pendant 1,5 seconde. Relâchez pour tout garder.';
 
   @override
-  String get wipe_channelWipedToast => 'Channel wiped.';
+  String get wipe_channelWipedToast => 'Ligne effacée.';
 
   @override
-  String get pairing_joinTitle => 'Enter a code';
+  String get pairing_joinTitle => 'Saisir un code';
 
   @override
   String get pairing_joinIntro =>
-      'Codes come from the other person. Each one works once.';
+      'Les codes viennent de l\'autre personne. Chacun fonctionne une seule fois.';
 
   @override
-  String get pairing_joinPaste => 'Paste';
+  String get pairing_joinPaste => 'Coller';
 
   @override
-  String get pairing_joinScan => 'Scan';
+  String get pairing_joinScan => 'Scanner';
 
   @override
-  String get pairing_joinUpload => 'Upload';
+  String get pairing_joinUpload => 'Importer';
 
   @override
-  String get pairing_joinAction => 'Join';
+  String get pairing_joinAction => 'Rejoindre';
 
   @override
   String get pairing_joinOffline =>
-      'You\'re offline. Joining needs a connection.';
+      'Vous êtes hors connexion. Rejoindre nécessite une connexion.';
 
   @override
-  String get pairing_joinScanTitle => 'Scan their code';
+  String get pairing_joinScanTitle => 'Scanner son code';
 
   @override
   String get pairing_joinScanCaption =>
-      'Point your camera at the code on their screen.';
+      'Pointez votre caméra vers le code sur son écran.';
 
   @override
-  String get pairing_joinScanEnterInstead => 'Enter it instead';
+  String get pairing_joinScanEnterInstead => 'Le saisir plutôt';
 
   @override
   String get pairing_joinCameraDenied =>
-      'No camera access — type the code instead.';
+      'Pas d\'accès à la caméra — saisissez le code plutôt.';
 
   @override
-  String get pairing_joinNoQrInFile => 'No code in that file.';
+  String get pairing_joinNoQrInFile => 'Aucun code dans ce fichier.';
 
   @override
-  String get pairing_joinFoundThem => 'Found them.';
+  String get pairing_joinFoundThem => 'Trouvé.';
 
   @override
-  String get pairing_joinSettingUp => 'Setting up the line…';
+  String get pairing_joinSettingUp => 'Mise en place de la ligne…';
 
   @override
   String get pairing_joinCodeSpentNote =>
-      'The code has done its job. It won\'t work again for anyone.';
+      'Le code a fait son travail. Il ne fonctionnera plus, pour personne.';
 
   @override
   String get pairing_joinSpentBody =>
-      'That didn\'t finish. The code is spent — ask them to make a new one.';
+      'Ça ne s\'est pas terminé. Le code est épuisé — demandez à l\'autre personne d\'en créer un nouveau.';
 
   @override
   String get pairing_noMatchError =>
-      'That code didn\'t match anything. Codes expire — ask them to make a new one.';
+      'Ce code ne correspond à rien. Les codes expirent — demandez à l\'autre personne d\'en créer un nouveau.';
 
   @override
-  String get pairing_clearAction => 'Clear';
+  String get pairing_clearAction => 'Effacer';
 
   @override
-  String get pairing_verifyTitle => 'Call them and compare';
+  String get pairing_verifyTitle => 'Appelez l\'autre personne et comparez';
 
   @override
   String get pairing_verifyBody =>
-      'Read these three words to each other. If they match, the line is yours alone.';
+      'Lisez-vous ces trois mots l\'un à l\'autre. S\'ils correspondent, la ligne n\'est qu\'à vous deux.';
 
   @override
-  String get pairing_verifyMatch => 'They match';
+  String get pairing_verifyMatch => 'Ils correspondent';
 
   @override
-  String get pairing_verifyMismatch => 'They don\'t match';
+  String get pairing_verifyMismatch => 'Ils ne correspondent pas';
 
   @override
-  String get pairing_mismatchTitle => 'The words didn\'t match.';
+  String get pairing_mismatchTitle => 'Les mots ne correspondaient pas.';
 
   @override
   String get pairing_mismatchBody =>
-      'That can mean someone got between you while pairing. This pairing has been thrown away — nothing was kept.';
+      'Cela peut signifier que quelqu\'un s\'est glissé entre vous pendant l\'association. Cette association a été jetée — rien n\'a été conservé.';
 
   @override
   String get pairing_mismatchShareSafer =>
-      'Make a new code and share it somewhere safer. In person is safest.';
+      'Créez un nouveau code et partagez-le dans un endroit plus sûr. En personne, c\'est le plus sûr.';
 
   @override
-  String get pairing_readyTitle => 'The line is yours.';
+  String get pairing_readyTitle => 'La ligne est à vous.';
 
   @override
-  String get pairing_nameLineLabel => 'Name this line';
+  String get pairing_nameLineLabel => 'Nommez cette ligne';
 
   @override
   String get pairing_nameLineCaption =>
-      'Labels live only on this phone. They\'re never sent anywhere.';
+      'Les étiquettes restent uniquement sur ce téléphone. Elles ne sont jamais envoyées où que ce soit.';
 
   @override
-  String get pairing_doneAction => 'Done';
+  String get pairing_doneAction => 'Terminé';
 
   @override
-  String get pairing_goBack => 'Go back';
+  String get pairing_goBack => 'Revenir en arrière';
 
   @override
-  String get billing_headline => 'One of you buys the line.';
+  String get billing_headline => 'L\'un de vous achète la ligne.';
 
   @override
-  String get billing_subhead => 'The other never pays.';
+  String get billing_subhead => 'L\'autre ne paie jamais.';
 
   @override
-  String get billing_pointSubscriptionTitle => 'One subscription a year.';
+  String get billing_pointSubscriptionTitle => 'Un abonnement par an.';
 
   @override
   String get billing_pointSubscriptionCaption =>
-      'As many lines as you care to create.';
+      'Autant de lignes que vous voulez créer.';
 
   @override
-  String get billing_pointPermanenceTitle => 'Every line is yours for good.';
+  String get billing_pointPermanenceTitle =>
+      'Chaque ligne est à vous pour de bon.';
 
   @override
   String get billing_pointPermanenceCaption =>
-      'If it lapses, everything you made keeps working — only new lines wait.';
+      'En cas d\'interruption, tout ce que vous avez créé continue de fonctionner — seules les nouvelles lignes attendent.';
 
   @override
-  String get billing_pointNoAccountTitle => 'No account.';
+  String get billing_pointNoAccountTitle => 'Pas de compte.';
 
   @override
   String get billing_pointNoAccountCaption =>
-      'The receipt stays between you and the store.';
+      'Le reçu reste entre vous et la boutique.';
 
   @override
-  String get billing_pointJoiningFreeTitle => 'Joining is always free.';
+  String get billing_pointJoiningFreeTitle => 'Rejoindre est toujours gratuit.';
 
   @override
   String get billing_pointJoiningFreeCaption =>
-      'The person you invite never sees this screen.';
+      'La personne que vous invitez ne voit jamais cet écran.';
 
   @override
   String billing_ctaStart(String price) {
-    return '$price — start';
+    return '$price — commencer';
   }
 
   @override
-  String get billing_restore => 'Restore';
+  String get billing_restore => 'Restaurer';
 
   @override
-  String get billing_noIdentityFootnote => 'We never learn who you are.';
+  String get billing_noIdentityFootnote =>
+      'Nous ne savons jamais qui vous êtes.';
 
   @override
-  String get billing_restoreChecking => 'Checking with the store…';
+  String get billing_restoreChecking => 'Vérification auprès de la boutique…';
 
   @override
-  String get billing_restoreSuccessToast => 'Purchase restored.';
+  String get billing_restoreSuccessToast => 'Achat restauré.';
 
   @override
-  String get billing_subscriptionStartedToast => 'Subscription started.';
+  String get billing_subscriptionStartedToast => 'Abonnement activé.';
 
   @override
   String get billing_restoreNothing =>
-      'The store has no subscription for this account.';
+      'La boutique n\'a aucun abonnement pour ce compte.';
 
   @override
   String get billing_storeUnreachable =>
-      'Couldn\'t reach the store. Try again in a moment.';
+      'Impossible de joindre la boutique. Réessayez dans un instant.';
 
   @override
   String get billing_reconnectToVerify =>
-      'Reconnect to verify your subscription.';
+      'Reconnectez-vous pour vérifier votre abonnement.';
 
   @override
-  String get billing_tryAgain => 'Try again';
+  String get billing_tryAgain => 'Réessayer';
 
   @override
   String billing_autoRenewDisclosure(String store) {
-    return 'One yearly subscription. It renews on its own and charges your $store account until you cancel — anytime, in your account settings. Lines you\'ve already made stay yours either way.';
+    return 'Un abonnement annuel. Il se renouvelle tout seul et débite votre compte $store jusqu\'à ce que vous l\'annuliez — à tout moment, dans les réglages de votre compte. Les lignes que vous avez déjà créées restent à vous dans tous les cas.';
   }
 
   @override
-  String get billing_termsLabel => 'Terms of Use';
+  String get billing_termsLabel => 'Conditions d\'utilisation';
 
   @override
-  String get billing_privacyLabel => 'Privacy Policy';
+  String get billing_privacyLabel => 'Politique de confidentialité';
 
   @override
-  String get session_lineOnline => 'On the line';
+  String get session_lineOnline => 'Sur la ligne';
 
   @override
-  String get session_lineOffline => 'Not on the line';
+  String get session_lineOffline => 'Pas sur la ligne';
 
   @override
-  String get session_lineLost => 'The line dropped.';
+  String get session_lineLost => 'La ligne a été coupée.';
 
   @override
-  String get session_lineDropped => 'The line dropped. Trying to reconnect…';
+  String get session_lineDropped =>
+      'La ligne a été coupée. Tentative de reconnexion…';
 
   @override
-  String get session_lineRecovered => 'You\'re both here.';
+  String get session_lineRecovered => 'Vous êtes tous les deux là.';
 
   @override
-  String get session_peerHungUp => 'They hung up.';
+  String get session_peerHungUp => 'L\'autre a raccroché.';
 
   @override
-  String get session_youHungUp => 'You hung up.';
+  String get session_youHungUp => 'Vous avez raccroché.';
 
   @override
-  String get chat_hangUp => 'Hang up';
+  String get chat_hangUp => 'Raccrocher';
 
   @override
-  String get chat_waitingHeader => 'WAITING — ON YOUR PHONE ONLY';
+  String get chat_waitingHeader =>
+      'EN ATTENTE — SUR VOTRE TÉLÉPHONE UNIQUEMENT';
 
   @override
-  String get chat_peerOfflineHeadline => 'They\'re not on the line right now.';
+  String get chat_peerOfflineHeadline =>
+      'L\'autre personne n\'est pas sur la ligne pour le moment.';
 
   @override
   String get chat_peerOfflineBody =>
-      'Anything you write waits here — on your phone only — and goes through when you\'re both on.';
+      'Tout ce que vous écrivez attend ici — sur votre téléphone uniquement — et part quand vous êtes tous les deux sur la ligne.';
 
   @override
   String get chat_expiryDisclaimer =>
-      'Their app will delete this on schedule, and yours will too.\nA timer can\'t undo being read — a screenshot is still a screenshot. It\'s a courtesy between the two of you, not a guarantee.';
+      'Son app le supprimera à l\'heure prévue, et la vôtre aussi.\nUn minuteur ne peut pas revenir sur ce qui a été lu — une capture d\'écran reste une capture d\'écran. C\'est une courtoisie entre vous deux, pas une garantie.';
 
   @override
-  String get chat_timerOff => 'Off';
+  String get chat_timerOff => 'Désactivé';
 
   @override
   String chat_timerMinutes(int minutes) {
@@ -510,78 +521,79 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       hours,
       locale: localeName,
-      other: '$hours hr',
-      one: '1 hr',
+      other: '$hours h',
+      one: '1 h',
     );
     return '$_temp0';
   }
 
   @override
-  String get chat_timerButtonA11y => 'Disappearing timer';
+  String get chat_timerButtonA11y => 'Minuteur de disparition';
 
   @override
   String get chat_composerA11y => 'Message';
 
   @override
-  String get chat_sendA11y => 'Send';
+  String get chat_sendA11y => 'Envoyer';
 
   @override
-  String get chat_deliveryWaitingA11y => 'Waiting. On your phone only.';
+  String get chat_deliveryWaitingA11y =>
+      'En attente. Sur votre téléphone uniquement.';
 
   @override
-  String get chat_deliverySentA11y => 'Sent.';
+  String get chat_deliverySentA11y => 'Envoyé.';
 
   @override
-  String get chat_deliveryDeliveredA11y => 'Delivered.';
+  String get chat_deliveryDeliveredA11y => 'Distribué.';
 
   @override
-  String get media_attachA11y => 'Add a photo or file';
+  String get media_attachA11y => 'Ajouter une photo ou un fichier';
 
   @override
   String get media_pickPhoto => 'Photo';
 
   @override
-  String get media_pickFile => 'File';
+  String get media_pickFile => 'Fichier';
 
   @override
   String get media_overCapError =>
-      'That\'s over 5 MB — the line carries documents, not archives. Try a smaller file.';
+      'Ça dépasse 5 Mo — la ligne transporte des documents, pas des archives. Essayez un fichier plus petit.';
 
   @override
   String get media_metadataStripNotice =>
-      'Photos are cleaned before they\'re sealed — location, device, and time are stripped on your phone, before encryption.';
+      'Les photos sont nettoyées avant d\'être scellées — le lieu, l\'appareil et l\'heure sont retirés sur votre téléphone, avant le chiffrement.';
 
   @override
   String get media_compressionNote =>
-      'Sent smaller by default. Original quality is a toggle away.';
+      'Envoyées plus légères par défaut. La qualité d\'origine est à portée d\'un bouton.';
 
   @override
-  String get media_originalQualityToggle => 'Original quality';
+  String get media_originalQualityToggle => 'Qualité d\'origine';
 
   @override
-  String get media_exportAction => 'Export';
+  String get media_exportAction => 'Exporter';
 
   @override
   String get media_exportConfirm =>
-      'This copies it out of Nimna — into your phone\'s own storage.';
+      'Cela le copie hors de Nimna — vers le stockage de votre téléphone.';
 
   @override
   String get media_exportRollNote =>
-      'Nothing you receive touches your photo roll. It stays inside Nimna until you choose to take it out.';
+      'Rien de ce que vous recevez ne touche votre pellicule. Ça reste dans Nimna jusqu\'à ce que vous choisissiez de l\'en sortir.';
 
   @override
-  String get media_exportCancel => 'Go back';
+  String get media_exportCancel => 'Revenir en arrière';
 
   @override
   String media_viewerReceivedTime(String time) {
-    return 'Received $time';
+    return 'Reçu le $time';
   }
 
   @override
-  String get media_sendingA11y => 'Sending.';
+  String get media_sendingA11y => 'Envoi en cours.';
 
   @override
-  String get media_receivingA11y => 'Receiving.';
+  String get media_receivingA11y => 'Réception en cours.';
 
   @override
   String get media_documentA11y => 'Document.';
@@ -593,16 +605,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get media_documentKindPdf => 'PDF';
 
   @override
-  String get media_documentKindFile => 'File';
+  String get media_documentKindFile => 'Fichier';
 
   @override
   String media_sizeMegabytes(String size) {
-    return '$size MB';
+    return '$size Mo';
   }
 
   @override
   String media_sizeKilobytes(String size) {
-    return '$size KB';
+    return '$size Ko';
   }
 
   @override
@@ -612,75 +624,163 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get knock_waitingTitle =>
-      'Knocked. If they pick up in the next minute, the line opens.';
+      'Vous avez frappé. Si l\'autre décroche dans la minute qui suit, la ligne s\'ouvre.';
 
   @override
   String get knock_waitingCaption =>
-      'One knock is enough — it won\'t repeat on its own.';
+      'Un seul coup suffit — il ne se répétera pas tout seul.';
 
   @override
-  String get knock_noAnswer => 'No answer.';
+  String get knock_noAnswer => 'Pas de réponse.';
 
   @override
-  String get knock_again => 'Knock again';
+  String get knock_knock => 'Frapper';
+
+  @override
+  String get knock_again => 'Frapper à nouveau';
 
   @override
   String get knock_staleHint =>
-      'No answer in a while. If they lost their phone, this line can\'t come back — you\'d pair again with a new code.';
+      'Pas de réponse depuis un moment. Si l\'autre a perdu son téléphone, cette ligne ne peut pas revenir — il faudrait vous associer à nouveau avec un nouveau code.';
 
   @override
   String knock_incomingKnocking(String label) {
-    return '$label is knocking.';
+    return '$label frappe.';
   }
 
   @override
-  String get knock_pickUp => 'Pick up';
+  String get knock_pickUp => 'Décrocher';
 
   @override
-  String get knock_ignore => 'Ignore';
+  String get knock_ignore => 'Ignorer';
 
   @override
-  String get push_toggleLabel => 'Notify me when they knock';
+  String get push_toggleLabel => 'Me prévenir quand l\'autre frappe';
 
   @override
   String get push_tradeOff =>
-      'Off: nothing about this line ever touches Apple or Google.';
+      'Désactivé : rien de cette ligne ne passe jamais par Apple ou Google.';
 
   @override
   String get push_tradeOn =>
-      'On: a knock can wake this phone through their notification service, carrying two words — \"New activity.\" No line, no name, no message — and the relay forgets the address the moment it\'s used.';
+      'Activé : un coup peut réveiller ce téléphone via leur service de notifications, en portant deux mots — « Nouvelle activité » Pas de ligne, pas de nom, pas de message — et le relais oublie l\'adresse dès qu\'elle est utilisée.';
 
   @override
-  String get screenshot_systemLinePeer => 'They took a screenshot.';
+  String get screenshot_systemLinePeer =>
+      'L\'autre personne a fait une capture d\'écran.';
 
   @override
   String get screenshot_systemLineOwn =>
-      'You took a screenshot. They\'ve been told.';
+      'Vous avez fait une capture d\'écran. L\'autre personne en a été informée.';
 
   @override
   String get screenshot_onboardingDisclosure =>
-      'Nimna can\'t stop a screenshot. It will always tell the other person.\nIt only notices what happens inside the app — a second camera pointed at a screen is invisible to any software. Said up front, so you both know the terms.';
+      'Nimna ne peut pas empêcher une capture d\'écran. Elle préviendra toujours l\'autre personne.\nElle ne remarque que ce qui se passe à l\'intérieur de l\'app — un second appareil photo pointé sur un écran est invisible pour n\'importe quel logiciel. Dit d\'emblée, pour que vous connaissiez tous les deux les conditions.';
 
   @override
   String get screenshot_onboardingAndroidCaveat =>
-      'On Android 13 and older, a screenshot can\'t be noticed here — only Android 14 and up, and iPhone, can tell the other person.';
+      'Sur Android 13 et versions antérieures, une capture d\'écran ne peut pas être remarquée ici — seuls Android 14 et plus récent, ainsi que l\'iPhone, peuvent prévenir l\'autre personne.';
 
   @override
-  String get sensitive_veilCaption => 'Sensitive content — tap to view.';
+  String get sensitive_veilCaption =>
+      'Contenu sensible — touchez pour afficher.';
 
   @override
   String get sensitive_whisperQuestion =>
-      'This looks like sensitive content — send anyway?';
+      'Cela ressemble à du contenu sensible — envoyer quand même ?';
 
   @override
-  String get sensitive_whisperSendAnyway => 'Send anyway';
+  String get sensitive_whisperSendAnyway => 'Envoyer quand même';
 
   @override
-  String get sensitive_whisperGoBack => 'Go back';
+  String get sensitive_whisperGoBack => 'Revenir en arrière';
 
   @override
-  String get push_newActivityBody => 'New activity';
+  String get push_newActivityBody => 'Nouvelle activité';
 
   @override
-  String get channelSettings_subtitle => 'Line settings — this phone only';
+  String get channelSettings_subtitle =>
+      'Réglages de la ligne — ce téléphone uniquement';
+
+  @override
+  String get onboarding_whatItIsHeadline =>
+      'Une ligne privée entre deux personnes.';
+
+  @override
+  String get onboarding_whatItIsBody =>
+      'Pas de comptes. Pas de cloud. Les messages vivent sur vos deux téléphones, nulle part ailleurs.';
+
+  @override
+  String get onboarding_pairingHeadline =>
+      'Associez-vous une seule fois, avec un code.';
+
+  @override
+  String get onboarding_pairingBody =>
+      'Associez-vous une seule fois avec un code Nimna que vous partagez comme vous voulez — lu à voix haute, sur papier, ou sous forme du QR affiché juste à côté.\nEnsuite, le code disparaît pour de bon. La ligne est à vous.';
+
+  @override
+  String get onboarding_cannotSeeHeadline => 'Ce que nous ne pouvons pas voir';
+
+  @override
+  String get onboarding_cannotSeeBody =>
+      'Nous ne pouvons pas lire vos messages. Nous ne pouvons pas non plus les récupérer.\nIl n\'y a rien à remettre, parce que rien n\'est conservé.';
+
+  @override
+  String get onboarding_cannotSeeRelayNote =>
+      'Le relais voit bien les heures de connexion, les adresses IP et la taille des messages — jamais le contenu. Détails dans Réglages → Relais.';
+
+  @override
+  String get onboarding_next => 'Suivant';
+
+  @override
+  String get onboarding_skip => 'Passer';
+
+  @override
+  String get onboarding_start => 'Commencer';
+
+  @override
+  String knock_lapsesInSeconds(int seconds) {
+    return 'Expire dans $seconds s';
+  }
+
+  @override
+  String get settings_readReceiptsLabel => 'Accusés de lecture';
+
+  @override
+  String get settings_readReceiptsCaption =>
+      'L\'autre verra « Vu » sous les messages que vous avez lus. Cette ligne uniquement.';
+
+  @override
+  String get settings_typingLabel => 'Indicateur de saisie';
+
+  @override
+  String get settings_typingCaption =>
+      'L\'autre verra quand vous écrivez. Cette ligne uniquement.';
+
+  @override
+  String get session_readReceiptSeen => 'Vu';
+
+  @override
+  String get settings_rowDiagnostics => 'Partager les diagnostics';
+
+  @override
+  String get settings_rowDiagnosticsCaption =>
+      'Uniquement des codes d\'événement et des horodatages — jamais vos messages. Rien ne quitte votre téléphone sans que vous l\'envoyiez.';
+
+  @override
+  String get diag_shareTitle => 'Diagnostics';
+
+  @override
+  String get diag_shareExplainer =>
+      'C\'est un relevé technique de ce que l\'app a fait — des codes d\'événement et des horaires, rien de plus. Aucun message, aucun nom, aucun code, aucune adresse ne s\'y trouve, et il ne peut pas en contenir. Il reste sur votre téléphone, sauf si vous choisissez de le partager.';
+
+  @override
+  String get diag_shareAction => 'Partager le journal';
+
+  @override
+  String get diag_shareEmpty => 'Rien à partager pour l\'instant.';
+
+  @override
+  String get notifications_emptyBody =>
+      'Les notifications s\'activent par ligne. Vous n\'en avez aucune pour l\'instant.';
 }

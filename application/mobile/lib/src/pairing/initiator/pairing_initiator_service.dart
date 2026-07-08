@@ -1,5 +1,6 @@
 import 'package:sodium/sodium_sumo.dart';
 
+import '../../crypto/at_rest_aead.dart';
 import '../../diag/diag.dart';
 import '../../storage/storage_service.dart';
 import '../../transport/relay_socket.dart';
@@ -18,9 +19,11 @@ class PairingInitiatorService {
     required this._connector,
     this._clock,
   }) : _sodium = sodium,
+       _storage = storage,
        pendingStore = PendingPairingStore(storage: storage, sodium: sodium);
 
   final SodiumSumo _sodium;
+  final StorageService _storage;
   final Diag _diag;
   final RelayConnector _connector;
   final DateTime Function()? _clock;
@@ -44,12 +47,17 @@ class PairingInitiatorService {
     return entry;
   }
 
-  /// Mints a controller for one flow run. Flow-internal.
+  /// Mints a controller for one flow run. Flow-internal. Supplies the S16
+  /// finalize deps (storage/aead/wordlist) so a created line reaches the
+  /// safety phrase (F2.6) and "channel ready" (F2.7) — the creator half of
+  /// "install → paired chat unaided".
   CreateLineController newController() => CreateLineController(
     sodium: _sodium,
     connector: _connector,
     store: pendingStore,
     diag: _diag,
+    storage: _storage,
+    aead: AtRestAead(_sodium),
     clock: _clock,
   );
 }

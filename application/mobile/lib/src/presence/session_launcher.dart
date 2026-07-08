@@ -107,6 +107,11 @@ class SessionLauncher {
       role: role,
       diag: _diag,
       clock: _clock,
+      // Per-channel F7 preferences ride from the channel record (spec §5;
+      // typing default ON, receipts default OFF — USER 2026-07-07). Locale- and
+      // protocol-independent; the wire behaviour is identical everywhere.
+      typingEnabled: record.typingEnabled,
+      readReceiptsEnabled: record.readReceiptsOptIn,
       onPeerTokenRefresh: (token) =>
           unawaited(_peerTokenStore.onPeerTokenRefresh(channelId, token)),
       seedPendingReactions: seedPendingReactions,
