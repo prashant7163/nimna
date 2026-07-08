@@ -24,6 +24,20 @@ import '../helpers/test_env.dart';
 /// at-rest AEAD blobs. Proves: photo + PDF reassemble byte-identical with the
 /// manifest ACKed; a hash-mismatch discards with NO ACK and NO session kill;
 /// expiry deletes the media_ix row + blob + message on BOTH ends.
+
+/// Waits until [done] on a real wall-clock deadline, polling at a non-zero
+/// delay (yields the CPU under load — see session_controller_test's rationale).
+Future<void> _pumpUntil(
+  bool Function() done, {
+  Duration timeout = const Duration(seconds: 30),
+  Duration interval = const Duration(milliseconds: 1),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (!done() && DateTime.now().isBefore(deadline)) {
+    await Future<void>.delayed(interval);
+  }
+}
+
 void main() {
   // Media persistence writes/reads real blob files (dart:io), so settling
   // needs real event-loop time — microtask drains alone don't advance I/O.
@@ -356,9 +370,16 @@ class _Session {
 
     await accepter.controller.start();
     await knocker.controller.start();
-    for (var i = 0; i < 30; i++) {
-      await Future<void>.delayed(Duration.zero);
-    }
+    // S12 knock-gating (folded at G4): the accepter no longer auto-ACCEPTs a
+    // forwarded knock — it holds until an explicit pick-up. Wait for the knock
+    // to surface, answer it, then wait for BOTH sides to reach the live KK
+    // session before any media traffic. Condition waits (not fixed ticks) so
+    // the setup is starvation-proof under load.
+    await _pumpUntil(() => accepter.controller.incomingKnockPending);
+    await accepter.controller.acceptKnock();
+    await _pumpUntil(
+      () => knocker.controller.isLive && accepter.controller.isLive,
+    );
     return _Session(knocker: knocker, accepter: accepter);
   }
 

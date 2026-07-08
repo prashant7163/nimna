@@ -21,10 +21,33 @@ import '../helpers/test_env.dart';
 /// transport traffic; every assertion below drives the actual send/receive
 /// loop, delivery FSM, §5.8 reaction/reply rules, typing, HANGUP, and the
 /// protocol-error kill path.
+/// Waits until [done] on a real WALL-CLOCK deadline, polling with a small
+/// NON-ZERO delay. Deliberately NOT a fixed count of `Future.delayed(Duration
+/// .zero)` ticks: a zero-duration delay does not yield the CPU, so on an
+/// oversubscribed host the main isolate burns the whole cap near-instantly
+/// while a descheduled sqflite FFI isolate never gets to commit the trailing
+/// write — the wait then completes before the state is ready and the test
+/// proceeds into a half-established session (the flake QA caught at ~1/45 in
+/// `establish`). A real 1 ms delay actually yields; a healthy run resolves in
+/// a few ms and never approaches the deadline. Mirrors `presence_flow_test`.
+Future<void> pumpUntil(
+  bool Function() done, {
+  Duration timeout = const Duration(seconds: 30),
+  Duration interval = const Duration(milliseconds: 1),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (!done() && DateTime.now().isBefore(deadline)) {
+    await Future<void>.delayed(interval);
+  }
+}
+
 void main() {
+  // A bounded settle for waits with no single observable condition. Uses a
+  // real (non-zero) delay so a descheduled sqflite FFI isolate is actually
+  // scheduled under host load — see pumpUntil's rationale.
   Future<void> settle() async {
-    for (var i = 0; i < 30; i++) {
-      await Future<void>.delayed(Duration.zero);
+    for (var i = 0; i < 40; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
     }
   }
 
@@ -361,13 +384,22 @@ class _Session {
       clock: clock,
     );
 
-    // Accepter registers/listens first, then the knocker knocks — the relay
-    // bridges and both run S1/S2.
+    // Accepter registers/listens first, then the knocker knocks. S12: the
+    // accepter no longer auto-ACCEPTs (knock-accept gating) — it surfaces an
+    // IncomingKnock and waits for an explicit pick-up. Answer it, then the
+    // relay bridges and both run S1/S2.
     await accepter.controller.start();
     await knocker.controller.start();
-    for (var i = 0; i < 30; i++) {
-      await Future<void>.delayed(Duration.zero);
-    }
+    // Condition waits, not fixed ticks: wait for the forwarded knock to
+    // actually surface before answering it, then for BOTH sides to reach the
+    // live KK session before the test body sends any traffic. An under-wait
+    // here dispatched a frame into a not-yet-live controller and threw in
+    // _dispatchInbound under load (the ~1/45 flake).
+    await pumpUntil(() => accepter.controller.incomingKnockPending);
+    await accepter.controller.acceptKnock();
+    await pumpUntil(
+      () => knocker.controller.isLive && accepter.controller.isLive,
+    );
     return _Session(
       bridge: bridge,
       knocker: knocker,

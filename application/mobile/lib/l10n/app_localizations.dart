@@ -1123,6 +1123,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{kind} · {size}'**
   String media_documentMeta(String kind, String size);
+
+  /// Voice guide string 6, line 1 — the 'knock sent / waiting' caption (wireframe F5, breathing line + 60 s countdown; spec §3.2). Canonical, verbatim. The waiting state invites patience, never hammering — the app never knocks twice on its own (§4). S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Knocked. If they pick up in the next minute, the line opens.'**
+  String get knock_waitingTitle;
+
+  /// Voice guide string 6, line 2 — reassurance that the knock will not auto-repeat (spec §4; wireframe F5). Canonical, verbatim. The em dash is U+2014. S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'One knock is enough — it won\'t repeat on its own.'**
+  String get knock_waitingCaption;
+
+  /// The knock-lapse caption (wireframe F5.13) — shown when a knock's 60 s window closes unanswered. EXACTLY 'No answer.' — never 'they didn't pick up', 'they're offline', or any attribution: offline vs saw-and-ignored is deliberately indistinguishable to the knocker (USER 2026-07-04, spec v0.2; voice register line 129). Canonical, verbatim. S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer.'**
+  String get knock_noAnswer;
+
+  /// The manual re-knock affordance (wireframe F5.13) — appears ONLY after a lapse, never during the countdown. A deliberate human re-knock; the app never auto-retries (spec §4, voice register verb 'Knock'). S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Knock again'**
+  String get knock_again;
+
+  /// Voice guide string 16 — the LOCAL-only stale-knock hint (spec §6.1), surfaced only after an extended unanswered stretch (a local heuristic; no wire signal, no attribution). Canonical, verbatim. The em dash is U+2014. S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer in a while. If they lost their phone, this line can\'t come back — you\'d pair again with a new code.'**
+  String get knock_staleHint;
+
+  /// The incoming-knock banner / knock screen headline (wireframe F6.1/F6.3) — the channel's local label + 'is knocking.'. No preview, because no content exists until the line is bridged. {label} is the local channel label. S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} is knocking.'**
+  String knock_incomingKnocking(String label);
+
+  /// The incoming-knock accept verb (wireframe F6.1/F6.3; voice register verb 'Pick up') — sends ACCEPT and opens the line. S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up'**
+  String get knock_pickUp;
+
+  /// The incoming-knock dismiss verb (wireframe F6.1/F6.3) — drops the banner; nothing is recorded and no wire signal is sent (the peer only ever observes silence; F6.1). S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore'**
+  String get knock_ignore;
+
+  /// The per-channel push opt-in toggle label (wireframe F7 channel settings). Push is per-line, opt-IN, DEFAULT OFF (spec §3.2.1). S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify me when they knock'**
+  String get push_toggleLabel;
+
+  /// Voice guide string 18, line 1 — the honest push trade (off state), shown as the always-visible caption under the toggle (the caption IS the disclosure, never a one-time dialog; components.md, wireframe F7). Canonical, verbatim. S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Off: nothing about this line ever touches Apple or Google.'**
+  String get push_tradeOff;
+
+  /// Voice guide string 18, line 2 — the honest push trade (on state): a content-free wake carrying only 'New activity', and the relay forgets the address after one use (spec §3.2.1). Shown always-visible under the toggle. Canonical, verbatim. The em dashes are U+2014; the inner quotes are straight double quotes. S12 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'On: a knock can wake this phone through their notification service, carrying two words — \"New activity.\" No line, no name, no message — and the relay forgets the address the moment it\'s used.'**
+  String get push_tradeOn;
 }
 
 class _AppLocalizationsDelegate

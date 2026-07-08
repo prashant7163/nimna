@@ -609,4 +609,44 @@ class AppLocalizationsIt extends AppLocalizations {
   String media_documentMeta(String kind, String size) {
     return '$kind · $size';
   }
+
+  @override
+  String get knock_waitingTitle =>
+      'Knocked. If they pick up in the next minute, the line opens.';
+
+  @override
+  String get knock_waitingCaption =>
+      'One knock is enough — it won\'t repeat on its own.';
+
+  @override
+  String get knock_noAnswer => 'No answer.';
+
+  @override
+  String get knock_again => 'Knock again';
+
+  @override
+  String get knock_staleHint =>
+      'No answer in a while. If they lost their phone, this line can\'t come back — you\'d pair again with a new code.';
+
+  @override
+  String knock_incomingKnocking(String label) {
+    return '$label is knocking.';
+  }
+
+  @override
+  String get knock_pickUp => 'Pick up';
+
+  @override
+  String get knock_ignore => 'Ignore';
+
+  @override
+  String get push_toggleLabel => 'Notify me when they knock';
+
+  @override
+  String get push_tradeOff =>
+      'Off: nothing about this line ever touches Apple or Google.';
+
+  @override
+  String get push_tradeOn =>
+      'On: a knock can wake this phone through their notification service, carrying two words — \"New activity.\" No line, no name, no message — and the relay forgets the address the moment it\'s used.';
 }

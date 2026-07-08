@@ -55,6 +55,21 @@ enum SessionLineState {
   /// The bridge died without a HANGUP (The line dropped…). S12 owns the
   /// reconnect/recovery behavior; S10 only surfaces the state.
   connectionLost,
+
+  /// S12 (append-only) — the knocker sent its ONE knock and is waiting for a
+  /// pick-up (the F5/F6 "knocked — waiting" state, spec §3.2, string 6). The
+  /// 60 s countdown + lapse UX lives in the presence lane's knock_controller;
+  /// the app NEVER auto-retries a cold knock (§4). MERGE HOTSPOT: chat/
+  /// status-line switch adds this case at fold (see SESSION-12 notes).
+  waiting,
+
+  /// S12 (append-only) — a LIVE-session drop is being auto-recovered inside
+  /// the bounded ~20 s window (string 10 "…Trying to reconnect…",
+  /// session_lineDropped). A fresh knock+KK is in flight via the presence
+  /// lane's reconnect_coordinator; distinct from the never-retried cold knock
+  /// ([waiting]). MERGE HOTSPOT: chat/ status-line switch adds this case at
+  /// fold (see SESSION-12 notes).
+  reconnecting,
 }
 
 /// Base of the event hierarchy.
@@ -119,4 +134,37 @@ final class SessionEnded extends ChatEvent {
   const SessionEnded(this.reason);
 
   final SessionEndReason reason;
+}
+
+/// S12 (append-only) — a knock arrived for this engaged channel and is
+/// waiting on an explicit pick-up (F6). The connection lane no longer
+/// auto-ACCEPTs (S10 did, to be end-to-end exercisable); the UI shows the
+/// in-app banner / knock screen and calls
+/// [SessionController.acceptKnock]/[SessionController.ignoreKnock]. Carries no
+/// payload — no content exists until the line is bridged (F6.1); the peer
+/// label the banner shows is the channel's local label the UI already holds.
+final class IncomingKnock extends ChatEvent {
+  const IncomingKnock();
+}
+
+/// S12 (append-only) — a reaction (spec §5.8) composed while the line was down
+/// that must ride the outbox on the next bridge (§3.4). The referent's own
+/// slot is already persisted on its [MessageRecord]; this marker records that
+/// the reaction still needs SENDING. [emoji] is the own-reaction to put on the
+/// wire, or null for a clear (remove op).
+///
+/// FOLD COORDINATION (S11): S12 carries this marker in session memory and
+/// hands it forward across a reconnect (fresh SessionController) via the
+/// reconnect_coordinator. A PERSISTED equivalent — a pending flag on the
+/// MessageRecord domain model so an offline reaction also survives an app
+/// RESTART — is deferred to the fold with S11 (who owns message rendering);
+/// S12 does not add a domain-model column (append-only, minimal).
+final class PendingReaction {
+  const PendingReaction({required this.referentRecordId, required this.emoji});
+
+  /// The local 16-byte surrogate id of the referent message record.
+  final Uint8List referentRecordId;
+
+  /// The own-reaction emoji to send, or null for a remove (clear).
+  final String? emoji;
 }

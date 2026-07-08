@@ -104,7 +104,41 @@ enum DiagEvent {
   /// Expired media was swept on this device — the media_ix row + blob file +
   /// message row were deleted (spec §5.1, expiry applies to media on both
   /// ends).
-  mediaExpired(21);
+  mediaExpired(21),
+
+  /// S12 presence events — events ONLY: no CRIDs, tokens, peer bytes, counts,
+  /// or attribution are representable here. Wire ids 22–27 (renumbered from the
+  /// session-branch's 19–24 at the G4 merge fold, appended after S11's media
+  /// 19–21 — the append-only, renumber-if-claimed-first rule the branch noted).
+
+  /// The knocker sent its ONE knock (spec §3.2). Never logged twice on its own
+  /// — the app never auto-retries a cold knock (§4). Carries nothing about the
+  /// peer, the channel, or whether a push token rode along.
+  knockSent(22),
+
+  /// A knock lapsed unanswered (the 60 s window closed with no pick-up). The
+  /// knocker renders exactly "No answer." — offline vs saw-and-ignored is
+  /// indistinguishable by construction, and this event preserves that: it says
+  /// only THAT a knock lapsed, never why (DECISIONS 2026-07-04).
+  knockLapsed(23),
+
+  /// A LIVE-session drop began bounded auto-recovery (string 10). Distinct
+  /// from a cold knock, which is never retried. No timing/peer detail.
+  sessionReconnecting(24),
+
+  /// Bounded auto-recovery re-established the line (a fresh knock+KK went
+  /// live within the window).
+  sessionRecovered(25),
+
+  /// The ~30 s background-grace timer expired and closed the live session
+  /// (client-side only; no relay state). Foregrounding cancels it silently and
+  /// logs nothing.
+  backgroundGraceExpired(26),
+
+  /// A peer device-token refresh CONTROL (§5.5, token_payload §5.7) was
+  /// received and persisted to the channel record. The event carries NO token
+  /// bytes — present-vs-absent is not even recorded (events only).
+  peerTokenRefreshed(27);
 
   const DiagEvent(this.id);
 

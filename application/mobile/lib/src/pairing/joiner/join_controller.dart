@@ -278,8 +278,14 @@ class JoinController extends ChangeNotifier {
       createdAtMs: _clock().toUtc().millisecondsSinceEpoch,
       // Store the peer's device-token if it rode the handshake (§3.2.1) so
       // S15 needs no retrofit; S9 ships push-off so the joiner sent absent.
+      // S12 (CODE, 2026-07-07 — FOLD FLAG, outside S12's declared dirs):
+      // persist the §5.7 PRESENT-FORM token_payload bytes
+      // (0x01‖platform‖len‖token), not the bare token — platform-preserving,
+      // so push_opt_in can derive the §5.4 KNOCK payload and the token-refresh
+      // CONTROL body from one stored form. Safe: push is off in all
+      // shipped/headless data, so no present token exists yet.
       peerDeviceToken: material.peerToken.isPresent
-          ? material.peerToken.token
+          ? material.peerToken.encode()
           : null,
     );
     // create() takes ownership of `priv` and `cdk` (moved into SecureKeys,
