@@ -16,6 +16,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../sensitive/sensitive_content_analyzer.dart';
+import '../../sensitive/sensitive_whisper_card.dart';
 import '../../ui/theme/nimna_tokens.dart';
 import '../../ui/widgets/nimna_toggle.dart';
 import '../model/media_attachment.dart';
@@ -30,7 +32,15 @@ const int mediaCapBytes = NimnaMedia.attachmentCapMB * 1024 * 1024;
 enum _AttachIntent { photo, file }
 
 /// Opens the attach sheet → picker → preview. Returns the chosen attachment.
-Future<MediaAttachment?> showAttachSheet(BuildContext context) async {
+///
+/// [sensitiveAnalyzer] (S14, spec §5.3) runs the on-device check on the chosen
+/// IMAGE at attach time; a flag raises the soft, non-blocking whisper (voice
+/// string 14). Null → no whisper (the Android-at-launch behaviour). Purely
+/// local: nothing is blocked, logged, reported, or transmitted.
+Future<MediaAttachment?> showAttachSheet(
+  BuildContext context, {
+  SensitiveContentAnalyzer? sensitiveAnalyzer,
+}) async {
   final tokens = Theme.of(context).extension<NimnaTokens>()!;
   final intent = await showModalBottomSheet<_AttachIntent>(
     context: context,
@@ -61,7 +71,10 @@ Future<MediaAttachment?> showAttachSheet(BuildContext context) async {
           top: Radius.circular(NimnaRadius.sheet),
         ),
       ),
-      builder: (context) => AttachImagePreview(rawBytes: picked.bytes),
+      builder: (context) => AttachImagePreview(
+        rawBytes: picked.bytes,
+        analyzer: sensitiveAnalyzer,
+      ),
     );
   }
   return showModalBottomSheet<MediaAttachment>(
@@ -134,9 +147,12 @@ class _AttachOptionsSheet extends StatelessWidget {
 /// quality toggle + over-cap guard + Send. Re-runs the strip/compress pipeline
 /// whenever the toggle flips. Public for widget tests.
 class AttachImagePreview extends StatefulWidget {
-  const AttachImagePreview({required this.rawBytes, super.key});
+  const AttachImagePreview({required this.rawBytes, this.analyzer, super.key});
 
   final Uint8List rawBytes;
+
+  /// S14 sender-side sensitive-content analysis (spec §5.3). Null → no whisper.
+  final SensitiveContentAnalyzer? analyzer;
 
   @override
   State<AttachImagePreview> createState() => _AttachImagePreviewState();
@@ -146,6 +162,12 @@ class _AttachImagePreviewState extends State<AttachImagePreview> {
   bool _originalQuality = false;
   bool _processing = true;
   ProcessedImage? _processed;
+
+  // The whisper is shown at most once per attachment (components.md): analysis
+  // starts once on the first processed image; editing (the quality toggle)
+  // dismisses it and it never returns.
+  bool _analysisStarted = false;
+  bool _whisperVisible = false;
 
   @override
   void initState() {
@@ -171,6 +193,39 @@ class _AttachImagePreviewState extends State<AttachImagePreview> {
       _processed = out;
       _processing = false;
     });
+    if (out != null && !_analysisStarted) {
+      _analysisStarted = true;
+      unawaited(_analyze(out.bytes));
+    }
+  }
+
+  /// Runs the on-device check ONCE and, if flagged, raises the whisper. Purely
+  /// local (§5.3): nothing is blocked, logged, reported, or transmitted; the
+  /// recipient is never told. Fail-open — a null/absent analyzer never whispers.
+  Future<void> _analyze(Uint8List bytes) async {
+    final analyzer = widget.analyzer;
+    if (analyzer == null) {
+      return;
+    }
+    final flagged = await analyzer.isSensitive(bytes);
+    if (!mounted || !flagged) {
+      return;
+    }
+    setState(() => _whisperVisible = true);
+  }
+
+  /// Confirms the attachment with the current quality setting — the single exit
+  /// used by both Send and the whisper's "Send anyway".
+  void _pop(BuildContext context, ProcessedImage processed) {
+    Navigator.of(context).pop(
+      MediaAttachment(
+        bytes: processed.bytes,
+        mime: processed.mime,
+        pixelWidth: processed.width,
+        pixelHeight: processed.height,
+        originalQuality: _originalQuality,
+      ),
+    );
   }
 
   @override
@@ -230,7 +285,12 @@ class _AttachImagePreviewState extends State<AttachImagePreview> {
                   onChanged: _processing
                       ? null
                       : (value) {
-                          setState(() => _originalQuality = value);
+                          // Editing the attachment dismisses the whisper for
+                          // good (components.md: at most once per attachment).
+                          setState(() {
+                            _originalQuality = value;
+                            _whisperVisible = false;
+                          });
                           unawaited(_reprocess());
                         },
                 ),
@@ -244,18 +304,20 @@ class _AttachImagePreviewState extends State<AttachImagePreview> {
                 style: NimnaText.caption.copyWith(color: tokens.danger),
               ),
             ],
+            // The sensitive-content whisper (string 14): a soft, non-blocking
+            // card that rises above the preview when the check flags the image.
+            // Not shown while over cap (the size guard must be cleared first).
+            if (_whisperVisible && processed != null && !overCap) ...[
+              const SizedBox(height: NimnaSpacing.base * 3),
+              SensitiveWhisperCard(
+                onSendAnyway: () => _pop(context, processed),
+                onGoBack: () => setState(() => _whisperVisible = false),
+              ),
+            ],
             const SizedBox(height: NimnaSpacing.base * 4),
             _SendButton(
               enabled: processed != null && !overCap && !_processing,
-              onSend: () => Navigator.of(context).pop(
-                MediaAttachment(
-                  bytes: processed!.bytes,
-                  mime: processed.mime,
-                  pixelWidth: processed.width,
-                  pixelHeight: processed.height,
-                  originalQuality: _originalQuality,
-                ),
-              ),
+              onSend: () => _pop(context, processed!),
             ),
           ],
         ),

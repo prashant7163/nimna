@@ -107,6 +107,59 @@ void main() {
     expect(s.accepter.controller.messages, isEmpty);
   });
 
+  test('screenshot round trip: CONTROL 0x03 → peer system line, own recorded '
+      '(S14, spec §5.2)', () async {
+    final s = await liveSession();
+    addTearDown(s.dispose);
+
+    // Give both sides a message so the notice anchors to a real record.
+    await s.knocker.controller.sendText('Here it is.');
+    await settle();
+
+    final peerEvents = <ChatEvent>[];
+    s.accepter.controller.events.listen(peerEvents.add);
+    final ownEvents = <ChatEvent>[];
+    s.knocker.controller.events.listen(ownEvents.add);
+
+    // The knocker took a screenshot while content was on screen.
+    s.knocker.controller.noticeLocalScreenshot();
+    await settle();
+
+    // Own side recorded exactly one own-notice, anchored after the last record.
+    expect(s.knocker.controller.screenshotNotices, hasLength(1));
+    final own = s.knocker.controller.screenshotNotices.single;
+    expect(own.own, isTrue);
+    expect(own.anchorRecordId, s.knocker.controller.messages.single.recordId);
+    expect(ownEvents.whereType<ScreenshotNoticed>().single.own, isTrue);
+
+    // The peer received exactly one peer-notice (own == false) — the bare
+    // "They took a screenshot." system line; never a message.
+    expect(s.accepter.controller.screenshotNotices, hasLength(1));
+    expect(s.accepter.controller.screenshotNotices.single.own, isFalse);
+    expect(peerEvents.whereType<ScreenshotNoticed>().single.own, isFalse);
+    // A screenshot notice is never speech: the thread still holds one message.
+    expect(s.accepter.controller.messages, hasLength(1));
+  });
+
+  test(
+    'screenshot notice is a no-op when the line is not live (S14)',
+    () async {
+      final s = await liveSession();
+      addTearDown(s.dispose);
+
+      // Hang up → not live. A subsequent detection must seal nothing and record
+      // nothing (spec §5.2: fires only while content is on screen inside a live
+      // session).
+      await s.knocker.controller.hangup();
+      await settle();
+
+      s.knocker.controller.noticeLocalScreenshot();
+      await settle();
+
+      expect(s.knocker.controller.screenshotNotices, isEmpty);
+    },
+  );
+
   test('reaction round trip sets the peer slot; never ACKed', () async {
     final s = await liveSession();
     addTearDown(s.dispose);

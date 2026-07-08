@@ -83,6 +83,14 @@ src/presence/        S12 — knock/presence/offline-compose/reconnect:
                      controllers, reconnect_coordinator (~20s live-drop),
                      background_grace (30s), push_opt_in (default OFF),
                      peer_token_store; see src/presence/README.md
+src/screenshot/      S14 — screenshot detect-and-notify (spec §5.2): the
+                     transient system-line model + detector (iOS 17 / Android
+                     14+, zero permissions, NO FLAG_SECURE) + the bare
+                     system-line widget (string 12); see src/screenshot/README.md
+src/sensitive/       S14 — on-device sensitive-content (spec §5.3, iOS-only):
+                     analyzer (fail-open), recipient blur veil (string 15),
+                     sender whisper card (string 14); local display only, never
+                     phones home; see src/sensitive/README.md
 src/billing/         S17 — on-device entitlement gate + paywall (StoreKit2/
                      Play Billing); billing absent from protocol/transport/
                      storage/crypto/wipe/lock (permanence fence)

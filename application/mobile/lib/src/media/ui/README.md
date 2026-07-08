@@ -5,8 +5,12 @@ block and `tokens.json`. Hold no transport/store state; decrypt-to-memory via
 callbacks the chat screen routes through the session controller.
 
 - `media_bubble_content.dart` — image edge-to-edge / document row / 2 px
-  transfer progress line (consumed by chat/message_bubble.dart).
+  transfer progress line (consumed by chat/message_bubble.dart). [S14] wraps a
+  RECEIVED image in `sensitive/SensitiveImageVeil` when an analyzer is supplied
+  (recipient-side blur, spec §5.3; sender's own images never blurred).
 - `attach_sheet.dart` — attach options + preview (metadata-strip notice,
   original-quality toggle off by default, over-cap error — voice string 17).
+  [S14] runs the injected analyzer on the chosen image and raises the
+  `sensitive/SensitiveWhisperCard` (string 14) once if flagged.
 - `media_viewer.dart` — full-bleed viewer + Export (pushed on-the-fly; no
   named route — routes.dart untouched).

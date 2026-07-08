@@ -121,6 +121,17 @@ final class PeerTyping extends ChatEvent {
   const PeerTyping();
 }
 
+/// S14 — a screenshot notice entered the thread (spec §5.2, CONTROL 0x03): the
+/// peer took one ([own] false → "They took a screenshot.") or this device did
+/// ([own] true → "You took a screenshot. They've been told."). The UI re-reads
+/// [SessionController.screenshotNotices] and renders the bare system line
+/// (voice string 12). Honor-system like expiry; carries no content.
+final class ScreenshotNoticed extends ChatEvent {
+  const ScreenshotNoticed({required this.own});
+
+  final bool own;
+}
+
 /// The line state changed — the UI re-reads [SessionController.lineState].
 final class LineStateChanged extends ChatEvent {
   const LineStateChanged(this.state);

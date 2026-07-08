@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:sqflite/sqflite.dart';
 
+import '../crypto/at_rest_aead.dart';
 import '../crypto/record_cipher.dart';
 import '../diag/diag.dart';
 import '../diag/diag_events.dart';
@@ -55,54 +56,94 @@ class StorageService {
 
   /// Boot/open sequence. Diag events raised before the log attaches queue
   /// in memory and flush at attach — order is deliberate.
+  ///
+  /// One SILENT fresh-install-reset is permitted (S13→S14, architect ACK
+  /// 2026-07-07): if [ChannelRepository.openAll] raises [AeadAuthError] — a
+  /// stored channel row no longer authenticates under the current MK, the
+  /// interrupted-wipe / keystore-loss signature — destroy the MK, wipe the
+  /// root, and re-open empty. There is NO user surface for this path (decision
+  /// 2, AeadAuthError auto-reset is SILENT): not a lock screen, not the panic-
+  /// wipe UI, and `wasReset` is deliberately NOT propagated — a post-reset
+  /// store is indistinguishable from a fresh install.
   Future<void> open() async {
     if (isOpen) {
       return;
     }
-    await keyService.open();
+    var didReset = false;
+    while (true) {
+      await keyService.open();
 
-    root.create();
-    // Backup exclusion: set at store-root creation, re-asserted every
-    // launch (iOS; Android is manifest-static).
-    await backupExclusion.assertExcluded(root.root.path);
+      root.create();
+      // Backup exclusion: set at store-root creation, re-asserted every
+      // launch (iOS; Android is manifest-static).
+      await backupExclusion.assertExcluded(root.root.path);
 
-    final result = await NimnaDatabase.open(
-      factory: _dbFactory,
-      root: root,
-      diag: diag,
-    );
-    _db = result.db;
-    if (result.created && !result.wasReset) {
-      diag.log(DiagEvent.storeCreated);
+      final result = await NimnaDatabase.open(
+        factory: _dbFactory,
+        root: root,
+        diag: diag,
+      );
+      if (result.created && !result.wasReset) {
+        diag.log(DiagEvent.storeCreated);
+      }
+
+      diag.attach(diagKey: keyService.takeDiagKey(), dir: root.diagDir);
+
+      final channelRepo = ChannelRepository(
+        keyService: keyService,
+        store: ChannelStore(result.db),
+        cipher: cipher,
+      );
+      try {
+        await channelRepo.openAll();
+      } on AeadAuthError {
+        if (didReset) {
+          // A freshly created store still failing is NOT a wipe signature —
+          // surface it rather than loop.
+          rethrow;
+        }
+        didReset = true;
+        await _freshInstallReset(result.db);
+        continue; // Re-open from scratch against the now-empty store.
+      }
+
+      _db = result.db;
+      _channels = channelRepo;
+      _messages = MessageRepository(
+        channels: channelRepo,
+        store: MessageStore(result.db),
+        cipher: cipher,
+      );
+      _media = MediaRepository(
+        channels: channelRepo,
+        indexStore: MediaIndexStore(result.db),
+        blobStore: MediaStore(root: root, cipher: cipher),
+        cipher: cipher,
+        keyService: keyService,
+      );
+      _metaRecords = MetaRecords(
+        db: result.db,
+        keyService: keyService,
+        cipher: cipher,
+      );
+      diag.log(DiagEvent.storeOpened);
+      return;
     }
+  }
 
-    diag.attach(diagKey: keyService.takeDiagKey(), dir: root.diagDir);
-
-    final channelRepo = ChannelRepository(
-      keyService: keyService,
-      store: ChannelStore(result.db),
-      cipher: cipher,
-    );
-    await channelRepo.openAll();
-    _channels = channelRepo;
-    _messages = MessageRepository(
-      channels: channelRepo,
-      store: MessageStore(result.db),
-      cipher: cipher,
-    );
-    _media = MediaRepository(
-      channels: channelRepo,
-      indexStore: MediaIndexStore(result.db),
-      blobStore: MediaStore(root: root, cipher: cipher),
-      cipher: cipher,
-      keyService: keyService,
-    );
-    _metaRecords = MetaRecords(
-      db: result.db,
-      keyService: keyService,
-      cipher: cipher,
-    );
-    diag.log(DiagEvent.storeOpened);
+  /// The SILENT fresh-install-reset primitive (decision 2). Mirrors [fullWipe]'s
+  /// key-FIRST destruction so on-disk data is undecryptable even if the sweep
+  /// is interrupted: destroy the MK, drop the diag ring, close the DB, zeroize
+  /// in-memory keys, then delete + recreate the store root. The caller re-runs
+  /// [open] against the empty root. No diag event marks this — a post-reset
+  /// store must be indistinguishable from a fresh install (mirrors the
+  /// no-`fullWipe`-event stance).
+  Future<void> _freshInstallReset(Database db) async {
+    await keyService.destroyMasterKey();
+    diag.reset();
+    await db.close();
+    keyService.seal();
+    root.wipeAndRecreate();
   }
 
   /// Seals the perimeter: logs, detaches the log, zeroizes every key

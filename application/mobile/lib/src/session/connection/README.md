@@ -19,6 +19,11 @@ touches any of it (the import-direction fence). Imports **no Flutter**.
   reaction; resolve reply referents from the LOCAL copy, tombstone when gone.
 - **Typing** — CONTROL 0x01, ON BY DEFAULT (USER 2026-07-07), gated by the single
   `typingEnabled` seam (the future F7 toggle).
+- **Screenshot notice** [S14, spec §5.2] — `noticeLocalScreenshot()` seals CONTROL
+  0x03 (empty payload) when live and records the own-side system line; an inbound
+  CONTROL 0x03 records the peer-side line. Transient `screenshotNotices` (never a
+  `MessageRecord`, never persisted) each anchored just after the last record, so
+  the widget interleaves without re-sorting messages. Detect-and-notify only.
 - **End** — explicit HANGUP → `SessionEnded.ended`; a bridge dying without one →
   `SessionEnded.connectionLost`. Any `TransportError`/`InnerEnvelopeError`/counter
   violation is the §3.3.1 protocol error: destroy all session keys, send relay

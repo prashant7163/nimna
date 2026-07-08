@@ -20,6 +20,10 @@ import '../../app/transitions.dart';
 import '../../media/pipeline/media_export.dart';
 import '../../media/ui/attach_sheet.dart';
 import '../../media/ui/media_viewer.dart';
+import '../../screenshot/screenshot_detector.dart';
+import '../../screenshot/screenshot_notice.dart';
+import '../../screenshot/screenshot_system_line.dart';
+import '../../sensitive/sensitive_content_analyzer.dart';
 import '../../ui/theme/nimna_tokens.dart';
 import '../../ui/widgets/glyphs.dart';
 import '../connection/session_controller.dart';
@@ -40,10 +44,26 @@ class ChatScreenArgs {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({required this.controller, required this.label, super.key});
+  const ChatScreen({
+    required this.controller,
+    required this.label,
+    this.screenshotDetector,
+    this.sensitiveAnalyzer,
+    super.key,
+  });
 
   final SessionController controller;
   final String label;
+
+  /// S14 (spec §5.2): local screenshot detection. Injected in tests; defaults
+  /// to the platform detector. The screen owns its lifecycle — it observes ONLY
+  /// while mounted (session content on screen inside the app).
+  final ScreenshotDetector? screenshotDetector;
+
+  /// S14 (spec §5.3): on-device sensitive-content analysis for recipient blur
+  /// and sender whisper. Injected in tests; defaults to the platform analyzer
+  /// (iOS-only, fail-open elsewhere).
+  final SensitiveContentAnalyzer? sensitiveAnalyzer;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -55,10 +75,23 @@ class _ChatScreenState extends State<ChatScreen> {
   final Map<String, GlobalKey> _itemKeys = {};
   MessageView? _replyingTo;
 
+  late final ScreenshotDetector _detector;
+  StreamSubscription<void>? _screenshotSub;
+  late final SensitiveContentAnalyzer _analyzer;
+
   @override
   void initState() {
     super.initState();
     _sub = widget.controller.events.listen(_onEvent);
+    // Screenshot detection is on ONLY while this screen is mounted — spec
+    // §5.2's "detection fires only while content is on screen inside the app".
+    _detector = widget.screenshotDetector ?? PlatformScreenshotDetector();
+    _analyzer = widget.sensitiveAnalyzer ?? PlatformSensitiveContentAnalyzer();
+    _screenshotSub = _detector.onScreenshot.listen((_) {
+      // The controller additionally gates on liveness and seals CONTROL 0x03.
+      widget.controller.noticeLocalScreenshot();
+    });
+    unawaited(_detector.start());
     // Kick the live path (register CRID / knock / accept). A no-op if already
     // established. TODO(S12): the entry point owns start() once presence lands.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -71,6 +104,9 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _sub?.cancel();
+    unawaited(_screenshotSub?.cancel());
+    unawaited(_detector.stop());
+    unawaited(_detector.dispose());
     _scroll.dispose();
     super.dispose();
   }
@@ -80,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
     setState(() {});
-    if (event is MessageArrived) {
+    if (event is MessageArrived || event is ScreenshotNoticed) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     }
   }
@@ -110,7 +146,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _openAttach(int? expirySeconds) async {
-    final attachment = await showAttachSheet(context);
+    final attachment = await showAttachSheet(
+      context,
+      sensitiveAnalyzer: _analyzer,
+    );
     if (attachment == null) {
       return;
     }
@@ -192,7 +231,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<NimnaTokens>()!;
     final l10n = AppLocalizations.of(context)!;
-    final messages = widget.controller.messages;
     return Scaffold(
       backgroundColor: tokens.surface0,
       body: SafeArea(
@@ -206,27 +244,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   horizontal: NimnaSpacing.screenMargin,
                   vertical: NimnaSpacing.base * 2,
                 ),
-                children: [
-                  for (final m in messages)
-                    KeyedSubtree(
-                      key: _keyFor(m.recordId),
-                      child: MessageBubble(
-                        message: m,
-                        onLongPress: () => unawaited(_openActions(m)),
-                        onTapQuote: m.reply?.referentRecordId == null
-                            ? null
-                            : () =>
-                                  _scrollToReferent(m.reply!.referentRecordId!),
-                        mediaLoadBytes: m.isMedia && m.mediaId != null
-                            ? () => widget.controller.readMedia(m.mediaId!)
-                            : null,
-                        onTapMedia: m.isMedia
-                            ? () => _openMediaViewer(m)
-                            : null,
-                      ),
-                    ),
-                  if (widget.controller.peerTyping) const PeerTypingBubble(),
-                ],
+                children: _threadChildren(),
               ),
             ),
             Composer(
@@ -240,6 +258,71 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+
+  /// Builds the thread children: message bubbles in the connection lane's
+  /// order (never re-sorted), with each screenshot system line interleaved just
+  /// AFTER its anchor message (spec §5.2, string 12). A notice anchored to null
+  /// leads the thread; one whose anchor was deleted/purged falls to the end.
+  List<Widget> _threadChildren() {
+    final messages = widget.controller.messages;
+    final notices = widget.controller.screenshotNotices;
+    final present = <String, List<ScreenshotNotice>>{};
+    final leading = <ScreenshotNotice>[];
+    final trailing = <ScreenshotNotice>[];
+    final ids = {for (final m in messages) _hex(m.recordId)};
+    for (final n in notices) {
+      final anchor = n.anchorRecordId;
+      if (anchor == null) {
+        leading.add(n);
+      } else if (ids.contains(_hex(anchor))) {
+        present.putIfAbsent(_hex(anchor), () => []).add(n);
+      } else {
+        trailing.add(n);
+      }
+    }
+    var sysIndex = 0;
+    Widget systemLine(ScreenshotNotice n) => ScreenshotSystemLine(
+      key: ValueKey('screenshot-${sysIndex++}'),
+      notice: n,
+    );
+
+    final children = <Widget>[];
+    for (final n in leading) {
+      children.add(systemLine(n));
+    }
+    for (final m in messages) {
+      children.add(
+        KeyedSubtree(
+          key: _keyFor(m.recordId),
+          child: MessageBubble(
+            message: m,
+            sensitiveAnalyzer: _analyzer,
+            onLongPress: () => unawaited(_openActions(m)),
+            onTapQuote: m.reply?.referentRecordId == null
+                ? null
+                : () => _scrollToReferent(m.reply!.referentRecordId!),
+            mediaLoadBytes: m.isMedia && m.mediaId != null
+                ? () => widget.controller.readMedia(m.mediaId!)
+                : null,
+            onTapMedia: m.isMedia ? () => _openMediaViewer(m) : null,
+          ),
+        ),
+      );
+      final after = present[_hex(m.recordId)];
+      if (after != null) {
+        for (final n in after) {
+          children.add(systemLine(n));
+        }
+      }
+    }
+    for (final n in trailing) {
+      children.add(systemLine(n));
+    }
+    if (widget.controller.peerTyping) {
+      children.add(const PeerTypingBubble());
+    }
+    return children;
   }
 
   Widget _header(

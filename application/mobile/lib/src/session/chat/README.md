@@ -8,7 +8,11 @@ user-facing string comes from l10n; left/right is never hardcoded. BINDING to
 
 - `chat_screen.dart` — wires the controller to the composer, bubbles, and actions
   card, and renders the session-status line. No protocol logic; reads the
-  controller's `messages`/`lineState`/`peerTyping` and forwards intent.
+  controller's `messages`/`lineState`/`peerTyping` and forwards intent. [S14] owns
+  the `ScreenshotDetector` lifecycle (start while mounted = content on screen, stop
+  on dispose → `controller.noticeLocalScreenshot()`), interleaves the screenshot
+  system lines into the thread by anchor (never re-sorting messages), and threads
+  the `SensitiveContentAnalyzer` down to received-image bubbles + the attach whisper.
 - `message_bubble.dart` — text bubble + delivery ticks (dashed "WAITING — ON YOUR
   PHONE ONLY" / delivered check), the quoted-reply preview + neutral tombstone,
   reaction chips (ownership by STROKE weight, never color, never amber; one-line

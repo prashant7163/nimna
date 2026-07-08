@@ -1189,6 +1189,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On: a knock can wake this phone through their notification service, carrying two words — \"New activity.\" No line, no name, no message — and the relay forgets the address the moment it\'s used.'**
   String get push_tradeOn;
+
+  /// Voice guide string 12 (peer side) — the bare centered system line shown in the thread when the PEER took a screenshot of the session (spec §5.2, CONTROL 0x03). An event, not speech: no bubble, no icon (components.md system line). Canonical, verbatim. S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'They took a screenshot.'**
+  String get screenshot_systemLinePeer;
+
+  /// Voice guide string 12 (own side) — the bare centered system line shown in the thread when THIS device took a screenshot; it names honestly that the other person was notified (detect-and-notify, spec §5.2). No bubble, no icon (components.md system line). Canonical, verbatim. The apostrophe in 'They've' is a straight ASCII apostrophe. S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'You took a screenshot. They\'ve been told.'**
+  String get screenshot_systemLineOwn;
+
+  /// Voice guide string 11 — the onboarding screenshot disclosure as informed consent. First sentence is canonical from spec §5.2, verbatim. The em dash is U+2014; apostrophes are straight ASCII. STAGED canonical copy: the onboarding host (wireframe F1) is a separate screen (S7/S16); this key carries the copy so it is ready. S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Nimna can\'t stop a screenshot. It will always tell the other person.\nIt only notices what happens inside the app — a second camera pointed at a screen is invisible to any software. Said up front, so you both know the terms.'**
+  String get screenshot_onboardingDisclosure;
+
+  /// The honest sub-Android-14 caveat (USER 2026-07-07 detection floor): on Android 10–13 there is NO screenshot notice, disclosed plainly rather than hidden (spec §5.2 honesty; brand voice 'say the limit out loud'). Pairs with screenshot_onboardingDisclosure. STAGED for the onboarding host (F1). The /security website copy for this gap is S19. The em dash is U+2014; apostrophe is straight ASCII. S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'On Android 13 and older, a screenshot can\'t be noticed here — only Android 14 and up, and iPhone, can tell the other person.'**
+  String get screenshot_onboardingAndroidCaveat;
+
+  /// Voice guide string 15 — the caption over a recipient-side blurred image flagged by the on-device sensitive-content check (spec §5.3; iOS 17 only). Tapping reveals in place; nothing is reported to anyone, including the sender. Canonical, verbatim. The em dash is U+2014. S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensitive content — tap to view.'**
+  String get sensitive_veilCaption;
+
+  /// Voice guide string 14 — the sender-side sensitive-content whisper question at attach time (spec §5.3): soft, non-blocking, never a modal. The question is canonical from spec §5.3, verbatim. Never amber, never danger. The em dash is U+2014. S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'This looks like sensitive content — send anyway?'**
+  String get sensitive_whisperQuestion;
+
+  /// Voice guide string 14 action — confirm sending the flagged attachment (register verb 'Send anyway'). S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Send anyway'**
+  String get sensitive_whisperSendAnyway;
+
+  /// Voice guide string 14 action — reconsider; dismiss the whisper and return to the live preview (register verb 'Go back'). S14 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get sensitive_whisperGoBack;
 }
 
 class _AppLocalizationsDelegate

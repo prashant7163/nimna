@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../domain/models/message_record.dart';
 import '../../media/ui/media_bubble_content.dart';
+import '../../sensitive/sensitive_content_analyzer.dart';
 import '../../ui/theme/nimna_tokens.dart';
 import '../model/message_view.dart';
 
@@ -86,6 +87,7 @@ class MessageBubble extends StatelessWidget {
     this.onTapQuote,
     this.mediaLoadBytes,
     this.onTapMedia,
+    this.sensitiveAnalyzer,
     super.key,
   });
 
@@ -104,6 +106,10 @@ class MessageBubble extends StatelessWidget {
 
   /// Tap on a media bubble opens the full-bleed viewer.
   final VoidCallback? onTapMedia;
+
+  /// S14 recipient-side sensitive-content analysis (spec §5.3) — forwarded to a
+  /// RECEIVED media image so it can render blurred + "tap to view" if flagged.
+  final SensitiveContentAnalyzer? sensitiveAnalyzer;
 
   static const double _maxWidthFraction = 0.75;
 
@@ -243,6 +249,7 @@ class MessageBubble extends StatelessWidget {
       message: message,
       loadBytes: mediaLoadBytes,
       onTap: onTapMedia,
+      sensitiveAnalyzer: sensitiveAnalyzer,
     );
     if (message.reply == null) {
       return content;
