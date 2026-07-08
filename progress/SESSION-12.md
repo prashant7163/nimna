@@ -516,6 +516,83 @@ Two passes:
 
 ## QA done-check
 
+**done-check: PASS** — senior-qa, 2026-07-08 09:30 +0200, HEAD `4cf55fb`
+(branch `session-12-presence`).
+
+_This is the third QA pass. The prior two were FAILs on a NON-deterministic
+done-check test (not a spec/behaviour miss): ~30% flake (pass 1), then a ~3%
+residual (pass 2, caught at 1/32–1/45). The determinism defect is now fixed
+TEST-ONLY and re-verified clean under sustained load._
+
+### Production untouched — the fix is test-only (verified)
+- `git diff e8cc1b1..4cf55fb -- application/mobile/lib` → **EMPTY** (production
+  `session_controller.dart` and all of `lib` byte-identical since my last FAIL;
+  only `test/presence/presence_flow_test.dart`,
+  `test/session/session_controller_test.dart`, and this progress file changed).
+- `git diff 195d7c4..HEAD -- application/mobile/lib/src/protocol` → **EMPTY**
+  (v0.2.1 codec still FROZEN — G3 unbroken).
+- The de-flake is legitimate: `pumpUntil`/`settle`/teardown-drain moved from
+  fixed `Future.delayed(Duration.zero)` ticks (which never yield the CPU, so a
+  descheduled sqflite FFI isolate's trailing write could miss the cap) to a real
+  wall-clock deadline polled at a NON-ZERO 1 ms delay that actually yields.
+  `session_controller_test`'s `establish()` moved to condition waits
+  (`pumpUntil(incomingKnockPending)` → `acceptKnock()` → `pumpUntil(both isLive)`),
+  fixing the 1/45 "frame into a not-yet-live controller" flake introduced by
+  S12's knock-gating timing shift. No behaviour is masked — assertions still wait
+  on real state.
+
+### Static checks (clean)
+- `flutter analyze` → **No issues found.**
+- `dart format --output=none --set-exit-if-changed lib test` → **clean** (0 changed).
+
+### Loaded-stress evidence (my own, on top of the orchestrator's 40)
+- **Orchestrator, 40 runs** under 11 CPU burners on `4cf55fb`:
+  **40/40 PASS, 0 fail, 0 database-closed** (log `stress_s12_r3.log`) — re-read
+  and confirmed, not merely trusted.
+- **My own, 12 runs** of the FULL suite under **11 concurrent CPU burners**
+  (host = 11 logical CPUs; load average climbed 4.78 → 31.4 during the set):
+  **12/12 PASS, 0 fail, 0 database-closed** (log `stress_s12_qa.log`).
+- Combined **52 loaded full-suite runs, 0 failures**. Prior residual flake was
+  1/32–1/45; a clean 52-run under-oversubscription set clears it.
+- Full suite = **361 tests** (17 net-new S12 presence tests), all green on a
+  loaded run and a quiet run.
+
+### Done-check clauses re-attested (spot-checked on green runs)
+- compose-offline → knock → accept → **ordered text backlog** delivers
+  (`presence_flow_test` "compose-offline → knock → accept → ordered text backlog
+  delivers"); offline **reaction** re-sends on next bridge ("offline-composed
+  reaction re-sends on the next bridge"). ✓
+- knock-gating: accepter does **NOT** auto-ACCEPT; explicit pick-up opens the line. ✓
+- ignore = **pure silence** (no ACCEPT, no wire signal) — attribution-free at the wire. ✓
+- **token rotation §5.7/§5.5** survives: peer token-refresh CONTROL persisted
+  (present→store encoded form, absent→revoke), and a subsequent KNOCK carries
+  the rotated token minus the `0x01` presence byte. ✓
+- **push-off = empty KNOCK payload** (pure burner-line); **push-on** carries
+  `platform‖len‖token`. no-SDK fence holds — `pubspec.yaml` unchanged, zero
+  push/APNs/FCM package added. ✓
+- **reconnect ~20 s**: recovers a live-session drop within the window; exhausts
+  to terminal loss when nobody answers; **cold knock never auto-retries** — the
+  S-2 `_hasBeenLive` gate discriminates live-drop from cold-knock ("a cold knock
+  that drops before going live does NOT reconnect"; verified it FAILS with the
+  gate removed). Fresh per-session keys (fresh KK per attempt, §3.3.1). ✓
+- lapsed knock renders **exactly "No answer."** (`knock_noAnswer`),
+  attribution-free per USER 2026-07-04 + voice-guide register line 129; §6.1
+  stale hint is LOCAL-only, no wire signal. ✓
+- **no new dependency** (architect sign-off not required); **i18n** strings
+  verbatim/canonical, non-EN siblings deferred to S16 crafted pass (matches S10). ✓
+
+### Scope notes (not FAIL conditions)
+- Push toggle: `PushOptIn` model + `PushOptInTile` ship and are unit-tested; the
+  reachable **mount** is deferred to S15/S16 F7 per USER. Verified the opt-in
+  model/payload behaviour (empty-off / token-on) directly — NOT failing on the
+  unmounted tile.
+- Device rungs (real APNs/FCM delivery, OS 30 s background socket-hold,
+  push-tap→launch→reconnect, real platform token rotation) honestly deferred to
+  S15/S18. Headless proves the wire bytes + logic; the device proves OS integration.
+
+**Verdict: PASS.** Session 12 done-check satisfied on evidence; the determinism
+defect that failed the prior two passes is fixed and re-verified under load.
+
 ## Next / follow-ups
 
 - **S15 (push):** call `SessionController.sendTokenRefresh(ownToken)` at session
