@@ -18,7 +18,9 @@ import 'package:sodium/sodium_sumo.dart';
 import '../crypto/at_rest_aead.dart';
 import '../diag/diag.dart';
 import '../domain/channel_repository.dart';
+import '../domain/media_repository.dart';
 import '../domain/message_repository.dart';
+import '../media/transfer/media_transfer_controller.dart';
 import '../noise/dh.dart';
 import '../session/connection/session_controller.dart';
 import '../session/model/chat_event.dart';
@@ -34,6 +36,7 @@ class SessionLauncher {
     required ChannelRepository channels,
     required MessageRepository messages,
     required Diag diag,
+    required MediaRepository media,
     required PushOptIn pushOptIn,
     required PeerTokenStore peerTokenStore,
     DateTime Function()? clock,
@@ -43,6 +46,7 @@ class SessionLauncher {
        _channels = channels,
        _messages = messages,
        _diag = diag,
+       _media = media,
        _pushOptIn = pushOptIn,
        _peerTokenStore = peerTokenStore,
        _clock = clock;
@@ -53,6 +57,7 @@ class SessionLauncher {
   final ChannelRepository _channels;
   final MessageRepository _messages;
   final Diag _diag;
+  final MediaRepository _media;
   final PushOptIn _pushOptIn;
   final PeerTokenStore _peerTokenStore;
   final DateTime Function()? _clock;
@@ -79,7 +84,7 @@ class SessionLauncher {
       publicKey: record.ownStaticPublic,
       secretKey: _channels.ownStaticPrivateFor(channelId),
     );
-    return SessionController(
+    final controller = SessionController(
       sodium: _sodium,
       aead: _aead,
       connector: _connector,
@@ -95,6 +100,22 @@ class SessionLauncher {
           unawaited(_peerTokenStore.onPeerTokenRefresh(channelId, token)),
       seedPendingReactions: seedPendingReactions,
     );
+    // G4 fold: media rides every launched session. The MediaTransferController
+    // is Flutter-free and attached post-construction (the S11 seam). Its clock
+    // is the SAME source the session uses, so inbound media expiry is keyed to
+    // THIS device's clock, never the sender's wire timestamp (S11 B2).
+    controller.attachMedia(
+      MediaTransferController(
+        media: _media,
+        channelId: channelId,
+        randomBytes: _aead.randomBytes,
+        sealFrame: controller.sealMediaFrame,
+        onInboundComplete: controller.ingestReceivedMedia,
+        nowMs: () => (_clock ?? DateTime.now)().toUtc().millisecondsSinceEpoch,
+        diag: _diag,
+      ),
+    );
+    return controller;
   }
 
   /// The §5.4 KNOCK payload for [channelId] (empty when push is off / no peer

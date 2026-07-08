@@ -6,9 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nimna/src/crypto/at_rest_aead.dart';
 import 'package:nimna/src/diag/diag.dart';
 import 'package:nimna/src/domain/channel_repository.dart';
+import 'package:nimna/src/domain/media_repository.dart';
 import 'package:nimna/src/domain/message_repository.dart';
 import 'package:nimna/src/domain/models/channel_record.dart';
 import 'package:nimna/src/domain/models/message_record.dart';
+import 'package:nimna/src/media/model/media_attachment.dart';
 import 'package:nimna/src/noise/dh.dart';
 import 'package:nimna/src/presence/peer_token_store.dart';
 import 'package:nimna/src/presence/push_opt_in.dart';
@@ -466,6 +468,44 @@ void main() {
       reason: 'no second KNOCK — the cold knock is never auto-retried',
     );
   });
+
+  test(
+    'media rides a launcher-built session end-to-end (G4 fold wiring)',
+    () async {
+      final env = await _Env.create(sodium, aead);
+      addTearDown(env.dispose);
+
+      // Both controllers are built ONLY through SessionLauncher.build — the
+      // production construction path. If build() did not attach a
+      // MediaTransferController, the knocker could not seal media and the
+      // accepter could not reassemble it, so a round-trip proves the G4
+      // launcher→attachMedia wiring on BOTH sides (this file, unlike
+      // media_transfer_integration_test, never hand-wires attachMedia).
+      final accepter = env.accepter.build(SessionRole.accepter);
+      final knocker = env.knocker.build(SessionRole.knocker);
+      _autoAccept(accepter);
+      await accepter.start();
+      await knocker.start();
+      await pumpUntil(() => knocker.isLive && accepter.isLive);
+
+      final bytes = Uint8List.fromList(
+        List<int>.generate(2048, (i) => i % 251),
+      );
+      await knocker.sendMedia(
+        MediaAttachment(bytes: bytes, mime: 'application/pdf'),
+      );
+
+      // The accepter's launcher-attached media controller reassembled and
+      // persisted the blob byte-identically.
+      await pumpUntil(() => accepter.messages.any((m) => m.mediaId != null));
+      final received = accepter.messages.firstWhere((m) => m.mediaId != null);
+      final blob = await env.accepter.media.readBlob(
+        channelId: env.accepter.channelId,
+        id: received.mediaId!,
+      );
+      expect(blob, equals(bytes));
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -539,6 +579,7 @@ class _Party {
     required this.aead,
     required this.channels,
     required this.messages,
+    required this.media,
     required this.diag,
     required this.channelId,
     required this.bridge,
@@ -551,6 +592,7 @@ class _Party {
   final AtRestAead aead;
   final ChannelRepository channels;
   final MessageRepository messages;
+  final MediaRepository media;
   final Diag diag;
   final Uint8List channelId;
   final _Bridge bridge;
@@ -593,6 +635,7 @@ class _Party {
       aead: aead,
       channels: services.storage.channels,
       messages: services.storage.messages,
+      media: services.storage.media,
       diag: services.diag,
       channelId: channelId,
       bridge: bridge,
@@ -606,6 +649,7 @@ class _Party {
     connector: connector,
     channels: channels,
     messages: messages,
+    media: media,
     diag: diag,
     pushOptIn: pushOptIn,
     peerTokenStore: peerTokenStore,

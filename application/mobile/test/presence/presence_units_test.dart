@@ -191,6 +191,7 @@ void main() {
         connector: connector,
         channels: services.storage.channels,
         messages: services.storage.messages,
+        media: services.storage.media,
         diag: services.diag,
         pushOptIn: PushOptIn(services.storage.channels),
         peerTokenStore: PeerTokenStore(services.storage.channels),
