@@ -170,6 +170,28 @@ does not read them as dead keys.
   when not live.
 - `test/storage/storage_service_test.dart` — AeadAuthError on open → silent
   fresh-install-reset (empty store, fresh MK, no throw).
+- `test/session/chat_screen_test.dart` [SHOULD-FIX, added at review] — the
+  ChatScreen detector-lifecycle composition with an injected fake detector:
+  start-on-mount, stop()+dispose()-on-unmount, and a screenshot emitted while
+  NOT live records no line (the §5.2 privacy gate).
+
+## Code-review NITs (review PASS 2026-07-08; no blockers)
+- **SHOULD-FIX applied** — `test/session/chat_screen_test.dart` (above) now
+  guards the detector-lifecycle composition; a regression dropping `stop()`/
+  `dispose()` from `ChatScreen.dispose`, or the liveness gate, fails there.
+- **NIT applied** — `_freshInstallReset` now closes the local `channelRepo` and
+  nulls the repo fields for symmetry with `fullWipe` (cosmetic; no dangling
+  resource today — the repo held no loaded keys after a failed `openAll`).
+- **NIT noted, left as-is** — the iOS screenshot observer is torn down on
+  stop/unmount but NOT on background (Android unregisters on `onPause`). Safe
+  today: `UIApplicationUserDidTakeScreenshotNotification` is not delivered to a
+  suspended app, so a backgrounded Nimna cannot fire a spurious notice. Confirm
+  at the S18 device rung; if iOS ever changes that, add a background stop/start
+  pair in `AppDelegate`.
+- **NIT noted, left as-is** — an over-cap flagged image shows the size error but
+  not the whisper (the size guard must clear first). Consistent with the
+  non-blocking / fail-open posture: the whisper is caution sugar and an over-cap
+  image cannot be sent until resized anyway.
 
 ## What's next
 - S16 crafts the 4-language translations for the 8 new ARB keys.

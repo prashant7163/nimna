@@ -103,7 +103,7 @@ class StorageService {
           rethrow;
         }
         didReset = true;
-        await _freshInstallReset(result.db);
+        await _freshInstallReset(result.db, channelRepo);
         continue; // Re-open from scratch against the now-empty store.
       }
 
@@ -137,11 +137,23 @@ class StorageService {
   /// in-memory keys, then delete + recreate the store root. The caller re-runs
   /// [open] against the empty root. No diag event marks this — a post-reset
   /// store must be indistinguishable from a fresh install (mirrors the
-  /// no-`fullWipe`-event stance).
-  Future<void> _freshInstallReset(Database db) async {
+  /// no-`fullWipe`-event stance). [channelRepo] is the not-yet-adopted repo
+  /// whose `openAll` raised — closed here for symmetry with [fullWipe] (it
+  /// holds no loaded key material after a failed open, but we mirror the field
+  /// teardown so no future refactor leaks one).
+  Future<void> _freshInstallReset(
+    Database db,
+    ChannelRepository channelRepo,
+  ) async {
     await keyService.destroyMasterKey();
     diag.reset();
+    channelRepo.close();
+    _channels = null;
+    _messages = null;
+    _media = null;
+    _metaRecords = null;
     await db.close();
+    _db = null;
     keyService.seal();
     root.wipeAndRecreate();
   }
