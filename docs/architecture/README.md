@@ -26,3 +26,22 @@ still defers to `docs/nimna-protocol-spec-v0.2.1.md`.
   content-free payload constants, config slots; real APNs/FCM transports
   deferred to S6, stdlib-only), keepalive stance, and the S4 test-client
   + done-check verification path.
+- [`s18-noise-oracle-design.md`](s18-noise-oracle-design.md) — Session 18
+  adversarial pass, tech design: the flynn/noise test-oracle harness as a
+  dedicated isolated Go module (`nimna.app/test-vectors/oracle` under
+  `docs/test-vectors/oracle/`) so flynn/noise never enters the AGPL relay's
+  dependency graph (three-layer CI proof); what the oracle cross-verifies
+  (XXpsk2 + KK byte-equal vs committed vectors, commitment prologue by
+  independent SHA-256, the post-Split transport deviation flynn/noise cannot
+  mirror + its honest fallback); and the `threat-model.md` doc structure
+  (every §9 row + plan-§18 new rows → test or accepted limitation, with the
+  4 hardware-bound rungs pointed at PUBLISH_READY device-QA).
+- [`threat-model.md`](threat-model.md) — Session 18 adversarial-pass
+  coverage record: the binding map for the S18 done-check. Every spec §9
+  adversary row and every plan-§18 "new row" (replay, MITM, malformed-frame
+  fuzzing both stacks, storage/backup inspection, screenshot-notice
+  suppression honesty, push-bombing, EXIF-strip, wipe forensics) → the exact
+  `path :: test name` that exercises it OR a documented accepted limitation.
+  Records the two production findings the pass caught and closed (ICC-profile
+  metadata leak; Dart outer-frame upper bound) and the four hardware-bound
+  accepted limitations carried to PUBLISH_READY §2 device-QA.

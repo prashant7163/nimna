@@ -39,6 +39,17 @@ jobs:
         # false-positive on Go's stdlib-vendored vendor/golang.org/x/crypto
         # TLS paths, present in any HTTP binary.
         run: test "$(go list -deps ./cmd/relay | grep -c '^golang.org/x/crypto$\|^golang.org/x/crypto/')" -eq 0
+      - name: relay module manifest is flynn/noise-free (S18 oracle isolation)
+        # The flynn/noise test oracle lives in its own module
+        # (docs/test-vectors/oracle, module nimna.app/test-vectors/oracle); it
+        # is BSD-3 test tooling and must never enter the AGPL relay's resolved
+        # dependency manifest. Tightest tripwire — the go.sum/go.mod grep.
+        # (docs/architecture/s18-noise-oracle-design.md §1.4, layer a.)
+        run: "! grep -q 'flynn/noise' go.mod go.sum"
+      - name: relay import graph excludes flynn/noise (semantic proof, §1.4 layer b)
+        # Defense in depth over the manifest grep: the actual build graph of
+        # the whole relay module carries zero flynn/noise packages.
+        run: test "$(go list -deps ./... | grep -c '^github.com/flynn/noise')" -eq 0
       - name: test (includes the cmd/relay real-binary log-scrub assertion, note §20)
         run: go test ./...
       - name: vendored spec copy is byte-identical to the canonical spec (note §29)

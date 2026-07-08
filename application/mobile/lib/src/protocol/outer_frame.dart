@@ -20,6 +20,12 @@ const int routingIdBytes = 16;
 /// Outer-frame header length: `ver(1) ‖ frame_type(1) ‖ routing_id(16)`.
 const int outerHeaderBytes = 2 + routingIdBytes;
 
+/// Maximum total frame size (header + payload) the client accepts — the §4
+/// mirror of the relay's `wire.MaxFrame` (default 128 KiB, sized to carry a
+/// full 65,536-byte MEDIA_CHUNK). A frame larger than this is rejected at
+/// decode, matching the relay's `ErrOversize`.
+const int outerMaxFrame = 128 * 1024;
+
 /// The complete §5.4 frame-type enum — relay-plane and data-plane. Wire
 /// values are spec-fixed; never renumber.
 enum FrameType {
@@ -112,11 +118,15 @@ class OuterFrame {
     return out;
   }
 
-  /// Decodes wire bytes; throws [OuterFrameError] on a short header, a
-  /// version other than `0x01`, or an unknown frame type. The relay parses
+  /// Decodes wire bytes; throws [OuterFrameError] on a short header, a frame
+  /// larger than [outerMaxFrame], a version other than `0x01`, or an unknown
+  /// frame type (checked in that order, mirroring the relay). The relay parses
   /// exactly 18 bytes and routes; a client is no more lenient.
   static OuterFrame decode(Uint8List bytes) {
     if (bytes.length < outerHeaderBytes) {
+      throw OuterFrameError();
+    }
+    if (bytes.length > outerMaxFrame) {
       throw OuterFrameError();
     }
     if (bytes[0] != protocolVersion) {

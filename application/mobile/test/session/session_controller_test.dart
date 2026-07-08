@@ -186,6 +186,44 @@ void main() {
     },
   );
 
+  test('screenshot notice cannot be silenced while live: unconditional '
+      'CONTROL 0x03, no suppression toggle (§18-E honesty)', () async {
+    final s = await liveSession();
+    addTearDown(s.dispose);
+
+    // STRUCTURAL (a regression tripwire, NOT the guarantee): pins the CURRENT
+    // zero-argument shape of noticeLocalScreenshot. This is deliberately weak —
+    // it only fails if someone changes the arity to a REQUIRED parameter; an
+    // optional named opt-out (e.g. `{bool silent = false}`) would still tear
+    // off to `void Function()`, so this check alone does NOT prove
+    // non-suppressibility. The real guarantee is the BEHAVIORAL assertion
+    // below. (The method's only gates are `_closed` / `!isLive` — both
+    // non-suppression: a torn-down / not-live line has no peer to notify, spec
+    // §5.2 — covered by the no-op-when-not-live test above.)
+    final void Function() emit = s.knocker.controller.noticeLocalScreenshot;
+    expect(emit, isA<void Function()>());
+
+    // BEHAVIORAL (the actual non-suppressibility guarantee): every screenshot
+    // on a live line reaches the peer — there is no dedup, no "already noticed"
+    // silencing, and no code path that swallows it. Drive several; the peer's
+    // notice count must track 1:1 (a hostile or misconfigured sender cannot
+    // screenshot silently).
+    for (var i = 1; i <= 3; i++) {
+      s.knocker.controller.noticeLocalScreenshot();
+      await pumpUntil(
+        () => s.accepter.controller.screenshotNotices.length == i,
+      );
+      expect(s.accepter.controller.screenshotNotices, hasLength(i));
+      expect(s.knocker.controller.screenshotNotices, hasLength(i));
+    }
+    // Each peer-side line is a genuine peer notice (own == false) — none was
+    // swallowed or downgraded to a silent own-only record.
+    expect(
+      s.accepter.controller.screenshotNotices.every((n) => !n.own),
+      isTrue,
+    );
+  });
+
   test('reaction round trip sets the peer slot; never ACKed', () async {
     final s = await liveSession();
     addTearDown(s.dispose);
