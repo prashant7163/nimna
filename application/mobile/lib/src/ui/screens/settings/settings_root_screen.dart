@@ -88,6 +88,14 @@ class SettingsRootScreen extends StatelessWidget {
                       applicationName: l10n.appTitle,
                     ),
                   ),
+                  SettingsRow(
+                    label: l10n.settings_rowDiagnostics,
+                    caption: l10n.settings_rowDiagnosticsCaption,
+                    // A deliberate export of the content-free local log; nothing
+                    // auto-uploads (architect Concern 2). Inside the perimeter.
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(Routes.diagnostics),
+                  ),
                   const SizedBox(height: 24),
                   SettingsRow(
                     label: l10n.settings_rowWipeEverything,

@@ -2,9 +2,12 @@ import 'package:flutter/widgets.dart';
 
 import '../session/chat/chat_screen.dart';
 import '../ui/screens/channel_list_screen.dart';
+import '../ui/screens/knock_received_screen.dart';
+import '../ui/screens/onboarding/onboarding_screen.dart';
 import '../ui/screens/paywall/paywall_screen.dart';
 import '../ui/screens/settings/app_lock_setup_screen.dart';
 import '../ui/screens/settings/channel_notifications_screen.dart';
+import '../ui/screens/settings/diagnostics_screen.dart';
 import '../ui/screens/settings/notifications_directory_screen.dart';
 import '../ui/screens/settings/settings_root_screen.dart';
 import 'transitions.dart';
@@ -15,11 +18,21 @@ import 'transitions.dart';
 abstract final class Routes {
   static const String channelList = '/';
 
+  /// F1 — first-run onboarding (S16). Launch route only when onboarding has
+  /// not been seen (the first-run gate lives in the app root); it replaces
+  /// itself with [channelList] on Skip/Start and is never on the back stack.
+  static const String onboarding = '/onboarding';
+
   /// F8.1 — app settings (S13).
   static const String settings = '/settings';
 
   /// F8.2 — app-lock setup / manage (S13).
   static const String appLock = '/settings/app-lock';
+
+  /// F8 — diagnostics export (S16). A deliberate, in-memory share of the
+  /// structurally content-free local log; nothing auto-uploads. Inside the
+  /// app-lock perimeter.
+  static const String diagnostics = '/settings/diagnostics';
 
   /// F8 → per-line notifications directory (S15). Lists lines; each opens
   /// [channelNotifications]. The full F7 per-line screen is S16.
@@ -33,6 +46,12 @@ abstract final class Routes {
   /// `startCreateLine` when the store has no active creation subscription;
   /// pops a [PaywallResult]. Never a launch route, never joined-from.
   static const String paywall = '/paywall';
+
+  /// F6 — the incoming-knock surface (S16). Pushed with a [KnockScreenArgs]
+  /// (the engaged session + the channel's local label) — the target the
+  /// push-tap → open path lands on when the app opens into a live knock. Pick
+  /// up → the chat (F5); Ignore → silence. Never a launch route.
+  static const String knock = '/knock';
 
   /// F5 — the live chat session (S10). Pushed with a [ChatScreenArgs] carrying
   /// a built [SessionController] + the channel's local label. The entry points
@@ -48,6 +67,11 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
         settings: settings,
         builder: (context) => const ChannelListScreen(),
       );
+    case Routes.onboarding:
+      return NimnaPageRoute(
+        settings: settings,
+        builder: (context) => const OnboardingScreen(),
+      );
     case Routes.settings:
       return NimnaPageRoute(
         settings: settings,
@@ -57,6 +81,11 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
       return NimnaPageRoute(
         settings: settings,
         builder: (context) => const AppLockSetupScreen(),
+      );
+    case Routes.diagnostics:
+      return NimnaPageRoute(
+        settings: settings,
+        builder: (context) => const DiagnosticsScreen(),
       );
     case Routes.notifications:
       return NimnaPageRoute(
@@ -71,6 +100,13 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
           channelId: args.channelId,
           label: args.label,
         ),
+      );
+    case Routes.knock:
+      final args = settings.arguments as KnockScreenArgs;
+      return NimnaPageRoute(
+        settings: settings,
+        builder: (context) =>
+            KnockReceivedScreen(session: args.session, label: args.label),
       );
     case Routes.paywall:
       return NimnaPageRoute<PaywallResult>(

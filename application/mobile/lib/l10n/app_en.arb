@@ -828,5 +828,99 @@
   "channelSettings_subtitle": "Line settings — this phone only",
   "@channelSettings_subtitle": {
     "description": "Sub-header of the per-line settings surface (wireframe F7). Everything there is per-channel and stored only on this phone (spec §6). The em dash is U+2014. S15 net-new (minimal F7 mount; full F7 is S16). Enters the S16 crafted-translation pass."
+  },
+  "onboarding_whatItIsHeadline": "A private line between two people.",
+  "@onboarding_whatItIsHeadline": {
+    "description": "F1.1 headline — voice guide string 1, line 1, verbatim. The first thing a new user reads before any ask (spec §5.2 informed-consent flow). S16 net-new onboarding host. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_whatItIsBody": "No accounts. No cloud. Messages live on your two phones, nowhere else.",
+  "@onboarding_whatItIsBody": {
+    "description": "F1.1 body — voice guide string 1, line 2, verbatim. States the architecture as fact (no accounts / no cloud). S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_pairingHeadline": "Pair once with a code.",
+  "@onboarding_pairingHeadline": {
+    "description": "F1.2 headline (wireframe F1.2). Teaches the one ritual — the Nimna code — as a codeword game, not a security procedure. In UI the code is only ever the 'Nimna code' (spec §2). S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_pairingBody": "Pair once with a Nimna code you share however you like — read aloud, on paper, or as the QR shown right beside it.\nAfter that, the code is gone for good. The line is yours.",
+  "@onboarding_pairingBody": {
+    "description": "F1.2 body — voice guide string 2, verbatim (two lines, \\n between). The em dash is U+2014; apostrophes are straight ASCII. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_cannotSeeHeadline": "What we cannot see",
+  "@onboarding_cannotSeeHeadline": {
+    "description": "F1.3 headline (wireframe F1.3). The honesty beat, stated as a plain title, not a claim. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_cannotSeeBody": "We can't read your messages. We can't recover them either.\nThere is nothing to hand over, because nothing is kept.",
+  "@onboarding_cannotSeeBody": {
+    "description": "F1.3 body — voice guide string 3, verbatim (two lines, \\n between). Facts, not vows. Straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_cannotSeeRelayNote": "The relay does see connection times, IP addresses, and message sizes — never content. Details live in Settings → Relay.",
+  "@onboarding_cannotSeeRelayNote": {
+    "description": "F1.3 caption (wireframe F1.3) — volunteers the honest metadata limit (relay sees IPs/timing/sizes, never content; spec §4) instead of hiding it. The honesty checklist forbids drifting toward 'no one can see anything'. The em dash is U+2014; the arrow is U+2192. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_next": "Next",
+  "@onboarding_next": {
+    "description": "F1.1–F1.3 primary action — advance to the next onboarding screen (register verb). S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_skip": "Skip",
+  "@onboarding_skip": {
+    "description": "F1.1–F1.3 secondary action — skip onboarding to the empty channel list (F4.4). The last screen (F1.4, the screenshot terms) has NO skip. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "onboarding_start": "Start",
+  "@onboarding_start": {
+    "description": "F1.4 sole primary action — finish onboarding and enter the app (register verb). No skip on the consent screen. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "knock_lapsesInSeconds": "Lapses in {seconds}s",
+  "@knock_lapsesInSeconds": {
+    "description": "F6.3 live-knock countdown caption (wireframe F6.3, screen 06) — the knock's remaining life at the relay (spec §3.2, 60 s). Attribution-neutral, states only time. {seconds} is the integer seconds remaining. S16 net-new. Enters the S16 crafted-translation pass.",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "42"
+      }
+    }
+  },
+  "settings_readReceiptsLabel": "Read receipts",
+  "@settings_readReceiptsLabel": {
+    "description": "F7 read-receipts toggle label (wireframe F7.1). Per-line, DEFAULT OFF (opt-in, spec §5; USER 2026-07-07). S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "settings_readReceiptsCaption": "They'll see \"Seen\" under messages you've read. This line only.",
+  "@settings_readReceiptsCaption": {
+    "description": "F7 read-receipts toggle caption (wireframe F7.1, verbatim). Honest and in-place: the caption IS the disclosure. Straight ASCII quotes/apostrophes. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "settings_typingLabel": "Typing indicator",
+  "@settings_typingLabel": {
+    "description": "F7 typing-indicator toggle label (wireframe F7.1). Per-line OFF switch; typing is DEFAULT ON (USER 2026-07-07). S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "settings_typingCaption": "They'll see when you're writing. This line only.",
+  "@settings_typingCaption": {
+    "description": "F7 typing-indicator toggle caption (wireframe F7.1, verbatim). Straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "session_readReceiptSeen": "Seen",
+  "@session_readReceiptSeen": {
+    "description": "The read-receipt indicator rendered under your latest sent message once the peer's app reports it read (CONTROL 0x02, spec §5). Shown only when the peer opted into read receipts. A single plain word, never a claim of more. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "settings_rowDiagnostics": "Share diagnostics",
+  "@settings_rowDiagnostics": {
+    "description": "F8.1 settings row (design-silent, PM-crafted to the voice guide) — opens the diagnostics export. The local diagnostic log is event codes and timestamps only, never content; nothing auto-uploads. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "settings_rowDiagnosticsCaption": "Event codes and times only — never your messages. Nothing leaves your phone unless you send it.",
+  "@settings_rowDiagnosticsCaption": {
+    "description": "F8.1 diagnostics row caption (design-silent, PM-crafted). States what the log is (codes + times, no content) and that nothing auto-uploads (spec §6 local ring-buffer; honesty doctrine). The em dash is U+2014; straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "diag_shareTitle": "Diagnostics",
+  "@diag_shareTitle": {
+    "description": "Nav-bar title of the diagnostics export screen (design-silent, PM-crafted). S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "diag_shareExplainer": "This is a technical record of what the app did — event codes and times, nothing more. No messages, no names, no codes, no addresses are in it, and it can't hold them. It stays on your phone unless you choose to share it.",
+  "@diag_shareExplainer": {
+    "description": "Diagnostics export screen explainer (design-silent, PM-crafted to the voice guide honesty bar). Describes the structurally content-free log (app-architecture §6) and that nothing auto-uploads. The em dash is U+2014; straight ASCII apostrophes. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "diag_shareAction": "Share the log",
+  "@diag_shareAction": {
+    "description": "Diagnostics export primary action — hand the rendered log to the OS share sheet (register verb). A single deliberate user tap; no network from the app. S16 net-new. Enters the S16 crafted-translation pass."
+  },
+  "diag_shareEmpty": "Nothing to share yet.",
+  "@diag_shareEmpty": {
+    "description": "Diagnostics export empty state — the log holds no records yet. Calm, factual. S16 net-new. Enters the S16 crafted-translation pass."
   }
 }

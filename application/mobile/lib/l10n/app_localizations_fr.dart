@@ -683,4 +683,81 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get channelSettings_subtitle => 'Line settings — this phone only';
+
+  @override
+  String get onboarding_whatItIsHeadline =>
+      'A private line between two people.';
+
+  @override
+  String get onboarding_whatItIsBody =>
+      'No accounts. No cloud. Messages live on your two phones, nowhere else.';
+
+  @override
+  String get onboarding_pairingHeadline => 'Pair once with a code.';
+
+  @override
+  String get onboarding_pairingBody =>
+      'Pair once with a Nimna code you share however you like — read aloud, on paper, or as the QR shown right beside it.\nAfter that, the code is gone for good. The line is yours.';
+
+  @override
+  String get onboarding_cannotSeeHeadline => 'What we cannot see';
+
+  @override
+  String get onboarding_cannotSeeBody =>
+      'We can\'t read your messages. We can\'t recover them either.\nThere is nothing to hand over, because nothing is kept.';
+
+  @override
+  String get onboarding_cannotSeeRelayNote =>
+      'The relay does see connection times, IP addresses, and message sizes — never content. Details live in Settings → Relay.';
+
+  @override
+  String get onboarding_next => 'Next';
+
+  @override
+  String get onboarding_skip => 'Skip';
+
+  @override
+  String get onboarding_start => 'Start';
+
+  @override
+  String knock_lapsesInSeconds(int seconds) {
+    return 'Lapses in ${seconds}s';
+  }
+
+  @override
+  String get settings_readReceiptsLabel => 'Read receipts';
+
+  @override
+  String get settings_readReceiptsCaption =>
+      'They\'ll see \"Seen\" under messages you\'ve read. This line only.';
+
+  @override
+  String get settings_typingLabel => 'Typing indicator';
+
+  @override
+  String get settings_typingCaption =>
+      'They\'ll see when you\'re writing. This line only.';
+
+  @override
+  String get session_readReceiptSeen => 'Seen';
+
+  @override
+  String get settings_rowDiagnostics => 'Share diagnostics';
+
+  @override
+  String get settings_rowDiagnosticsCaption =>
+      'Event codes and times only — never your messages. Nothing leaves your phone unless you send it.';
+
+  @override
+  String get diag_shareTitle => 'Diagnostics';
+
+  @override
+  String get diag_shareExplainer =>
+      'This is a technical record of what the app did — event codes and times, nothing more. No messages, no names, no codes, no addresses are in it, and it can\'t hold them. It stays on your phone unless you choose to share it.';
+
+  @override
+  String get diag_shareAction => 'Share the log';
+
+  @override
+  String get diag_shareEmpty => 'Nothing to share yet.';
 }

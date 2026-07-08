@@ -96,13 +96,17 @@ void main() {
 
     // Default OFF, then flip ON — persisted inside the channel record.
     expect(enabled(), isFalse);
-    await tester.tap(find.byType(NimnaToggle));
+    await tester.tap(
+      find.byType(NimnaToggle).first,
+    ); // F7 now has 3 toggles; the push toggle is first
     await tester.pump();
     await settleWrites();
     expect(enabled(), isTrue);
 
     // Flip back OFF — the unilateral opt-out.
-    await tester.tap(find.byType(NimnaToggle));
+    await tester.tap(
+      find.byType(NimnaToggle).first,
+    ); // F7 now has 3 toggles; the push toggle is first
     await tester.pump();
     await settleWrites();
     expect(enabled(), isFalse);

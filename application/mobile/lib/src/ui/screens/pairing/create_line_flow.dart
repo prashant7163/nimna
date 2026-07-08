@@ -8,6 +8,7 @@ import '../../../pairing/initiator/pending_pairing.dart';
 import '../../theme/nimna_tokens.dart';
 import 'code_ended_screen.dart';
 import 'create_code_setup_screen.dart';
+import 'create_finalize_screen.dart';
 import 'share_code_screen.dart';
 
 /// The F2 initiator flow host: one route whose surface follows the
@@ -66,8 +67,11 @@ class _CreateLineFlowState extends State<CreateLineFlow>
   }
 
   void _onPhase() {
-    if (_controller.phase == CreateLinePhase.cancelled) {
-      // Cancel → F4, "nothing was created".
+    final phase = _controller.phase;
+    if (phase == CreateLinePhase.cancelled ||
+        phase == CreateLinePhase.finalized) {
+      // Cancel → F4 ("nothing was created"); finalized → F4, where the new
+      // line now shows (F5 chat is one tap away — the first knock).
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Navigator.of(context).maybePop();
@@ -93,10 +97,14 @@ class _CreateLineFlowState extends State<CreateLineFlow>
         CreateCodeSetupScreen(controller: _controller),
       CreateLinePhase.waiting ||
       CreateLinePhase.bridged => ShareCodeScreen(controller: _controller),
+      CreateLinePhase.verifying => CreateVerifyScreen(controller: _controller),
+      CreateLinePhase.naming => CreateNameScreen(controller: _controller),
+      CreateLinePhase.mismatch => CreateMismatchScreen(onMakeNewCode: _restart),
       CreateLinePhase.expired => CodeEndedScreen.expired(
         onMakeNewCode: _restart,
       ),
       CreateLinePhase.spent => CodeEndedScreen.spent(onMakeNewCode: _restart),
+      CreateLinePhase.finalized ||
       CreateLinePhase.cancelled => const SizedBox.shrink(),
     };
     // Surface identity: F2.2/F2.4 (and the bridged hold) are ONE screen;
@@ -107,7 +115,10 @@ class _CreateLineFlowState extends State<CreateLineFlow>
       CreateLinePhase.waiting || CreateLinePhase.bridged => 1,
       CreateLinePhase.expired => 2,
       CreateLinePhase.spent => 3,
-      CreateLinePhase.cancelled => 4,
+      CreateLinePhase.cancelled || CreateLinePhase.finalized => 4,
+      CreateLinePhase.verifying => 5,
+      CreateLinePhase.naming => 6,
+      CreateLinePhase.mismatch => 7,
     };
     if (MediaQuery.disableAnimationsOf(context)) {
       return surface;

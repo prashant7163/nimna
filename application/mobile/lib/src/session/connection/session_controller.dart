@@ -79,6 +79,11 @@ class SessionController {
     // Typing is sent by default (USER, 2026-07-07); the per-channel F7 toggle
     // is a later session — [typingEnabled] is the single internal seam for it.
     this.typingEnabled = true,
+    // Read receipts are OFF by default (opt-in, USER 2026-07-07); the F7
+    // per-channel toggle drives this seam. When on, this device sends a
+    // CONTROL 0x02 read receipt (§5) for each peer message it reads, so the
+    // peer sees "Seen"; the same type carries the peer's receipts back to us.
+    this.readReceiptsEnabled = false,
     // S12: receive-side device-token refresh (§5.5/§5.7). Wired by the
     // presence lane's peer_token_store, which persists the token to the
     // channel record; null in the pure text harness.
@@ -131,6 +136,17 @@ class SessionController {
   /// The single seam for the future F7 per-channel typing toggle (default on,
   /// USER 2026-07-07). Never surfaced as UI in S10.
   final bool typingEnabled;
+
+  /// The single seam for the F7 per-channel read-receipts toggle (default off,
+  /// opt-in, USER 2026-07-07). When on, reading a peer message sends a §5
+  /// CONTROL 0x02 receipt; the peer then renders "Seen".
+  final bool readReceiptsEnabled;
+
+  /// Outbound msg_ids the peer has reported reading (CONTROL 0x02). Transient
+  /// and session-scoped — never persisted (like screenshot notices); a fresh
+  /// session starts with none. Drives the "Seen" caption under the latest sent
+  /// message.
+  final Set<String> _peerSeenOutbound = {};
 
   final StreamController<ChatEvent> _events =
       StreamController<ChatEvent>.broadcast();
@@ -194,6 +210,24 @@ class SessionController {
   SessionLineState get lineState => _lineState;
 
   bool get peerTyping => _peerTyping;
+
+  /// True when the peer's app has reported reading this device's most recent
+  /// sent message (CONTROL 0x02) — the chat renders a single "Seen" caption
+  /// under that bubble. Only ever true when the PEER opted into read receipts;
+  /// silent otherwise. Read receipts are never ACKed and carry no timing claim.
+  bool get peerSawLatestOutbound => latestSeenOutboundRecordId != null;
+
+  /// The local record id of the latest sent message the peer has read, or null
+  /// when none is seen — the anchor the chat renders the "Seen" caption under.
+  Uint8List? get latestSeenOutboundRecordId {
+    for (var i = _records.length - 1; i >= 0; i--) {
+      final r = _records[i];
+      if (r.direction == MessageDirection.sent && r.msgId != null) {
+        return _peerSeenOutbound.contains(_hex(r.msgId!)) ? r.id : null;
+      }
+    }
+    return null;
+  }
 
   bool get isLive => _transport != null && _lineState == SessionLineState.live;
 
@@ -969,6 +1003,28 @@ class SessionController {
         body: AckBody(ackedMsgId: env.msgId).encode(),
       ),
     );
+    _maybeSendReadReceipt(env.msgId);
+  }
+
+  /// Sends a CONTROL 0x02 read receipt for [readMsgId] — but ONLY when this
+  /// line opted into read receipts (F7, default OFF). Distinct from the ACK,
+  /// which is protocol delivery and always sent: a receipt is a discretionary,
+  /// opt-in "Seen" the peer will render (spec §5). Never ACKed itself.
+  void _maybeSendReadReceipt(Uint8List readMsgId) {
+    if (!readReceiptsEnabled) {
+      return;
+    }
+    _seal(
+      InnerEnvelope(
+        type: InnerType.control,
+        msgId: _aead.randomBytes(msgIdBytes),
+        timestampMs: _nowMs(),
+        body: ControlBody(
+          rawType: ControlType.readReceipt.wire,
+          payload: readMsgId,
+        ).encode(),
+      ),
+    );
   }
 
   void _onInboundAck(InnerEnvelope env) {
@@ -1032,8 +1088,18 @@ class SessionController {
       case ControlType.typing:
         _onPeerTyping();
       case ControlType.readReceipt:
-        // TODO(F7): read receipts default OFF; do not render "Seen" here.
-        break;
+        // The peer read one of OUR sent messages (F7 receipts, spec §5). The
+        // body is the outbound msg_id(16); mark it seen so the chat renders a
+        // single "Seen" caption under our latest sent bubble. Never ACKed; a
+        // receipt for an unknown/foreign id is silently ignored (forward-compat).
+        final receiptFor = Uint8List.fromList(control.payload);
+        if (receiptFor.length == msgIdBytes) {
+          final idx = _byMsgId[_hex(receiptFor)];
+          if (idx != null && _records[idx].direction == MessageDirection.sent) {
+            _peerSeenOutbound.add(_hex(receiptFor));
+            _emit(PeerReadReceipt(_records[idx].id));
+          }
+        }
       case ControlType.screenshot:
         // The peer took a screenshot while our content was on their screen
         // (spec §5.2). Render the peer-side bare system line ("They took a

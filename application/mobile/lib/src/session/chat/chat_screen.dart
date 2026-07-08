@@ -315,6 +315,14 @@ class _ChatScreenState extends State<ChatScreen> {
           children.add(systemLine(n));
         }
       }
+      // F7 read receipts: a single right-aligned "Seen" caption under the
+      // latest sent message the peer has read (spec §5). Only ever present when
+      // the PEER opted into receipts; silent otherwise. Never a per-message
+      // badge — one caption, iMessage-style.
+      final seenAnchor = widget.controller.latestSeenOutboundRecordId;
+      if (seenAnchor != null && _hex(seenAnchor) == _hex(m.recordId)) {
+        children.add(_seenCaption());
+      }
     }
     for (final n in trailing) {
       children.add(systemLine(n));
@@ -323,6 +331,21 @@ class _ChatScreenState extends State<ChatScreen> {
       children.add(const PeerTypingBubble());
     }
     return children;
+  }
+
+  Widget _seenCaption() {
+    final tokens = Theme.of(context).extension<NimnaTokens>()!;
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(top: 2, bottom: 4),
+      child: Align(
+        alignment: AlignmentDirectional.centerEnd,
+        child: Text(
+          l10n.session_readReceiptSeen,
+          style: NimnaText.caption.copyWith(color: tokens.textTertiary),
+        ),
+      ),
+    );
   }
 
   Widget _header(

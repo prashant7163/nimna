@@ -17,7 +17,9 @@ import '../lock/pin_verifier.dart';
 import '../pairing/initiator/pairing_initiator_service.dart';
 import '../pairing/initiator/pending_pairing.dart';
 import '../pairing/joiner/joiner_service.dart';
+import '../presence/peer_token_store.dart';
 import '../presence/push_opt_in.dart';
+import '../presence/session_launcher.dart';
 import '../push/platform_push_source.dart';
 import '../push/push_service.dart';
 import '../push/push_source_factory.dart';
@@ -29,6 +31,7 @@ import '../storage/store_root.dart';
 import '../transport/relay_socket.dart';
 import '../wipe/wipe_service.dart';
 import 'app_scope.dart';
+import 'first_run_store.dart';
 
 /// Composition root. Production boot passes nothing; tests inject the
 /// database factory, store root, master-key store, relay connector,
@@ -54,6 +57,7 @@ Future<NimnaServices> bootstrapNimna({
   void Function(Duration delay, void Function() callback)? lockScheduler,
   bool observeLifecycle = true,
   PlatformPushSource? pushSource,
+  PushService? pushService,
 }) async {
   final sodium = await SodiumInstance.init();
   final aead = AtRestAead(sodium);
@@ -133,11 +137,43 @@ Future<NimnaServices> bootstrapNimna({
   // rotations (no-op when inert). The opt-in lookup is LAZY (resolves the
   // current channel repo at read time, false while sealed) so no stale repo
   // is captured across a seal/unseal cycle.
-  final pushService = PushService(
-    source: pushSource ?? defaultPushSource(),
-    isOptedIn: (channelId) =>
-        storage.isOpen && PushOptIn(storage.channels).isEnabled(channelId),
-  )..initialize();
+  // Tests inject a [PushService] spy (e.g. to assert the SessionLauncher's
+  // bindSession hook fired at the composition root); production builds the
+  // real orchestrator over the platform source.
+  final push =
+      (pushService ??
+            PushService(
+              source: pushSource ?? defaultPushSource(),
+              isOptedIn: (channelId) =>
+                  storage.isOpen &&
+                  PushOptIn(storage.channels).isEnabled(channelId),
+            ))
+        ..initialize();
+
+  // S16 composition root (architect Concern 1 / the S15 forward-requirement):
+  // a FACTORY that builds a fresh SessionLauncher over the CURRENTLY-open
+  // repositories each time a session is launched — channels/messages/media are
+  // recreated on every seal→unseal, so capturing them once would go stale
+  // (the same lazy-repo discipline the S15 minimal push mount uses). The one
+  // line the forward-requirement is about — `onSessionBound: push.bindSession`
+  // — lives HERE, at the composition root, so a launched session announces
+  // this device's own token to an opted-in peer. `presence` never imports the
+  // push lane; the hook is a bare typedef.
+  SessionLauncher buildSessionLauncher() => SessionLauncher(
+    sodium: sodium,
+    aead: aead,
+    connector: connector,
+    channels: storage.channels,
+    messages: storage.messages,
+    media: storage.media,
+    diag: diag,
+    pushOptIn: PushOptIn(storage.channels),
+    peerTokenStore: PeerTokenStore(storage.channels),
+    clock: clock,
+    onSessionBound: push.bindSession,
+  );
+
+  final firstRun = FirstRunStore(root.root);
 
   // Lock first: with a lock enrolled this leaves the perimeter SEALED and
   // never reads the keystore; with the lock disabled it opens storage.
@@ -212,6 +248,8 @@ Future<NimnaServices> bootstrapNimna({
     lockController: lockController,
     wipe: wipe,
     billing: billing,
-    pushService: pushService,
+    pushService: push,
+    sessionLauncher: buildSessionLauncher,
+    firstRun: firstRun,
   );
 }

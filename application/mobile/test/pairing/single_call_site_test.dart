@@ -49,12 +49,15 @@ void main() {
     expect(callSites.single, startsWith('lib/src/ui/screens/'));
   });
 
-  test('share_plus is imported only by the two fenced call sites', () {
+  test('share_plus is imported only by the fenced call sites', () {
     // S8: the pairing-code share. S11: the media export (the one deliberate
-    // quarantine exit — decrypt-to-temp → share → cleanup, spec §5.1).
+    // quarantine exit — decrypt-to-temp → share → cleanup, spec §5.1). S16: the
+    // diagnostics export (structurally content-free enum-names + ints, shared
+    // in-memory via ShareParams(text:) — no temp file; architect Concern 2).
     const allowed = {
       'lib/src/pairing/initiator/share.dart',
       'lib/src/media/pipeline/media_export.dart',
+      'lib/src/ui/screens/settings/diagnostics_screen.dart',
     };
     final offenders = <String>[];
     for (final file in dartFilesUnderLib()) {

@@ -121,6 +121,17 @@ final class PeerTyping extends ChatEvent {
   const PeerTyping();
 }
 
+/// S16 — the peer's app reported reading one of our sent messages (F7 read
+/// receipts, CONTROL 0x02). The UI re-reads
+/// [SessionController.peerSawLatestOutbound] and renders a single "Seen"
+/// caption. Only ever fires when the PEER opted in; never ACKed, no timing
+/// claim (spec §5).
+final class PeerReadReceipt extends ChatEvent {
+  const PeerReadReceipt(this.recordId);
+
+  final Uint8List recordId;
+}
+
 /// S14 — a screenshot notice entered the thread (spec §5.2, CONTROL 0x03): the
 /// peer took one ([own] false → "They took a screenshot.") or this device did
 /// ([own] true → "You took a screenshot. They've been told."). The UI re-reads
