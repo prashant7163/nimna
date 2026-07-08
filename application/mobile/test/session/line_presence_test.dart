@@ -302,6 +302,88 @@ void main() {
     expect(ignored, isTrue);
   });
 
+  // ---- the inline F6 countdown ticks down live (self-scheduled 1 s ticker) ---
+
+  // The KNOCK_FWD-into-the-listener path (in-app, no push) surfaces F6 INLINE
+  // via [LinePresence]. Its remaining-seconds text must advance once per second
+  // on its own — not only on incidental rebuilds — mirroring the standalone
+  // KnockReceivedScreen's ticker. We drive the real coordinator into the
+  // incoming posture with a single inbound KNOCK_FWD, then let ~1 real second
+  // pass (so DateTime.now() advances the deadline delta) and fire the fake 1 s
+  // tick that rebuilds the surface — the displayed count must have dropped.
+  testWidgets('the inline incoming-knock countdown ticks down on a 1 s tick', (
+    tester,
+  ) async {
+    widenView(tester);
+    final device = TestDevice.create();
+    addTearDown(device.dispose);
+    late NimnaServices services;
+    await tester.runAsync(() async {
+      services = await device.boot();
+    });
+    final channelId = aead.randomBytes(16);
+    await tester.runAsync(() async {
+      await services.storage.channels.create(_record(sodium, aead, channelId));
+    });
+    final connector = FakeRelayConnector();
+    final launcher = _launcher(sodium, aead, services, connector);
+
+    await tester.runAsync(() async {
+      await tester.pumpWidget(
+        host(
+          LinePresence(
+            launcher: launcher,
+            diag: services.diag,
+            channelId: channelId,
+            // A full 60 s window so an integer second is comfortably resolvable.
+            knockWindow: const Duration(seconds: 60),
+            label: 'Marlowe',
+            screenshotDetector: _FakeDetector(),
+            sensitiveAnalyzer: const NoOpSensitiveContentAnalyzer(),
+          ),
+        ),
+      );
+      await tester.pump(); // first frame: listening surface
+      await Future<void>.delayed(
+        const Duration(milliseconds: 30),
+      ); // accepter start() → connecting
+    });
+    await tester.pump();
+
+    // An inbound KNOCK_FWD on the listening accepter connection → F6 inline.
+    // Real async lets the frame → IncomingKnock → notifier → setState chain
+    // settle (the presence_flow_test discipline); then pump to render.
+    await tester.runAsync(() async {
+      connector.connections[0].deliver(
+        OuterFrame(type: FrameType.knockFwd, routingId: aead.randomBytes(16)),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+    });
+    await tester.pump();
+
+    final view = find.byType(IncomingKnockView);
+    expect(view, findsOneWidget);
+    final before = tester.widget<IncomingKnockView>(view).remainingSeconds;
+    expect(before, greaterThan(0));
+
+    // Let ~1 real second elapse: the self-scheduled 1 s ticker (a real timer,
+    // built inside runAsync) fires setState and the wall clock the deadline is
+    // read against advances. Then pump the pending rebuild.
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+    });
+    await tester.pump();
+
+    final after = tester
+        .widget<IncomingKnockView>(find.byType(IncomingKnockView))
+        .remainingSeconds;
+    expect(
+      after,
+      lessThan(before),
+      reason: 'the inline countdown must advance live, once per second',
+    );
+  });
+
   // ---- reconnect phases render the three captions ---------------------------
 
   testWidgets('reconnect phases render the three status captions', (

@@ -176,7 +176,7 @@ class _ToggleRow extends StatelessWidget {
         constraints: const BoxConstraints(
           minHeight: NimnaSpacing.listRowSettings,
         ),
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: NimnaSpacing.base * 3.5),
         decoration: BoxDecoration(
           border: hairline
               ? Border(bottom: BorderSide(color: tokens.hairline))
@@ -193,7 +193,7 @@ class _ToggleRow extends StatelessWidget {
                     label,
                     style: text.labelLarge?.copyWith(color: tokens.textPrimary),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: NimnaSpacing.base * 0.5),
                   Text(
                     caption,
                     style: text.bodySmall?.copyWith(color: tokens.textTertiary),
@@ -201,7 +201,7 @@ class _ToggleRow extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: NimnaSpacing.base * 3),
             NimnaToggle(value: value, onChanged: onChanged),
           ],
         ),

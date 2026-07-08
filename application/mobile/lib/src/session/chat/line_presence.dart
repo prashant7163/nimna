@@ -115,10 +115,12 @@ class _LinePresenceState extends State<LinePresence> {
   bool _showNoAnswer = false;
 
   // F6 countdown anchor (the incoming knock's remaining life at the relay). The
-  // inline surface renders the remaining seconds computed at build time — no
-  // self-scheduled ticker here (the standalone push-tap KnockReceivedScreen
-  // owns the animated countdown for that path); a rebuild refreshes it.
+  // inline surface renders the remaining seconds computed at build time from
+  // this deadline vs DateTime.now(); [_incomingTick] fires a setState once per
+  // second — mirroring the standalone push-tap KnockReceivedScreen — so the
+  // displayed number ticks down live rather than only on incidental rebuilds.
   DateTime? _incomingDeadline;
+  Timer? _incomingTick;
 
   @override
   void initState() {
@@ -227,6 +229,7 @@ class _LinePresenceState extends State<LinePresence> {
     final knocking = _incoming?.knocking ?? false;
     if (knocking) {
       _incomingDeadline ??= DateTime.now().add(widget.knockWindow);
+      _startIncomingTick();
       setState(() => _posture = LinePosture.incoming);
       return;
     }
@@ -234,6 +237,7 @@ class _LinePresenceState extends State<LinePresence> {
     // the connection is `connecting`; otherwise (ignore / self-dismiss) fall
     // back to the plain listening surface.
     _incomingDeadline = null;
+    _stopIncomingTick();
     if (_posture == LinePosture.incoming) {
       final state = _listening?.lineState;
       if (state == SessionLineState.connecting ||
@@ -242,6 +246,23 @@ class _LinePresenceState extends State<LinePresence> {
       }
       setState(() => _posture = LinePosture.listening);
     }
+  }
+
+  // The F6 live countdown: a 1 s ticker that rebuilds the inline surface so the
+  // remaining-seconds text advances even without an incidental rebuild. Started
+  // when a knock surfaces, cancelled the moment it resolves / the surface leaves
+  // (idempotent — `??=` so repeat notifications never stack timers).
+  void _startIncomingTick() {
+    _incomingTick ??= Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  void _stopIncomingTick() {
+    _incomingTick?.cancel();
+    _incomingTick = null;
   }
 
   // ---- live + reconnect -----------------------------------------------------
@@ -253,6 +274,7 @@ class _LinePresenceState extends State<LinePresence> {
     _posture = LinePosture.live;
     _showNoAnswer = false;
     _incomingDeadline = null;
+    _stopIncomingTick();
     // Drop the listening WRAPPER without disposing its controller — it may BE
     // this live controller (an incoming pick-up). If we went live via our own
     // knock, _listening was already disposed in _handleKnock.
@@ -333,6 +355,7 @@ class _LinePresenceState extends State<LinePresence> {
 
   @override
   void dispose() {
+    _incomingTick?.cancel();
     _knock.removeListener(_onKnockChanged);
     _incoming?.removeListener(_onIncomingChanged);
     unawaited(_listeningSub?.cancel());
