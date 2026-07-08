@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NEW_ACTIVITY (S15): EN placeholder pending the S16 crafted-translation
+     pass. The content-free push body; no line/name/message — ever. -->
+<resources>
+    <string name="NEW_ACTIVITY">New activity</string>
+</resources>

@@ -9,6 +9,13 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # Never analyze generated trees. `build/` is git-ignored and, since S15,
+  # holds vendored plugin sources (e.g. the firebase_messaging SPM checkout's
+  # own test/mock.dart, which targets an older mockito) — not our code.
+  exclude:
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

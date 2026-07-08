@@ -70,9 +70,10 @@ class SettingsRootScreen extends StatelessWidget {
                   SettingsRow(
                     label: l10n.settings_rowNotifications,
                     caption: l10n.settings_rowNotificationsCaption,
-                    // Per-line directory — target ships with a later
-                    // session; inert row in S13.
-                    onTap: null,
+                    // Per-line push directory (S15): lists lines, each flips
+                    // its own opt-in (default off). Full F7 polish is S16.
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(Routes.notifications),
                   ),
                   SettingsRow(
                     label: l10n.settings_rowRelay,

@@ -17,6 +17,10 @@ import '../lock/pin_verifier.dart';
 import '../pairing/initiator/pairing_initiator_service.dart';
 import '../pairing/initiator/pending_pairing.dart';
 import '../pairing/joiner/joiner_service.dart';
+import '../presence/push_opt_in.dart';
+import '../push/platform_push_source.dart';
+import '../push/push_service.dart';
+import '../push/push_source_factory.dart';
 import '../storage/backup/backup_exclusion.dart';
 import '../storage/keys/key_service.dart';
 import '../storage/keys/master_key_store.dart';
@@ -49,6 +53,7 @@ Future<NimnaServices> bootstrapNimna({
   int pinMemLimit = PinVerifier.specMemLimitBytes,
   void Function(Duration delay, void Function() callback)? lockScheduler,
   bool observeLifecycle = true,
+  PlatformPushSource? pushSource,
 }) async {
   final sodium = await SodiumInstance.init();
   final aead = AtRestAead(sodium);
@@ -120,6 +125,19 @@ Future<NimnaServices> bootstrapNimna({
   // inject a fake EntitlementSource. Nothing here persists an entitlement
   // flag — permanence is structural (spec §10).
   final billing = BillingService(entitlementSource ?? StoreEntitlementSource());
+
+  // S15 push: the orchestrator over the platform push source. Production
+  // picks native APNs (iOS) / FCM (Android); off-mobile and host tests get
+  // InertPushSource — NOTHING touches Google/Apple until a line opts in
+  // (default off, string 18). `initialize()` subscribes to OS token
+  // rotations (no-op when inert). The opt-in lookup is LAZY (resolves the
+  // current channel repo at read time, false while sealed) so no stale repo
+  // is captured across a seal/unseal cycle.
+  final pushService = PushService(
+    source: pushSource ?? defaultPushSource(),
+    isOptedIn: (channelId) =>
+        storage.isOpen && PushOptIn(storage.channels).isEnabled(channelId),
+  )..initialize();
 
   // Lock first: with a lock enrolled this leaves the perimeter SEALED and
   // never reads the keystore; with the lock disabled it opens storage.
@@ -194,5 +212,6 @@ Future<NimnaServices> bootstrapNimna({
     lockController: lockController,
     wipe: wipe,
     billing: billing,
+    pushService: pushService,
   );
 }

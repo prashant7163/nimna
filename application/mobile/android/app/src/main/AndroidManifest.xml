@@ -5,6 +5,11 @@
          Play's signed on-device cache (queryPurchasesAsync); no Nimna
          server or flag is involved. -->
     <uses-permission android:name="com.android.vending.BILLING" />
+    <!-- Android push (S15, FCM). POST_NOTIFICATIONS is the Android 13+ (API
+         33) runtime notification grant, requested only when a line opts into
+         push (default OFF, spec §3.2.1). Below API 33 notifications need no
+         permission. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Backup exclusion (spec §6): allowBackup=false kills auto-backup and
          the legacy transport everywhere; dataExtractionRules (API 31+)
          additionally excludes every domain from cloud-backup AND
@@ -38,6 +43,28 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- FCM privacy hardening (S15). firebase_messaging is the ONE Google
+             SDK (USER decision 1) and MESSAGING-ONLY: no firebase-analytics
+             is bundled, so the measurement connector has no sink. These flags
+             belt-and-suspenders it — no auto-generated token or phone-home on
+             app start (token flow is user-driven, only after opt-in), and
+             analytics collection off/deactivated. The disclosed cost of
+             Android push is FCM's own delivery mechanics (voice string 18),
+             never Nimna telemetry (CLAUDE.md: no analytics SDK, ever). -->
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_deactivated"
+            android:value="true" />
+        <!-- The tray channel FCM posts the content-free wake into. The label
+             is user-visible in OS settings; it carries no line/sender/content. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/default_notification_channel_id" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -5,6 +5,7 @@ import '../diag/diag.dart';
 import '../lock/lock_controller.dart';
 import '../pairing/initiator/pairing_initiator_service.dart';
 import '../pairing/joiner/joiner_service.dart';
+import '../push/push_service.dart';
 import '../storage/keys/key_service.dart';
 import '../storage/storage_service.dart';
 import '../wipe/wipe_service.dart';
@@ -22,6 +23,7 @@ class NimnaServices {
     required this.lockController,
     required this.wipe,
     required this.billing,
+    required this.pushService,
   });
 
   final KeyService keyService;
@@ -38,6 +40,12 @@ class NimnaServices {
   /// `startCreateLine`; the session/send/receive path and the channel list
   /// never reference it (permanence is structural, spec §10).
   final BillingService billing;
+
+  /// S15 — the push orchestrator: own-token acquisition, token-refresh
+  /// wiring, tap routing, foreground suppression. Off-Android/off-iOS (and in
+  /// host tests) its source is inert, so push is a no-op with zero
+  /// third-party touch.
+  final PushService pushService;
 }
 
 /// The one DI surface. `AppScope.of(context)` anywhere below the app root.

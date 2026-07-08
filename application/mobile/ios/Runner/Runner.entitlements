@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- S15 push (native APNs, no SDK). `development` for dev/sandbox builds;
+	     the App Store / TestFlight build flips this to `production` and points
+	     the relay at api.push.apple.com (the sandbox switch is the relay's
+	     -apns-sandbox flag). Wiring this file into the target
+	     (CODE_SIGN_ENTITLEMENTS in project.pbxproj) + the Apple APNs key are
+	     the deferred live-push hand-step (USER decision 2 → PUBLISH_READY). -->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

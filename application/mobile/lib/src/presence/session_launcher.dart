@@ -28,6 +28,14 @@ import '../transport/relay_socket.dart';
 import 'peer_token_store.dart';
 import 'push_opt_in.dart';
 
+/// S15 seam: called once per launched session so the push lane can bind it
+/// (announce THIS device's own token to the peer when the line goes live /
+/// on OS token rotation). Injected as `PushService.bindSession` in production;
+/// omitted (no-op) in headless tests that do not exercise push. A bare
+/// typedef so `presence` never imports the push lane.
+typedef SessionBoundHook =
+    void Function(SessionController controller, Uint8List channelId);
+
 class SessionLauncher {
   SessionLauncher({
     required SodiumSumo sodium,
@@ -40,6 +48,7 @@ class SessionLauncher {
     required PushOptIn pushOptIn,
     required PeerTokenStore peerTokenStore,
     DateTime Function()? clock,
+    SessionBoundHook? onSessionBound,
   }) : _sodium = sodium,
        _aead = aead,
        _connector = connector,
@@ -49,7 +58,8 @@ class SessionLauncher {
        _media = media,
        _pushOptIn = pushOptIn,
        _peerTokenStore = peerTokenStore,
-       _clock = clock;
+       _clock = clock,
+       _onSessionBound = onSessionBound;
 
   final SodiumSumo _sodium;
   final AtRestAead _aead;
@@ -61,6 +71,7 @@ class SessionLauncher {
   final PushOptIn _pushOptIn;
   final PeerTokenStore _peerTokenStore;
   final DateTime Function()? _clock;
+  final SessionBoundHook? _onSessionBound;
 
   // The pass-through fields above are assigned in the initializer list rather
   // than as `this._x` formals so the public constructor keeps meaningful,
@@ -115,6 +126,10 @@ class SessionLauncher {
         diag: _diag,
       ),
     );
+    // S15: hand the fresh controller to the push lane so it announces THIS
+    // device's own token to the peer once the line goes live (only for an
+    // opted-in channel). No-op when push is not wired (headless tests).
+    _onSessionBound?.call(controller, channelId);
     return controller;
   }
 

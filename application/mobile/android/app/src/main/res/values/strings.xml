@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  S15 push string resources.
+
+  NEW_ACTIVITY is the ENTIRE content-free push body (spec §3.2.1): the relay
+  sends only the loc-key NEW_ACTIVITY (relay push.go title_loc_key), and
+  Android renders THIS. No line, no name, no message — ever. EN canonical
+  (voice string 18, "the two words"); values-de/fr/es/it carry the EN
+  placeholder pending the S16 crafted-translation pass.
+
+  default_notification_channel_id is a locale-independent identifier for the
+  FCM tray channel; it is not user-facing copy.
+-->
+<resources>
+    <string name="NEW_ACTIVITY">New activity</string>
+    <string name="default_notification_channel_id" translatable="false">nimna_knock</string>
+</resources>

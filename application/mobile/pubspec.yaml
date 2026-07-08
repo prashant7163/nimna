@@ -88,6 +88,19 @@ dependencies:
   in_app_purchase: 3.2.4
   in_app_purchase_storekit: 0.4.10+1
   in_app_purchase_android: 0.4.0+11
+  # Android push (S15). THE one Google SDK — Android push is impossible
+  # without Google FCM; iOS uses native APNs (no SDK) via the app.nimna/push
+  # method channel. Messaging-ONLY: firebase_messaging pulls firebase_core +
+  # Play Services messaging, NOT analytics/crashlytics/performance (pin-time
+  # audit recorded in SESSION-15.md — the firebase subtree carries no
+  # firebase_analytics/crashlytics/performance/installations-telemetry).
+  # Gated behind per-channel opt-in, DEFAULT OFF (spec §3.2.1, voice string
+  # 18). FENCED to lib/src/push/ (fcm_push_source.dart is the SOLE import
+  # site; asserted by push_dependency_fence_test). Architect sign-off:
+  # granted under USER decision 1 (SESSION-15 intake) for these
+  # network-touching deps. Exact-pinned.
+  firebase_core: 4.11.0
+  firebase_messaging: 16.4.1
 
 # Windows-only FFI (win32) has a resolution clash: file_picker 11 needs
 # win32 ^5.9 (its Windows COM picker uses 5.x APIs) while share_plus ^13.2

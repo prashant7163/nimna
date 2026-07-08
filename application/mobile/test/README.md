@@ -165,6 +165,25 @@ billing/ (S17)
                            re-grant + toast + continue; dismiss = calm
                            return; offline = reconnect state (no CTA);
                            existing state never consults billing
+push/                    S15 — the push CLIENT (notifications end-to-end):
+  push_dependency_fence_test.dart  firebase fenced to lib/src/push/
+                           fcm_push_source.dart; no analytics/crash/
+                           notification SDK anywhere (replaces the S12 blanket
+                           "no push SDK" ban)
+  push_service_test.dart   own-token opt-in gating + caching + OS-rotation
+                           re-cache; eager acquire on opt-in; inert = burner;
+                           tap/foreground pass-through (fake_push_source.dart)
+  apns_source_test.dart    ApnsPushSource over a mock app.nimna/push channel:
+                           raw bytes → present-form; null → absent; rotation/
+                           tap streams; setForeground reaches native
+  push_wire_test.dart      end-to-end over the two-party bridge: opted-in ⇒
+                           own token announced on live + persisted by the peer;
+                           opt-out ⇒ revoke; opted-OUT ⇒ nothing leaves
+  content_free_push_test.dart  the ONLY push body is "New activity" across the
+                           Dart ARB + iOS Localizable.strings + Android
+                           strings.xml; NEW_ACTIVITY is the sole relay loc-key
+  notifications_mount_test.dart  Settings → Notifications → line → the F7
+                           toggle flips + persists the per-channel opt-in
 ```
 
 Device-attached coverage lives in `../integration_test/` (see its README);

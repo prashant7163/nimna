@@ -82,7 +82,19 @@ src/presence/        S12 — knock/presence/offline-compose/reconnect:
                      token sink + KNOCK payload), knock/incoming-knock
                      controllers, reconnect_coordinator (~20s live-drop),
                      background_grace (30s), push_opt_in (default OFF),
-                     peer_token_store; see src/presence/README.md
+                     peer_token_store; session_launcher exposes the S15
+                     `onSessionBound` hook (push binds each live session);
+                     see src/presence/README.md
+src/push/            S15 — notifications end-to-end (push CLIENT): the one
+                     Google SDK (firebase_messaging, Android FCM) fenced to
+                     fcm_push_source.dart; iOS = native APNs (no SDK) via the
+                     app.nimna/push channel (apns_push_source.dart); both
+                     behind PlatformPushSource. push_service orchestrates
+                     own-token acquisition → §5.5 token-refresh at session
+                     start / on OS rotation, content-free tap routing, and
+                     foreground suppression. Opt-in default OFF ⇒ zero
+                     third-party touch (InertPushSource off-mobile/host);
+                     see src/push/README.md
 src/billing/         S17 — on-device entitlement gate + paywall (StoreKit2/
                      Play Billing); billing absent from protocol/transport/
                      storage/crypto/wipe/lock (permanence fence)

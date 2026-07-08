@@ -4,6 +4,8 @@ import '../session/chat/chat_screen.dart';
 import '../ui/screens/channel_list_screen.dart';
 import '../ui/screens/paywall/paywall_screen.dart';
 import '../ui/screens/settings/app_lock_setup_screen.dart';
+import '../ui/screens/settings/channel_notifications_screen.dart';
+import '../ui/screens/settings/notifications_directory_screen.dart';
 import '../ui/screens/settings/settings_root_screen.dart';
 import 'transitions.dart';
 
@@ -18,6 +20,14 @@ abstract final class Routes {
 
   /// F8.2 — app-lock setup / manage (S13).
   static const String appLock = '/settings/app-lock';
+
+  /// F8 → per-line notifications directory (S15). Lists lines; each opens
+  /// [channelNotifications]. The full F7 per-line screen is S16.
+  static const String notifications = '/settings/notifications';
+
+  /// F7 (minimal) — per-line push settings (S15). Pushed with a
+  /// [ChannelNotificationsArgs] (channelId + local label).
+  static const String channelNotifications = '/settings/notifications/channel';
 
   /// F9 — subscription paywall / creation gate (S17). Pushed only from
   /// `startCreateLine` when the store has no active creation subscription;
@@ -47,6 +57,20 @@ Route<dynamic>? onGenerateRoute(RouteSettings settings) {
       return NimnaPageRoute(
         settings: settings,
         builder: (context) => const AppLockSetupScreen(),
+      );
+    case Routes.notifications:
+      return NimnaPageRoute(
+        settings: settings,
+        builder: (context) => const NotificationsDirectoryScreen(),
+      );
+    case Routes.channelNotifications:
+      final args = settings.arguments as ChannelNotificationsArgs;
+      return NimnaPageRoute(
+        settings: settings,
+        builder: (context) => ChannelNotificationsScreen(
+          channelId: args.channelId,
+          label: args.label,
+        ),
       );
     case Routes.paywall:
       return NimnaPageRoute<PaywallResult>(

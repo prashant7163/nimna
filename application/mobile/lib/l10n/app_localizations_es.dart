@@ -649,4 +649,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get push_tradeOn =>
       'On: a knock can wake this phone through their notification service, carrying two words — \"New activity.\" No line, no name, no message — and the relay forgets the address the moment it\'s used.';
+
+  @override
+  String get push_newActivityBody => 'New activity';
+
+  @override
+  String get channelSettings_subtitle => 'Line settings — this phone only';
 }

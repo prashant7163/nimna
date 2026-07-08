@@ -1,0 +1,5 @@
+/* The ENTIRE content-free push body (spec §3.2.1). The relay sends only the
+   loc-key NEW_ACTIVITY; iOS renders this. No line, no name, no message —
+   ever. EN canonical (voice string 18, "the two words"); de/fr/es/it carry
+   the EN placeholder pending the S16 crafted-translation pass. */
+"NEW_ACTIVITY" = "New activity";
