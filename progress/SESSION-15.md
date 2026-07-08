@@ -40,8 +40,14 @@ Stamp: 2026-07-08 11:45 +0200.
   knock-answer surface mounts there at S16); lifecycle → `setForeground`
   (in-app suppression). No-op with the inert source.
 - `presence/session_launcher.dart` — added the optional `onSessionBound` hook
-  (bare `SessionBoundHook` typedef; presence never imports the push lane) wired
-  to `PushService.bindSession`. This is the ONLY presence-lane edit.
+  (bare `SessionBoundHook` typedef; presence never imports the push lane). The
+  hook is **SEAM-READY, NOT wired in production**: `SessionLauncher` is
+  constructed only in tests today (the presence/knock stack mounts at S16), so
+  `PushService.bindSession` is exercised by tests only. The **S16
+  forward-requirement (below)** must pass `onSessionBound: pushService.bindSession`
+  or push will silently never fire in production.
+- `presence/push_opt_in.dart` — **review CODE fix** (item 1 below): the KNOCK
+  peer-token gating is now per-side.
 - `SendTokenRefresh` seam (peer_token_store.dart typedef) fulfilled:
   `PushService.bindSession` calls `SessionController.sendTokenRefresh` with THIS
   device's own token. Receive side (`onPeerTokenRefresh`) unchanged (S12).
@@ -105,6 +111,45 @@ Stamp: 2026-07-08 11:45 +0200.
    real Apple APNs key + a real Firebase project + physical devices) rides a
    documented hand-step to PUBLISH_READY / S18–S19 — same pattern as S6
    live-relay, S7/S8/S13 device rungs, S17 sandbox.
+
+---
+
+## Code-review fixes (PASS, zero blockers; SHOULD-FIX applied 2026-07-08 11:5x +0200)
+
+**FIX 1 (correctness) — KNOCK peer-token gating is per-side.**
+`lib/src/presence/push_opt_in.dart` `knockPayloadFor` no longer gates on the
+knocker's OWN `record.pushOptIn`; it returns the present-form peer token
+whenever one is stored (empty only when absent/revoked). Defect it removes: A
+opted-out + B opted-in ⇒ A holds B's token but the old guard returned empty ⇒
+B, who explicitly asked to be woken, was never woken. The two push directions
+are independent — A's own opt-in governs only whether A shares A's OWN token
+(via the token-refresh CONTROL / pairing-absent path), never whether A carries
+B's token in the knock. Tests: `presence_units_test.dart` (unit — the
+A-out+B-in case carries B's token; absent/revoked ⇒ empty) and
+`presence_flow_test.dart` (wire — an opted-OUT knocker still carries an
+opted-IN peer's token over the frame; no stored token ⇒ empty knock). The old
+`presence_flow_test` "push-off = empty KNOCK" test encoded the defect and was
+corrected.
+
+> **CODE DECISION (fold into DECISIONS.md), 2026-07-08:** *KNOCK peer-token
+> gating is PER-SIDE per spec §3.2.1 ("each side… 'absent' form if push off")
+> and voice string 18 ("wake THIS phone"). The outgoing KNOCK carries the
+> PEER's token gated SOLELY on a stored present-form peer token (which already
+> encodes the peer's opt-in) — NOT on the knocker's own opt-in. The knocker's
+> own opt-in governs the OTHER direction (sharing its own token via the §5.5
+> token-refresh CONTROL). The two directions are never coupled.* Corrects the
+> S12 CODE gating in `push_opt_in.dart`.
+
+**FIX 2 (honesty) — `onSessionBound` is seam-ready, NOT production-wired.** The
+"What was produced" note above was corrected: `SessionLauncher` is constructed
+only in tests today, so `PushService.bindSession` fires in tests only. See the
+S16 forward-requirement under "What's next".
+
+**NIT (noted, no fix) — `ApnsPushSource.setForeground` native round-trip is
+redundant.** iOS `willPresent` returns `[]` unconditionally, so foreground
+banners are already suppressed regardless of the `setForeground` bool; the
+native call is harmless and the code comments say so. Kept for interface
+symmetry with the Android/inert sources.
 
 ---
 
@@ -192,6 +237,13 @@ against runtime keys, exact request shapes, h2, sink E2E).
 ## What's next
 - **Code-review + senior-qa done-check**, then orchestrator merge (route fold,
   pubspec union, ARB namespaced keys, README index).
+- **S16 FORWARD-REQUIREMENT (carry onto the TASKS.md S16 entry — like the
+  S13→S14 requirement):** when S16 constructs the PRODUCTION `SessionLauncher`
+  (as the presence/knock stack mounts), it MUST pass
+  `onSessionBound: pushService.bindSession` (from `AppScope`). Without it, push
+  own-token announcement silently never fires in production even though the
+  client is complete. S16 SHOULD add an assertion/test guarding that the
+  production launcher is constructed with the hook wired.
 - **S16** (per-line F7 polish + crafted translations): the full F7 screen
   (label/receipts/typing/per-line wipe) around this push toggle; the F6
   incoming-knock surface the tap route lands on; NEW_ACTIVITY + the two new ARB
@@ -200,9 +252,11 @@ against runtime keys, exact request shapes, h2, sink E2E).
 
 ## Checks (green in-worktree)
 - `flutter analyze` — no issues. `dart format --set-exit-if-changed lib test` —
-  clean. `flutter test` — **415 pass, 0 skipped** (baseline 393; +23 push
-  tests, −1 deleted ban test). Push suite 23/23, 3× repeat 0-flake.
-- Relay `go build/test/vet ./...` + `gofmt -l .` — clean.
+  clean. `flutter test` — **417 pass, 0 skipped** (baseline 393; +23 push
+  tests, −1 deleted ban test, +2 from splitting the per-side knock tests in the
+  FIX-1 review pass). Push suite 23/23, 3× repeat 0-flake.
+- Relay `go build/test/vet ./...` + `gofmt -l .` — clean (relay untouched in
+  the review pass).
 
 ## Reviewer / QA — scrutinize
 - Fence completeness (firebase single-site; analytics/crash absent).
@@ -211,7 +265,5 @@ against runtime keys, exact request shapes, h2, sink E2E).
 - The lazy `PushOptInLookup` (no stale channel-repo capture across seal/unseal).
 - The pairing-plane absent-form decision (token rides token-refresh, not M2/M3)
   — confirm this matches the intended shipped model.
-- The S12 `knockPayloadFor` gating on `record.pushOptIn` (the knocker's own
-  opt-in gates carrying the PEER's token). Left AS-IS per intake ("ensure the
-  knock path uses it — it should already"); noted as a possible semantic to
-  confirm, not changed.
+- The FIX-1 per-side `knockPayloadFor` gating (now gated on the stored peer
+  token, not the knocker's own opt-in) + the recorded CODE decision.
