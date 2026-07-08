@@ -60,6 +60,32 @@ src/protocol/        PURE §3.1.1/§3.1.2/§5.4 codec & derivation,
                      see src/protocol/README.md
 src/transport/       dart:io WebSocket relay transport + no-hammer
                      backoff policy; see src/transport/README.md
+src/noise/           S9/S10 — from-spec Noise engines (XXpsk2 pairing +
+                     KK session + §5.6 transport); see src/noise/README.md
+src/session/         S10 — the live text session, decomposed per-concern:
+  model/               Flutter-free immutable view/event leaf (MessageView,
+                       ChatEvent, SessionLineState, PendingReaction)
+  connection/          SessionController — the Flutter-free connection lane
+                       (KK driver, delivery FSM, knock-accept gating [S12],
+                       outbox flush, reconnect, media dispatch [S11])
+  chat/                the chat UI (composer, message_bubble, message_actions,
+                       chat_screen) — holds no transport/keys/store
+                     see src/session/README.md
+src/media/           S11 — media & documents: transfer/ (chunker +
+                     reassembler over the frozen codec, receiver-bounded +
+                     receiver-clock expiry), pipeline/ (on-device EXIF-strip
+                     + compression via `image` in an isolate; the sole
+                     file_picker/share_plus 2nd sites), ui/ (attach sheet,
+                     media bubbles, viewer); see src/media/README.md
+src/presence/        S12 — knock/presence/offline-compose/reconnect:
+                     session_launcher (THE controller factory — wires media +
+                     token sink + KNOCK payload), knock/incoming-knock
+                     controllers, reconnect_coordinator (~20s live-drop),
+                     background_grace (30s), push_opt_in (default OFF),
+                     peer_token_store; see src/presence/README.md
+src/billing/         S17 — on-device entitlement gate + paywall (StoreKit2/
+                     Play Billing); billing absent from protocol/transport/
+                     storage/crypto/wipe/lock (permanence fence)
 src/lock/            S13 — the app-lock domain tier (imports storage/keys +
                      crypto, never ui):
   lock_controller.dart   state machine over KeyService: the only path to
