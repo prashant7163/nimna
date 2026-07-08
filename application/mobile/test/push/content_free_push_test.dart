@@ -14,20 +14,57 @@ void main() {
   const canonical = 'New activity';
   const locales = ['en', 'de', 'fr', 'es', 'it'];
 
+  // The crafted content-free body per launch locale (S16 filled DE/FR/ES/IT).
+  // Each is the two-word "New activity" equivalent, verified against the ARBs.
+  const bodies = {
+    'en': 'New activity',
+    'de': 'Neue Aktivität',
+    'fr': 'Nouvelle activité',
+    'es': 'Actividad nueva',
+    'it': 'Nuova attività',
+  };
+
   test('the Dart ARB body is the canonical two words (EN)', () async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
     expect(l10n.push_newActivityBody, canonical);
   });
 
   test(
-    'every launch locale renders the body (non-EN fall back to EN)',
+    'every launch locale renders ITS OWN content-free body — no EN fallback',
     () async {
       for (final code in locales) {
         final l10n = await AppLocalizations.delegate.load(Locale(code));
+        final body = l10n.push_newActivityBody;
+
+        // The delegate resolves to THIS locale's crafted body — the loc-key
+        // NEW_ACTIVITY renders the translated two words, not the EN template.
         expect(
-          l10n.push_newActivityBody,
-          canonical,
-          reason: '$code push body must render the content-free two words',
+          body,
+          bodies[code],
+          reason: '$code push body must render its own crafted two words',
+        );
+        // Non-EN proves the translation is actually wired (not a fallthrough).
+        if (code != 'en') {
+          expect(
+            body,
+            isNot(canonical),
+            reason: '$code must render its translation, not the EN fallback',
+          );
+        }
+
+        // The content-free invariant survives translation: the body stays a
+        // short fixed label with no channel, sender, count, or message — so
+        // nothing about the line can leak in any locale.
+        expect(body.trim(), isNotEmpty);
+        expect(
+          body.contains(RegExp(r'\d')),
+          isFalse,
+          reason: '$code body must carry no count/identity digit',
+        );
+        expect(
+          body.trim().split(RegExp(r'\s+')).length,
+          lessThanOrEqualTo(2),
+          reason: '$code body must stay the two-word content-free label',
         );
       }
     },

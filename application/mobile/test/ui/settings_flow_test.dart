@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nimna/l10n/app_localizations.dart';
 import 'package:nimna/l10n/app_localizations_en.dart';
 import 'package:nimna/src/app/app.dart';
 import 'package:nimna/src/app/app_scope.dart';
@@ -30,7 +31,10 @@ void main() {
   Future<void> openSettings(WidgetTester tester, {Locale? locale}) async {
     await tester.pumpWidget(NimnaApp(services: services, locale: locale));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(en.settings_title));
+    // Tap the settings entry in whichever locale is mounted (the label is
+    // itself localized post-S16).
+    final l10n = lookupAppLocalizations(locale ?? const Locale('en'));
+    await tester.tap(find.text(l10n.settings_title));
     await tester.pumpAndSettle();
   }
 
@@ -53,15 +57,18 @@ void main() {
         '$locale', (tester) async {
       await openSettings(tester, locale: locale);
 
+      // Each F8.1 row renders THIS locale's crafted copy (S16 filled
+      // DE/FR/ES/IT — the settings root renders its own translation, not EN).
+      final l10n = lookupAppLocalizations(locale);
       expect(find.byType(SettingsRootScreen), findsOneWidget);
-      expect(find.text(en.settings_rowAppLock), findsOneWidget);
-      expect(find.text(en.settings_rowAppLockOff), findsOneWidget);
-      expect(find.text(en.settings_rowNotifications), findsOneWidget);
-      expect(find.text(en.settings_rowRelay), findsOneWidget);
-      expect(find.text(en.settings_rowRelayCaption), findsOneWidget);
-      expect(find.text(en.settings_rowLicenses), findsOneWidget);
-      expect(find.text(en.settings_rowWipeEverything), findsOneWidget);
-      expect(find.text(en.settings_rowWipeEverythingCaption), findsOneWidget);
+      expect(find.text(l10n.settings_rowAppLock), findsOneWidget);
+      expect(find.text(l10n.settings_rowAppLockOff), findsOneWidget);
+      expect(find.text(l10n.settings_rowNotifications), findsOneWidget);
+      expect(find.text(l10n.settings_rowRelay), findsOneWidget);
+      expect(find.text(l10n.settings_rowRelayCaption), findsOneWidget);
+      expect(find.text(l10n.settings_rowLicenses), findsOneWidget);
+      expect(find.text(l10n.settings_rowWipeEverything), findsOneWidget);
+      expect(find.text(l10n.settings_rowWipeEverythingCaption), findsOneWidget);
     });
   }
 

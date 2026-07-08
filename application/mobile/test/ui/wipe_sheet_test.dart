@@ -162,15 +162,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // String 8 verbatim (EN fallback until the S16 crafted pass).
-      expect(find.text(en.wipe_fullBody), findsOneWidget);
-      expect(find.text(en.wipe_holdToWipe), findsOneWidget);
-      expect(find.text(en.wipe_fullHoldCaption), findsOneWidget);
-      expect(find.text(en.wipe_actionKeep), findsOneWidget);
+      // String 8 verbatim in THIS locale's crafted copy (S16 filled
+      // DE/FR/ES/IT — the sheet renders its own translation, not EN).
+      final l10n = lookupAppLocalizations(locale);
+      expect(find.text(l10n.wipe_fullBody), findsOneWidget);
+      expect(find.text(l10n.wipe_holdToWipe), findsOneWidget);
+      expect(find.text(l10n.wipe_fullHoldCaption), findsOneWidget);
+      expect(find.text(l10n.wipe_actionKeep), findsOneWidget);
       // The emphasized title renders as a rich text containing string 8's
-      // first line.
+      // first line, in this locale's copy.
       expect(
-        find.textContaining(en.wipe_fullTitleEmphasis, findRichText: true),
+        find.textContaining(l10n.wipe_fullTitleEmphasis, findRichText: true),
         findsWidgets,
       );
     });

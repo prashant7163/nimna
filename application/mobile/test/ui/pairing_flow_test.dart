@@ -61,15 +61,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Each string renders THIS locale's crafted copy (S16 filled
+      // DE/FR/ES/IT — F2.1 renders its own translation, not the EN template).
+      final l10n = lookupAppLocalizations(locale);
       // Heading + primary action carry the same designed verb phrase.
-      expect(find.text(en.pairing_createTitle), findsNWidgets(2));
-      expect(find.text(en.pairing_createIntro), findsOneWidget);
-      expect(find.text(en.pairing_ttlLabel), findsOneWidget);
-      expect(find.text(en.pairing_ttlHint), findsOneWidget);
-      // Default TTL is 24 h.
-      expect(find.text(en.pairing_ttlHours(24)), findsOneWidget);
+      expect(find.text(l10n.pairing_createTitle), findsNWidgets(2));
+      expect(find.text(l10n.pairing_createIntro), findsOneWidget);
+      expect(find.text(l10n.pairing_ttlLabel), findsOneWidget);
+      expect(find.text(l10n.pairing_ttlHint), findsOneWidget);
+      // Default TTL is 24 h (locale-aware plural).
+      expect(find.text(l10n.pairing_ttlHours(24)), findsOneWidget);
       // No offline line unless the edge occurred.
-      expect(find.text(en.pairing_offlineError), findsNothing);
+      expect(find.text(l10n.pairing_offlineError), findsNothing);
     });
   }
 

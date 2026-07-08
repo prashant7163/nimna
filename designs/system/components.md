@@ -145,7 +145,7 @@ Center card, bg `surface2`, radius 16, padding 24, scrim 60%, `title2` + `body` 
 
 ## Toast
 
-Bottom, above safe-area, bg `surface3`, radius `rSmall` 10, `body`, max 2 lines, auto-dismiss 3 s, one at a time, no icons, no colors: "Code copied." · "Purchase restored." · "Channel wiped." Never used for errors that need action.
+Bottom, above safe-area, bg `surface3`, radius `rSmall` 10, `body`, max 2 lines, auto-dismiss 3 s, one at a time, no icons, no colors: "Code copied." · "Purchase restored." · "Line wiped." Never used for errors that need action.
 
 ## Sheet
 

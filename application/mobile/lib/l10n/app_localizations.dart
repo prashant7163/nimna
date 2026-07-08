@@ -557,7 +557,7 @@ abstract class AppLocalizations {
   /// CANONICAL toast copy (components.md Toast; F7.2 exit), verbatim. Consumed by the F7 host screen's session; the key lands with the S13 wipe seam.
   ///
   /// In en, this message translates to:
-  /// **'Channel wiped.'**
+  /// **'Line wiped.'**
   String get wipe_channelWipedToast;
 
   /// F3.1 join-screen headline, verbatim. S9.

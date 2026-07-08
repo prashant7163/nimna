@@ -273,7 +273,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Hold for 1.5 seconds. Let go to keep everything.';
 
   @override
-  String get wipe_channelWipedToast => 'Channel wiped.';
+  String get wipe_channelWipedToast => 'Line wiped.';
 
   @override
   String get pairing_joinTitle => 'Enter a code';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nimna/l10n/app_localizations.dart';
 import 'package:nimna/l10n/app_localizations_en.dart';
 import 'package:nimna/src/app/app.dart';
 import 'package:nimna/src/app/app_scope.dart';
@@ -38,11 +39,13 @@ void main() {
       await tester.pumpWidget(NimnaApp(services: services, locale: locale));
       await tester.pumpAndSettle();
 
-      // String 4 verbatim from the ARB (EN fallback until S16 fills the
-      // other four languages — runtime falls back to the template).
-      expect(find.text(en.channelListEmptyHeadline), findsOneWidget);
-      expect(find.text(en.channelListEmptyBody), findsOneWidget);
-      expect(find.text(en.appTitle), findsOneWidget);
+      // String 4 verbatim from the ARB, in THIS locale's crafted copy
+      // (S16 filled DE/FR/ES/IT — the shell renders its own translation,
+      // not the EN template).
+      final l10n = lookupAppLocalizations(locale);
+      expect(find.text(l10n.channelListEmptyHeadline), findsOneWidget);
+      expect(find.text(l10n.channelListEmptyBody), findsOneWidget);
+      expect(find.text(l10n.appTitle), findsOneWidget);
 
       // "Create a code" is live (the G2 single entry point, S8); "Enter a
       // code" is now live too (the S9 joiner flow, never paywalled).
@@ -50,8 +53,8 @@ void main() {
       final enter = tester.widget<OutlinedButton>(find.byType(OutlinedButton));
       expect(create.onPressed, isNotNull);
       expect(enter.onPressed, isNotNull);
-      expect(find.text(en.actionCreateCode), findsOneWidget);
-      expect(find.text(en.actionEnterCode), findsOneWidget);
+      expect(find.text(l10n.actionCreateCode), findsOneWidget);
+      expect(find.text(l10n.actionEnterCode), findsOneWidget);
     });
   }
 

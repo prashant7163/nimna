@@ -322,7 +322,7 @@
   "@wipe_channelHoldCaption": {
     "description": "F7.2 hold caption, verbatim. 1.5 s is USER-settled (2026-07-03), deliberately shorter than the 2.5 s full wipe. S13."
   },
-  "wipe_channelWipedToast": "Channel wiped.",
+  "wipe_channelWipedToast": "Line wiped.",
   "@wipe_channelWipedToast": {
     "description": "CANONICAL toast copy (components.md Toast; F7.2 exit), verbatim. Consumed by the F7 host screen's session; the key lands with the S13 wipe seam."
   },
