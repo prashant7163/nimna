@@ -28,7 +28,7 @@ no envelope changes.
 ## Files
 | File | Lane | Responsibility |
 |---|---|---|
-| `session_launcher.dart` | pure Dart | Builds a `SessionController` from a stored channel — the app's single construction point (chat + reconnect both go through it). Wires the KNOCK push payload and the receive-side token-refresh sink; seeds offline reactions across a reconnect rebuild. |
+| `session_launcher.dart` | pure Dart | Builds a `SessionController` from a stored channel — the app's single construction point (chat + reconnect both go through it). Wires the KNOCK push payload and the receive-side token-refresh sink; seeds offline reactions across a reconnect rebuild. **S15**: the optional `onSessionBound` hook (a bare typedef — presence never imports the push lane) lets `PushService.bindSession` announce THIS device's own token on every launched session. |
 | `knock_controller.dart` | `ChangeNotifier` | Outgoing knock/waiting/lapse UX (F5): 60 s window, "No answer." + manual "Knock again", §6.1 stale hint. Never auto-retries. |
 | `incoming_knock_controller.dart` | `ChangeNotifier` | Receiving-knock banner (F6): "{label} is knocking." + Pick up / Ignore, 60 s auto-dismiss. |
 | `reconnect_coordinator.dart` | pure Dart | Bounded (~20 s) automatic recovery of a LIVE-session drop — a fresh knock+KK via the launcher, `ReconnectBackoff`-spaced; reconnecting → recovered / lost. |

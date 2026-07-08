@@ -820,5 +820,13 @@
   "sensitive_whisperGoBack": "Go back",
   "@sensitive_whisperGoBack": {
     "description": "Voice guide string 14 action — reconsider; dismiss the whisper and return to the live preview (register verb 'Go back'). S14 net-new. Enters the S16 crafted-translation pass."
+  },
+  "push_newActivityBody": "New activity",
+  "@push_newActivityBody": {
+    "description": "The ENTIRE content-free push notification body — 'the two words' of voice guide string 18. The relay never carries text: it sends loc-key NEW_ACTIVITY and the OS renders THIS from the app bundle (iOS Localizable.strings / Android string resource NEW_ACTIVITY); this ARB key is the Dart-side canonical source those native resources mirror. No channel, sender, or content — ever (spec §3.2). S15 net-new. Enters the S16 crafted-translation pass."
+  },
+  "channelSettings_subtitle": "Line settings — this phone only",
+  "@channelSettings_subtitle": {
+    "description": "Sub-header of the per-line settings surface (wireframe F7). Everything there is per-channel and stored only on this phone (spec §6). The em dash is U+2014. S15 net-new (minimal F7 mount; full F7 is S16). Enters the S16 crafted-translation pass."
   }
 }

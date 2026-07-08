@@ -281,18 +281,46 @@ void main() {
 
   // ---- KNOCK push payload -------------------------------------------------
 
-  test('push-off = empty KNOCK payload (pure burner-line)', () async {
+  test(
+    'no stored peer token ⇒ empty KNOCK payload (pure burner-line)',
+    () async {
+      final env = await _Env.create(sodium, aead);
+      addTearDown(env.dispose);
+
+      // The peer never opted in (no stored token). Even with the knocker's OWN
+      // push ON, there is nothing to carry ⇒ the KNOCK frame is empty.
+      await env.knocker.pushOn();
+      expect(env.knocker.pushOptIn.isEnabled(env.knocker.channelId), isTrue);
+
+      final knocker = env.knocker.build(SessionRole.knocker);
+      await knocker.start(
+        knockPushPayload: env.knocker.pushOptIn.knockPayloadFor(
+          env.knocker.channelId,
+        ),
+      );
+      await pumpUntil(
+        () => env.bridge.knockerSent.any((f) => f.type == FrameType.knock),
+      );
+      final knock = env.bridge.knockerSent.firstWhere(
+        (f) => f.type == FrameType.knock,
+      );
+      expect(knock.payload, isEmpty);
+    },
+  );
+
+  test('an opted-OUT knocker still carries an opted-IN peer\'s token (§3.2.1 '
+      'per-side)', () async {
     final env = await _Env.create(sodium, aead);
     addTearDown(env.dispose);
 
-    // Even with a stored peer token, push OFF ⇒ empty payload; the sent KNOCK
-    // frame carries nothing.
-    await env.knocker.storePeerToken(
-      TokenPayload.present(
-        platform: PushPlatform.fcm,
-        token: Uint8List.fromList(utf8.encode('fcm-token')),
-      ),
+    // The PEER (B) opted in and shared its token; the knocker (A) is opted
+    // OUT. The KNOCK must STILL carry B's token so B — who asked to be woken —
+    // is woken. (The review-fixed defect: A's own opt-in must not gate this.)
+    final token = TokenPayload.present(
+      platform: PushPlatform.fcm,
+      token: Uint8List.fromList(utf8.encode('fcm-token')),
     );
+    await env.knocker.storePeerToken(token);
     expect(env.knocker.pushOptIn.isEnabled(env.knocker.channelId), isFalse);
 
     final knocker = env.knocker.build(SessionRole.knocker);
@@ -307,7 +335,7 @@ void main() {
     final knock = env.bridge.knockerSent.firstWhere(
       (f) => f.type == FrameType.knock,
     );
-    expect(knock.payload, isEmpty);
+    expect(knock.payload, token.encode().sublist(1));
   });
 
   test('push-on carries platform‖len‖token in the KNOCK payload', () async {

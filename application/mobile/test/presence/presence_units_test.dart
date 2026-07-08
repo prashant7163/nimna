@@ -84,13 +84,19 @@ void main() {
   // ---- push opt-in payload ------------------------------------------------
 
   group('PushOptIn', () {
-    test('off ⇒ empty payload; on ⇒ platform‖len‖token', () async {
+    // The KNOCK carries the PEER's token so the relay can wake the PEER; it is
+    // gated SOLELY on a stored present-form peer token (which already encodes
+    // the peer's opt-in), NEVER on the knocker's own opt-in. Push is per-side
+    // (spec §3.2.1 / voice string 18). CODE, 2026-07-08 (S15 review fix).
+    test('knock carries the peer token whenever one is stored — independent of '
+        'the knocker OWN opt-in', () async {
       final device = TestDevice.create();
       addTearDown(device.dispose);
       final services = await device.boot();
       final channels = services.storage.channels;
       final channelId = aead.randomBytes(16);
       final ownStatic = generateNoiseKeyPair(sodium);
+      // The PEER (B) opted in and shared its token; it is stored present-form.
       final token = TokenPayload.present(
         platform: PushPlatform.apns,
         token: Uint8List.fromList(utf8.encode('tok')),
@@ -110,18 +116,48 @@ void main() {
       );
       final push = PushOptIn(channels);
 
-      // Default OFF → empty even though a token is stored (pure burner-line).
+      // THE DEFECT-CASE: A opted OUT + B opted IN ⇒ A holds B's token ⇒ the
+      // knock MUST carry it so B, who asked to be woken, is woken.
       expect(push.isEnabled(channelId), isFalse);
-      expect(push.knockPayloadFor(channelId), isEmpty);
+      expect(push.knockPayloadFor(channelId), token.encode().sublist(1));
 
+      // A opting in changes nothing here (that direction is A's OWN token, via
+      // the token-refresh CONTROL) — the knock still carries B's token.
       await push.setEnabled(channelId, enabled: true);
       expect(push.isEnabled(channelId), isTrue);
       expect(push.knockPayloadFor(channelId), token.encode().sublist(1));
-
-      // No stored token but push on → still empty (nothing to carry).
-      await push.setEnabled(channelId, enabled: false);
-      expect(push.knockPayloadFor(channelId), isEmpty);
     });
+
+    test(
+      'a revoked/absent peer token ⇒ empty knock (burner-line wake)',
+      () async {
+        final device = TestDevice.create();
+        addTearDown(device.dispose);
+        final services = await device.boot();
+        final channels = services.storage.channels;
+        final channelId = aead.randomBytes(16);
+        final ownStatic = generateNoiseKeyPair(sodium);
+        // No stored peer token (peer never opted in, or revoked).
+        await channels.create(
+          ChannelRecord(
+            id: channelId,
+            ownStaticPrivate: ownStatic.secretKey.extractBytes(),
+            ownStaticPublic: Uint8List.fromList(ownStatic.publicKey),
+            peerStaticPublic: aead.randomBytes(32),
+            crid: aead.randomBytes(16),
+            label: 'peer',
+            cdk: aead.randomBytes(32),
+            createdAtMs: 0,
+          ),
+        );
+        final push = PushOptIn(channels);
+
+        // Empty regardless of the knocker's own opt-in — nothing to carry.
+        expect(push.knockPayloadFor(channelId), isEmpty);
+        await push.setEnabled(channelId, enabled: true);
+        expect(push.knockPayloadFor(channelId), isEmpty);
+      },
+    );
   });
 
   // ---- peer-token store ---------------------------------------------------

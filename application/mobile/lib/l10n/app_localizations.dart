@@ -1237,6 +1237,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go back'**
   String get sensitive_whisperGoBack;
+
+  /// The ENTIRE content-free push notification body — 'the two words' of voice guide string 18. The relay never carries text: it sends loc-key NEW_ACTIVITY and the OS renders THIS from the app bundle (iOS Localizable.strings / Android string resource NEW_ACTIVITY); this ARB key is the Dart-side canonical source those native resources mirror. No channel, sender, or content — ever (spec §3.2). S15 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'New activity'**
+  String get push_newActivityBody;
+
+  /// Sub-header of the per-line settings surface (wireframe F7). Everything there is per-channel and stored only on this phone (spec §6). The em dash is U+2014. S15 net-new (minimal F7 mount; full F7 is S16). Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Line settings — this phone only'**
+  String get channelSettings_subtitle;
 }
 
 class _AppLocalizationsDelegate

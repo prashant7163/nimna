@@ -35,9 +35,14 @@ import (
 
 const (
 	// apnsDefaultBaseURL is the production endpoint (§27: the :2197
-	// alternative is not used; a sandbox switch is deliberately not
-	// added — S15 adds one flag if dev-build tokens require it).
+	// alternative is not used).
 	apnsDefaultBaseURL = "https://api.push.apple.com"
+	// APNsSandboxBaseURL is the development/sandbox host. Dev-build tokens
+	// (an app signed with `aps-environment=development`) are only routable
+	// here — the production host 400s them. Selected via -apns-sandbox
+	// (S15), used for the deferred live-push device rung (PUBLISH_READY);
+	// never in production.
+	APNsSandboxBaseURL = "https://api.sandbox.push.apple.com"
 	// apnsJWTMaxAge: the cached provider JWT is re-signed lazily once
 	// this old — inside Apple's window (≥ 20 min between refreshes,
 	// ≤ 60 min validity) with margin on both sides for clock skew.

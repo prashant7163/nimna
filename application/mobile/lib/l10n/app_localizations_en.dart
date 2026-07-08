@@ -677,4 +677,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sensitive_whisperGoBack => 'Go back';
+
+  @override
+  String get push_newActivityBody => 'New activity';
+
+  @override
+  String get channelSettings_subtitle => 'Line settings — this phone only';
 }

@@ -135,6 +135,8 @@ func main() {
 		"Apple developer team id (env NIMNA_RELAY_APNS_TEAM_ID)")
 	apnsTopic := flag.String("apns-topic", envStr("APNS_TOPIC", ""),
 		"apns-topic header: the app bundle id (env NIMNA_RELAY_APNS_TOPIC)")
+	apnsSandbox := flag.Bool("apns-sandbox", envBool("APNS_SANDBOX", false),
+		"route APNs to the sandbox host for dev-build (aps-environment=development) tokens; never in production (env NIMNA_RELAY_APNS_SANDBOX)")
 	fcmSAFile := flag.String("fcm-sa-file", envStr("FCM_SA_FILE", ""),
 		"FCM service-account JSON path (env NIMNA_RELAY_FCM_SA_FILE)")
 
@@ -271,11 +273,19 @@ func main() {
 	case apnsOn || fcmOn:
 		var apnsSender, fcmSender push.Sender
 		if apnsOn {
+			// -apns-sandbox overrides the production host so dev-build
+			// (aps-environment=development) tokens route to Apple's sandbox
+			// (S15). Empty BaseURL keeps the production default.
+			apnsBaseURL := ""
+			if *apnsSandbox {
+				apnsBaseURL = push.APNsSandboxBaseURL
+			}
 			s, err := push.NewAPNs(push.APNsConfig{
 				KeyFile: *apnsKeyFile,
 				KeyID:   *apnsKeyID,
 				TeamID:  *apnsTeamID,
 				Topic:   *apnsTopic,
+				BaseURL: apnsBaseURL,
 			})
 			if err != nil {
 				// The error may name the configured path (operator

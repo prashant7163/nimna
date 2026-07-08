@@ -1,11 +1,18 @@
 /// Per-channel push opt-in (spec §3.2.1) — the F7 toggle's model half.
 ///
-/// Push is per-line, opt-IN, DEFAULT OFF. A push-off channel is pure
-/// burner-line mode: NOTHING about it ever touches Apple or Google (string
-/// 18), and its KNOCK payload is empty. When on, the peer's stored
-/// device-token rides INSIDE the knock so the relay can make a single
-/// content-free APNs/FCM call and immediately forget the address (§3.2) —
-/// nothing this layer controls.
+/// Push is per-line, opt-IN, DEFAULT OFF, and **per-side** (spec §3.2.1: each
+/// side carries the "absent" form if ITS push is off; voice string 18 frames
+/// it as "wake THIS phone"). The two directions are independent:
+///  - **My own opt-in** governs only whether I share MY OWN token so the PEER
+///    can wake me — carried by the token-refresh CONTROL (S15) / the pairing
+///    absent path, NOT by this KNOCK payload.
+///  - **The outgoing KNOCK** carries the PEER's stored token so the relay can
+///    wake the PEER. That is gated SOLELY on whether I hold a present-form
+///    peer token — which already encodes the peer's opt-in (the peer shares
+///    its token only on opt-in and revokes on opt-out). A push-off peer means
+///    no stored token means an empty knock, a burner-line wake for that side.
+/// Coupling the KNOCK to MY own opt-in (as an earlier draft did) silences a
+/// peer who explicitly asked to be woken — the CODE fix here decouples them.
 ///
 /// SCOPE (S12 ⟂ S15). S12 owns the opt-in flag persistence and building the
 /// token-into-KNOCK payload from the STORED peer token. Acquiring THIS
@@ -45,16 +52,23 @@ class PushOptIn {
   }
 
   /// The §5.4 KNOCK payload (`platform(1) ‖ token_len(2) ‖ token`) for this
-  /// channel, or EMPTY when push is off / no peer token exists (pure
-  /// burner-line, zero third-party touch). Derived from the stored present-form
-  /// `token_payload` by dropping its leading presence byte.
+  /// channel — the PEER's token, so the relay can wake the PEER — or EMPTY when
+  /// no present-form peer token is stored (the peer's push is off / was
+  /// revoked ⇒ a burner-line wake for that side). Derived from the stored
+  /// present-form `token_payload` by dropping its leading presence byte.
+  ///
+  /// Gated SOLELY on the stored peer token, NOT on the knocker's OWN opt-in
+  /// (`record.pushOptIn`): push is per-side (spec §3.2.1). My own opt-in
+  /// governs a DIFFERENT direction — sharing MY token so the peer can wake me,
+  /// carried by the token-refresh CONTROL. Coupling them would drop the token
+  /// of a peer who explicitly opted to be woken (CODE, 2026-07-08).
   Uint8List knockPayloadFor(Uint8List channelId) {
     final record = _channels.byId(channelId);
-    if (record == null || !record.pushOptIn) {
+    if (record == null) {
       return Uint8List(0);
     }
     final stored = record.peerDeviceToken;
-    // Only a present-form token yields a payload; absent/empty → burner-line.
+    // Only a present-form token yields a payload; absent/revoked → empty.
     if (stored == null || stored.length < 4 || stored[0] != _tokenPresentByte) {
       return Uint8List(0);
     }
