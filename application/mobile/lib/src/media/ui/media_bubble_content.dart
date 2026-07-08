@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../sensitive/sensitive_content_analyzer.dart';
+import '../../sensitive/sensitive_image_veil.dart';
 import '../../session/model/message_view.dart';
 import '../../ui/theme/nimna_tokens.dart';
 import '../model/media_transfer_state.dart';
@@ -38,6 +40,7 @@ class MediaBubbleContent extends StatelessWidget {
     required this.message,
     required this.loadBytes,
     this.onTap,
+    this.sensitiveAnalyzer,
     super.key,
   });
 
@@ -49,6 +52,12 @@ class MediaBubbleContent extends StatelessWidget {
 
   /// Opens the full-bleed viewer (components.md media viewer).
   final VoidCallback? onTap;
+
+  /// S14 recipient-side sensitive-content analysis (spec §5.3). When supplied,
+  /// a RECEIVED image is checked on-device after decryption and rendered
+  /// blurred + "tap to view" if flagged. Null (or a sender's own image) → no
+  /// blur. Fail-open display sugar, never a block.
+  final SensitiveContentAnalyzer? sensitiveAnalyzer;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +113,19 @@ class MediaBubbleContent extends StatelessWidget {
               child: ColoredBox(color: tokens.surface2),
             );
           }
-          return Image.memory(data, fit: BoxFit.fitWidth);
+          final image = Image.memory(data, fit: BoxFit.fitWidth);
+          // Recipient-side blur ONLY (spec §5.3): a sender never has their own
+          // attachment blurred (they chose to send it). Fail-open when no
+          // analyzer is wired.
+          final analyzer = sensitiveAnalyzer;
+          if (message.outbound || analyzer == null) {
+            return image;
+          }
+          return SensitiveImageVeil(
+            imageBytes: data,
+            analyzer: analyzer,
+            child: image,
+          );
         },
       );
     }

@@ -267,6 +267,36 @@ void main() {
     expect(events, contains(DiagEvent.masterKeyGenerated));
   });
 
+  test('AeadAuthError on open → SILENT fresh-install-reset (S13→S14)', () async {
+    // A channel persisted under the original MK.
+    var services = await device.boot();
+    await createMarkerChannel(services);
+    expect(services.storage.channels.all, hasLength(1));
+    await device.shutdown();
+
+    // Interrupted-wipe / keystore-loss signature: the keystore MK no longer
+    // matches the on-disk channel ciphertext, so openAll will not authenticate.
+    device.keyStore.stored = Uint8List.fromList(List.filled(32, 0xAB));
+
+    // Re-open must NOT throw and must NOT surface a lock/wipe path — it silently
+    // resets to a fresh install (decision 2: AeadAuthError auto-reset is SILENT).
+    services = await device.boot();
+    expect(
+      services.storage.channels.all,
+      isEmpty,
+      reason: 'the store reset to a fresh, empty install',
+    );
+    // A fresh MK was minted (the injected/lost one is gone); indistinguishable
+    // from a first launch.
+    expect(device.keyStore.stored, isNotNull);
+    expect(
+      bytesToHex(device.keyStore.stored!),
+      isNot(bytesToHex(Uint8List.fromList(List.filled(32, 0xAB)))),
+    );
+    final events = services.diag.readAll().map((r) => r.event).toSet();
+    expect(events, contains(DiagEvent.masterKeyGenerated));
+  });
+
   test('per-channel wipe kills rows and files; others intact', () async {
     final services = await device.boot();
     final idA = (await createMarkerChannel(services, suffix: '_A')).id;

@@ -649,4 +649,32 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get push_tradeOn =>
       'On: a knock can wake this phone through their notification service, carrying two words — \"New activity.\" No line, no name, no message — and the relay forgets the address the moment it\'s used.';
+
+  @override
+  String get screenshot_systemLinePeer => 'They took a screenshot.';
+
+  @override
+  String get screenshot_systemLineOwn =>
+      'You took a screenshot. They\'ve been told.';
+
+  @override
+  String get screenshot_onboardingDisclosure =>
+      'Nimna can\'t stop a screenshot. It will always tell the other person.\nIt only notices what happens inside the app — a second camera pointed at a screen is invisible to any software. Said up front, so you both know the terms.';
+
+  @override
+  String get screenshot_onboardingAndroidCaveat =>
+      'On Android 13 and older, a screenshot can\'t be noticed here — only Android 14 and up, and iPhone, can tell the other person.';
+
+  @override
+  String get sensitive_veilCaption => 'Sensitive content — tap to view.';
+
+  @override
+  String get sensitive_whisperQuestion =>
+      'This looks like sensitive content — send anyway?';
+
+  @override
+  String get sensitive_whisperSendAnyway => 'Send anyway';
+
+  @override
+  String get sensitive_whisperGoBack => 'Go back';
 }

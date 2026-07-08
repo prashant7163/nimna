@@ -40,6 +40,7 @@ import '../../protocol/inner_envelope.dart';
 import '../../protocol/outer_frame.dart';
 import '../../protocol/reaction_body.dart';
 import '../../protocol/token_payload.dart';
+import '../../screenshot/screenshot_notice.dart';
 import '../../transport/relay_socket.dart';
 import '../model/chat_event.dart';
 import '../model/message_view.dart';
@@ -140,6 +141,12 @@ class SessionController {
   final Map<String, int> _byMsgId = {};
   final Map<String, int> _byRecordId = {};
 
+  /// S14: screenshot system lines (spec §5.2, voice string 12) — TRANSIENT and
+  /// session-scoped: an EVENT, not speech, never a [MessageRecord], never
+  /// sealed to disk. Each is anchored just AFTER the record present when it
+  /// occurred so the widget layer interleaves without ever re-sorting messages.
+  final List<ScreenshotNotice> _screenshotNotices = [];
+
   RelayConnection? _conn;
   StreamSubscription<OuterFrame>? _sub;
 
@@ -177,6 +184,12 @@ class SessionController {
   /// The current thread as immutable view models, with reply referents
   /// resolved from the LOCAL copy and reaction slots applied (spec §5.8).
   List<MessageView> get messages => [for (final r in _records) _view(r)];
+
+  /// S14: the transient screenshot system lines for this session, in the order
+  /// they occurred (spec §5.2). The widget layer interleaves them into the
+  /// thread by each notice's anchor; message order itself is never disturbed.
+  List<ScreenshotNotice> get screenshotNotices =>
+      List.unmodifiable(_screenshotNotices);
 
   SessionLineState get lineState => _lineState;
 
@@ -656,6 +669,45 @@ class SessionController {
     );
   }
 
+  /// Emits a screenshot notice (CONTROL 0x03, EMPTY payload — spec §5.2/§5.5)
+  /// and records the own-side system line (voice string 12). The chat screen
+  /// calls this on local screenshot detection, and only while it is mounted —
+  /// spec §5.2's "detection fires only while content is on screen inside the
+  /// app". Additionally gated on liveness here: no live line, no notice.
+  /// Detect-and-NOTIFY only — nothing is blocked; delivery is honor-system like
+  /// expiry (a modified peer client could suppress the system line).
+  void noticeLocalScreenshot() {
+    if (_closed || !isLive) {
+      return;
+    }
+    _seal(
+      InnerEnvelope(
+        type: InnerType.control,
+        msgId: _aead.randomBytes(msgIdBytes),
+        timestampMs: _nowMs(),
+        body: ControlBody(
+          rawType: ControlType.screenshot.wire,
+          payload: Uint8List(0),
+        ).encode(),
+      ),
+    );
+    _recordScreenshotNotice(own: true);
+  }
+
+  /// Appends a screenshot system line and notifies. Transient — never a
+  /// [MessageRecord], never persisted; anchored just after the current last
+  /// record so the timeline stays in message order (spec §5.2).
+  void _recordScreenshotNotice({required bool own}) {
+    _screenshotNotices.add(
+      ScreenshotNotice(
+        own: own,
+        timestampMs: _nowMs(),
+        anchorRecordId: _records.isEmpty ? null : _records.last.id,
+      ),
+    );
+    _emit(ScreenshotNoticed(own: own));
+  }
+
   /// Ends the session (explicit hang up / leave chat): sends the authenticated
   /// HANGUP envelope, then the relay TEARDOWN, destroys all session keys, and
   /// settles to "You hung up." (spec §3.3 — the relay cannot forge this, so
@@ -983,8 +1035,11 @@ class SessionController {
         // TODO(F7): read receipts default OFF; do not render "Seen" here.
         break;
       case ControlType.screenshot:
-        // TODO(S14): screenshot notice system line.
-        break;
+        // The peer took a screenshot while our content was on their screen
+        // (spec §5.2). Render the peer-side bare system line ("They took a
+        // screenshot.", string 12). The payload is empty by spec and ignored
+        // regardless (forward-compat); nothing is blocked — detect-and-notify.
+        _recordScreenshotNotice(own: false);
       case ControlType.tokenRefresh:
         // S12: peer rotated (or revoked) its device-token mid-session
         // (§3.2.1/§5.5). The body already validated as a token_payload during

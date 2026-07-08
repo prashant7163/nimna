@@ -6,7 +6,8 @@ can grow a shared mutable surface through it (the import-direction fence).
 
 - `chat_event.dart` — the sealed `ChatEvent` vocabulary the connection layer
   emits (`MessageArrived`, `MessageRemoved`, `DeliveryChanged`, `ReactionArrived`,
-  `PeerTyping`, `LineStateChanged`, `SessionEnded`) plus the `SessionLineState`,
+  `PeerTyping`, `ScreenshotNoticed` [S14, own/peer], `LineStateChanged`,
+  `SessionEnded`) plus the `SessionLineState`,
   `ReactionSide`, and `SessionEndReason{ended, connectionLost}` enums. Events are
   notifications — the UI re-reads the controller's `messages`/`lineState`/
   `peerTyping` for the truth.
