@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Create a Nimna code, or enter one you\'ve been given.'**
   String get channelListEmptyBody;
 
+  /// F4 populated channel-row status subtitle for a line you are not currently on (designs/screens/04-channel-list.html, verbatim). The only row status S16 renders: presence is per-open-line, so the list holds no live connection and every row reads 'Quiet' until you open it. The design's 'On the line' / 'Waiting: N' / 'Knocking…' row statuses presuppose list-level presence memory (an always-listening or persisted-knock-count model) out of S16 scope — flagged for S18. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet'**
+  String get channelListStatusQuiet;
+
   /// Primary action on the empty channel list (voice guide register notes: buttons are verbs, one or two words). Gated by subscription from S12; stub in S7.
   ///
   /// In en, this message translates to:
@@ -1141,6 +1147,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No answer.'**
   String get knock_noAnswer;
+
+  /// The primary Knock verb — the chat-header affordance on the 'Not on the line' surface (wireframe F5.1; designs/wireframes/f5-chat-session.html '<btn ghost small>Knock</btn>'; voice register verb 'Knock', voice guide line 127). Opens the 60 s knock window; distinct from knock_again ('Knock again'), which appears only after a lapse. Canonical, verbatim. S16 net-new. Enters the S16 crafted-translation pass.
+  ///
+  /// In en, this message translates to:
+  /// **'Knock'**
+  String get knock_knock;
 
   /// The manual re-knock affordance (wireframe F5.13) — appears ONLY after a lapse, never during the countdown. A deliberate human re-knock; the app never auto-retries (spec §4, voice register verb 'Knock'). S12 net-new. Enters the S16 crafted-translation pass.
   ///

@@ -26,7 +26,9 @@ src/app/             composition + app root
                        subtree while sealed (zero-leak rule)
   routes.dart          named routes (Navigator 1.0, onGenerateRoute); S16 adds
                        onboarding (F1), knock (F6 push-tap target),
-                       diagnostics (F8 export)
+                       diagnostics (F8 export), line (F4→F5 presence-mounted
+                       open line — builds LinePresence from the AppScope
+                       sessionLauncher factory)
   theme.dart           two ThemeData from the token map; button themes
   transitions.dart     fade + 8px drift, 320 ms decelerate; honors
                        MediaQuery.disableAnimations
@@ -34,12 +36,15 @@ src/ui/              screens + widgets
   theme/nimna_tokens.dart   NimnaTokens ThemeExtension — THE only file with
                             color literals; drift-guarded against
                             designs/system/tokens.json v1.1.0
-  screens/channel_list_screen.dart  empty-state shell (voice string 4
-                                    verbatim); S8: Create a code live via
-                                    the G2 single entry, Enter a code still
-                                    an S9 stub, boot-time pending-pairing
-                                    resume on first frame; S13: the F4 footer
-                                    Settings entry row
+  screens/channel_list_screen.dart  F4: empty-state shell (voice string 4
+                                    verbatim) + S16 POPULATED list from
+                                    channels.all (design 04 — label + "Quiet"
+                                    row status, per-open-line scope; a row tap
+                                    pushes /line = the presence trigger). S8:
+                                    Create a code live via the G2 single entry
+                                    (one call site, both bodies share it),
+                                    boot-time pending-pairing resume on first
+                                    frame; S13: the F4 footer Settings entry row
   screens/onboarding/       S16 — onboarding_screen.dart: the F1 first-run
                             host (4 screens: what it is / how pairing works /
                             what we cannot see / the screenshot terms; voice
@@ -95,7 +100,11 @@ src/session/         S10 — the live text session, decomposed per-concern:
                        (KK driver, delivery FSM, knock-accept gating [S12],
                        outbox flush, reconnect, media dispatch [S11])
   chat/                the chat UI (composer, message_bubble, message_actions,
-                       chat_screen) — holds no transport/keys/store
+                       chat_screen) — holds no transport/keys/store; S16 adds
+                       line_presence.dart (the per-open-line presence-mount
+                       coordinator: listening→knock→waiting/lapse or inbound
+                       KNOCK_FWD→F6→pick-up→live→reconnect, one controller at a
+                       time, one-CRID invariant) + IncomingKnockView (F6)
                      see src/session/README.md
 src/media/           S11 — media & documents: transfer/ (chunker +
                      reassembler over the frozen codec, receiver-bounded +

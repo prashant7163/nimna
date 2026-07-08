@@ -13,6 +13,25 @@ user-facing string comes from l10n; left/right is never hardcoded. BINDING to
   on dispose → `controller.noticeLocalScreenshot()`), interleaves the screenshot
   system lines into the thread by anchor (never re-sorting messages), and threads
   the `SensitiveContentAnalyzer` down to received-image bubbles + the attach whisper.
+  [S16] gains OPTIONAL presence props (all defaulting off, so a bare ChatScreen is
+  unchanged): `onKnock` renders the F5.1/F5.13 Knock / Knock again affordance + the
+  compose-while-not-on-the-line surface (peer-offline empty state + "WAITING — ON
+  YOUR PHONE ONLY" outbox header, spec §3.4); `knockDeadline` drives the screen-11
+  waiting banner + countdown; `knockLapsed`/`knockStaleHint` the "No answer." + §6.1
+  hint; `reconnectPhase` overrides the status line with the dropped/recovered/lost
+  caption; `autoStart` (false under `LinePresence`) yields connection-lane ownership
+  so the CRID is never double-registered.
+- `line_presence.dart` — [S16] the FOREGROUND presence-mount coordinator for ONE
+  open line (the F4-row-tap trigger). Owns exactly one controller at a time and maps
+  the pure S8–S12 presence controllers (knock / incoming-knock / reconnect) → the
+  postures: LISTENING (accepter, receivable) → Knock (disposes the listener FIRST,
+  then a fresh knocker — the one-CRID invariant) → screen-11 waiting → lapse
+  "No answer."/re-listen; or an inbound KNOCK_FWD → the F6 `IncomingKnockView` →
+  explicit pick-up (NO auto-ACCEPT) → live; on live, adopts the controller into a
+  `ReconnectCoordinator`. Presence scope is the single open line only — a knock to a
+  line you don't have open (or a backgrounded app past the ~30 s grace) is the
+  content-free push-wake path, device-deferred to S18. `IncomingKnockView` is the
+  pure stateless F6 surface (label + "is knocking." + countdown + Pick up / Ignore).
 - `message_bubble.dart` — text bubble + delivery ticks (dashed "WAITING — ON YOUR
   PHONE ONLY" / delivered check), the quoted-reply preview + neutral tombstone,
   reaction chips (ownership by STROKE weight, never color, never amber; one-line

@@ -19,6 +19,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Create a Nimna code, or enter one you\'ve been given.';
 
   @override
+  String get channelListStatusQuiet => 'Quiet';
+
+  @override
   String get actionCreateCode => 'Create a code';
 
   @override
@@ -620,6 +623,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get knock_noAnswer => 'No answer.';
+
+  @override
+  String get knock_knock => 'Knock';
 
   @override
   String get knock_again => 'Knock again';
